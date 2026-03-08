@@ -1,789 +1,834 @@
 (function () {
-  'use strict';
+  if (window.__bhbRentalsFilterInit) return;
+  window.__bhbRentalsFilterInit = true;
 
-  if (window.__bhbRentalsInited) return;
-  window.__bhbRentalsInited = true;
-
-  // ─── Config ──────────────────────────────────────────────────────────────────
-  var GRID_ID    = 'rentals-wrapper';
-  var CARD_SEL   = '.w-dyn-item';
-  var STEP       = 9;
-  var MAPTILER_KEY = 'c43H8q7pFefMtElMtWBS';
-  var MAP_STYLE    = '019c8e23-ebd1-7221-bd5f-20ae2dca2ab6';
-  var PIN_URL      = 'https://cdn.prod.website-files.com/67344ae68adf4fc1f539002d/69a009335d3c16a421dd917a_Icon.svg';
-
-  var AREA_RULES = [
-    { id: 'canggu-area',  label: 'Canggu area',  keys: ['canggu','pererenan','seseh','cemagi','kaba kaba','kaba-kaba','cepaka','tumbak bayuh','buwit','dalung'] },
-    { id: 'uluwatu-area', label: 'Uluwatu area', keys: ['bingin','uluwatu','uluwatu center','ungasan'] },
-    { id: 'ubud-area',    label: 'Ubud area',    keys: ['ubud','ubud center'] },
-    { id: 'tabanan-area', label: 'Tabanan area', keys: ['kedungu','nyanyi','pandak gede','nyambu','tanah lot'] }
-  ];
-
-  var LOC_COORDS = {
-    'canggu':        [115.13650, -8.65062],
-    'pererenan':     [115.12346, -8.64904],
-    'seseh':         [115.11505, -8.64560],
-    'cemagi':        [115.11502, -8.62971],
-    'kaba kaba':     [115.13919, -8.59345],
-    'kaba-kaba':     [115.13919, -8.59345],
-    'cepaka':        [115.14526, -8.59917],
-    'tumbak bayuh':  [115.14562, -8.61484],
-    'buwit':         [115.12362, -8.59905],
-    'dalung':        [115.17258, -8.61147],
-    'bingin':        [115.09200, -8.81200],
-    'uluwatu':       [115.08800, -8.82828],
-    'uluwatu center':[115.08800, -8.82828],
-    'ungasan':       [115.16562, -8.82695],
-    'ubud':          [115.26229, -8.50690],
-    'ubud center':   [115.26229, -8.50690],
-    'kedungu':       [115.09045, -8.60254],
-    'nyanyi':        [115.11025, -8.61237],
-    'pandak gede':   [115.12800, -8.58500],
-    'nyambu':        [115.13200, -8.57800],
-    'tanah lot':     [115.12604, -8.58208]
+  // ─── CURRENCY CONFIG ────────────────────────────────────────────────────────
+  const CURRENCY = {
+    IDR: {
+      symbol: "Rp",
+      min: 0,
+      max: 50000000,
+      step: 500000,
+      chips: [
+        { label: "< Rp3jt",        max: 3000000,  min: 0        },
+        { label: "Rp3jt – Rp10jt", min: 3000000,  max: 10000000 },
+        { label: "> Rp10jt",       min: 10000000, max: 50000000 },
+      ],
+      format: (v) => "Rp" + (v >= 1000000 ? (v / 1000000).toFixed(1).replace(/\.0$/, "") + "jt" : v.toLocaleString()),
+    },
+    USD: {
+      symbol: "$",
+      min: 0,
+      max: 5000,
+      step: 50,
+      chips: [
+        { label: "< $250",       max: 250,  min: 0    },
+        { label: "$250 – $600",  min: 250,  max: 600  },
+        { label: "> $600",       min: 600,  max: 5000 },
+      ],
+      format: (v) => "$" + v.toLocaleString(),
+    },
+    EUR: {
+      symbol: "€",
+      min: 0,
+      max: 5000,
+      step: 50,
+      chips: [
+        { label: "< €250",       max: 250,  min: 0    },
+        { label: "€250 – €600",  min: 250,  max: 600  },
+        { label: "> €600",       min: 600,  max: 5000 },
+      ],
+      format: (v) => "€" + v.toLocaleString(),
+    },
   };
 
-  var CHIP_PRESETS = {
-    IDR: [
-      { label: '< Rp3B',       min: 0,           max: 3000000000  },
-      { label: 'Rp3B–Rp10B',   min: 3000000000,  max: 10000000000 },
-      { label: '> Rp10B',      min: 10000000000, max: null        }
-    ],
-    USD: [
-      { label: '< $250k',      min: 0,      max: 250000 },
-      { label: '$250k–$600k',  min: 250000, max: 600000 },
-      { label: '> $600k',      min: 600000, max: null   }
-    ],
-    EUR: [
-      { label: '< €250k',      min: 0,      max: 250000 },
-      { label: '€250k–€600k',  min: 250000, max: 600000 },
-      { label: '> €600k',      min: 600000, max: null   }
-    ]
+  // ─── AREA / LOCATION CONFIG ──────────────────────────────────────────────────
+  const AREAS = {
+    "Canggu": ["canggu", "pererenan", "seseh", "cemagi", "kaba kaba", "cepaka", "tumbak bayuh", "buwit", "dalung"],
+    "Uluwatu": ["bingin", "uluwatu", "uluwatu center", "ungasan"],
+    "Ubud": ["ubud", "ubud center"],
+    "Tabanan": ["kedungu", "nyanyi", "pandak gede", "nyambu", "tanah lot"],
   };
 
-  // ─── State ───────────────────────────────────────────────────────────────────
-  var allCards = [], filtered = [], visible = 0;
-  var map = null, mapReady = false, markers = [];
-  var locDropOpen = false, draftLocs = [], areas = [], labelByNorm = {};
-  var state = { availability: 'Any', bedrooms: [], locations: [], currency: 'IDR', priceMin: null, priceMax: null, keyword: '' };
-  var sliderBase = { min: 0, max: 10000000000 };
-  var sliderActive = { min: 0, max: 10000000000 };
-  var minRatio = 0, maxRatio = 1;
+  // ─── STATE ───────────────────────────────────────────────────────────────────
+  let state = {
+    bedrooms: "Any",
+    availability: "Any",
+    keyword: "",
+    currency: "IDR",
+    priceMin: 0,
+    priceMax: CURRENCY.IDR.max,
+    selectedLocations: [],   // array of lowercase village names
+    page: 1,
+    pageSize: 9,
+  };
 
-  // ─── Helpers ─────────────────────────────────────────────────────────────────
-  function norm(v) {
-    return String(v || '').toLowerCase().trim()
-      .replace(/[-–—]/g, ' ').replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
-  }
-  function symFor(c) { return c === 'USD' ? '$' : c === 'EUR' ? '€' : 'Rp'; }
-  function short(n) {
-    var a = Math.abs(n);
-    if (a >= 1e9) return (n/1e9).toFixed(1).replace('.0','') + 'B';
-    if (a >= 1e6) return (n/1e6).toFixed(1).replace('.0','') + 'M';
-    if (a >= 1e3) return (n/1e3).toFixed(1).replace('.0','') + 'k';
-    return String(Math.round(n));
-  }
-  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-  function fmt(n) { return Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 }); }
+  let mapInstance = null;
+  let mapMarkers = [];
 
-  // ─── DOM refs ─────────────────────────────────────────────────────────────────
-  var grid, bedsField, availField, currField;
-  var locTrigger, locTrigText, locDropdown;
-  var priceTrigger, priceTrigText, priceDropdown;
-  var kwInput, btnClear, btnSearch, btnLoadMore, btnBackTop;
-  var resultsCount, emptyState;
-  var locUI = {};
-  var thumbMin, thumbMax, fillEl, trackEl;
+  // ─── DOM REFS ────────────────────────────────────────────────────────────────
+  const $ = (sel, ctx = document) => ctx.querySelector(sel);
+  const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 
-  // ─── Cache DOM ────────────────────────────────────────────────────────────────
-  function cacheDom() {
-    grid        = document.getElementById(GRID_ID);
-    locTrigger  = document.querySelector('.location-trigger');
-    locTrigText = document.querySelector('.location-trigger_text');
-    locDropdown = document.querySelector('.location-dropdown');
-    priceTrigger  = document.querySelector('.price-trigger');
-    priceTrigText = document.querySelector('.price-trigger_text');
-    priceDropdown = document.querySelector('.price-dropdown');
-    btnClear    = document.querySelector('.filter-button-1');
-    btnSearch   = document.querySelector('.filter-button-2');
-    btnLoadMore = document.getElementById('load-more');
-    resultsCount = document.getElementById('rental-results-count');
-    emptyState   = document.getElementById('rental-empty-state');
-    kwInput = document.querySelector('.keyword-input');
-
-    // Detect filter fields by label
-    var fields = document.querySelectorAll('.filter-field');
-    for (var i = 0; i < fields.length; i++) {
-      var lbl = fields[i].querySelector('.filter-label');
-      if (!lbl) continue;
-      var t = lbl.textContent.toLowerCase().trim();
-      if (t.indexOf('bed') > -1)          bedsField = fields[i];
-      else if (t.indexOf('avail') > -1)   availField = fields[i];
-      else if (t.indexOf('currency') > -1) currField = fields[i];
-    }
+  // ─── HELPERS ─────────────────────────────────────────────────────────────────
+  function closeAllDropdowns(except) {
+    $$(".filter-dropdown, .location-dropdown, .price-dropdown").forEach((d) => {
+      if (d !== except) d.classList.remove("is-open");
+    });
+    $$(".filter-trigger, .location-trigger, .price-trigger").forEach((t) => {
+      const dropdown = t.closest(".filter-field")
+        ? t.closest(".filter-field").querySelector(".filter-dropdown, .location-dropdown")
+        : null;
+      if (dropdown && dropdown !== except) t.classList.remove("is-active");
+    });
   }
 
-  // ─── Dropdown open/close ──────────────────────────────────────────────────────
-  function closeAllDropdowns(exceptEl) {
-    var drops = document.querySelectorAll('.filter-dropdown, .price-dropdown');
-    for (var i = 0; i < drops.length; i++) {
-      if (drops[i] === exceptEl) continue;
-      drops[i].style.display = 'none';
-      var f = drops[i].closest('.filter-field');
-      if (f) { var t = f.querySelector('.filter-trigger'); if (t) t.classList.remove('is-active'); }
-    }
-    if (priceTrigger && exceptEl !== priceDropdown) priceTrigger.classList.remove('is-active');
-    // close location dropdown
-    if (locDropdown && locDropdown !== exceptEl && locDropOpen) {
-      locDropOpen = false;
-      locDropdown.style.display = 'none';
-      if (locTrigger) locTrigger.classList.remove('is-active');
-    }
+  function toggleDropdown(trigger, dropdown) {
+    const isOpen = dropdown.classList.contains("is-open");
+    closeAllDropdowns(isOpen ? null : dropdown);
+    dropdown.classList.toggle("is-open", !isOpen);
+    trigger.classList.toggle("is-active", !isOpen);
   }
 
-  function toggleFilterDrop(field) {
-    var dd = field.querySelector('.filter-dropdown');
-    var trig = field.querySelector('.filter-trigger');
-    if (!dd) return;
-    var isOpen = dd.style.display === 'block';
-    closeAllDropdowns(isOpen ? null : dd);
-    dd.style.display = isOpen ? 'none' : 'block';
-    if (trig) trig.classList.toggle('is-active', !isOpen);
-  }
+  // ─── BEDROOMS FILTER ─────────────────────────────────────────────────────────
+  function initBedrooms() {
+    const fields = $$(".filter-field");
+    const bedField = fields.find((f) => f.querySelector(".filter-label")?.textContent.trim().startsWith("Bed"));
+    if (!bedField) return;
 
-  function togglePriceDrop() {
-    var isOpen = priceDropdown.style.display === 'block';
-    closeAllDropdowns(isOpen ? null : priceDropdown);
-    priceDropdown.style.display = isOpen ? 'none' : 'block';
-    priceTrigger.classList.toggle('is-active', !isOpen);
-  }
+    const trigger = $(".filter-trigger", bedField);
+    const dropdown = $(".filter-dropdown", bedField);
+    const triggerText = $(".filter-trigger_text", trigger);
 
-  // ─── Init single select field ─────────────────────────────────────────────────
-  function initSingle(field, cb) {
-    if (!field) return;
-    var trig = field.querySelector('.filter-trigger');
-    var opts = field.querySelectorAll('.filter-option');
-    var trigText = field.querySelector('.filter-trigger_text');
-    if (!trig) return;
-
-    trig.addEventListener('click', function (e) {
+    trigger.addEventListener("click", (e) => {
       e.stopPropagation();
-      toggleFilterDrop(field);
+      toggleDropdown(trigger, dropdown);
     });
 
-    for (var i = 0; i < opts.length; i++) {
-      (function (opt) {
-        opt.addEventListener('click', function (e) {
-          e.stopPropagation();
-          for (var k = 0; k < opts.length; k++) opts[k].classList.remove('is-active');
-          opt.classList.add('is-active');
-          if (trigText) trigText.textContent = opt.dataset.value;
-          field.querySelector('.filter-dropdown').style.display = 'none';
-          trig.classList.remove('is-active');
-          if (cb) cb(opt.dataset.value);
-        });
-      })(opts[i]);
-    }
+    $$(".filter-option", dropdown).forEach((opt) => {
+      opt.addEventListener("click", () => {
+        state.bedrooms = opt.dataset.value;
+        triggerText.textContent = opt.dataset.value === "Any" ? "Any" : opt.dataset.value + " Br";
+        $$(".filter-option", dropdown).forEach((o) => o.classList.remove("is-selected"));
+        opt.classList.add("is-selected");
+        dropdown.classList.remove("is-open");
+        trigger.classList.remove("is-active");
+      });
+    });
   }
 
-  // ─── Init multi select field ──────────────────────────────────────────────────
-  function initMulti(field, cb) {
-    if (!field) return;
-    var trig = field.querySelector('.filter-trigger');
-    var opts = field.querySelectorAll('.filter-option');
-    var trigText = field.querySelector('.filter-trigger_text');
-    if (!trig) return;
+  // ─── AVAILABILITY FILTER ──────────────────────────────────────────────────────
+  function initAvailability() {
+    const fields = $$(".filter-field");
+    const avField = fields.find((f) => f.querySelector(".filter-label")?.textContent.trim().startsWith("Avail"));
+    if (!avField) return;
 
-    trig.addEventListener('click', function (e) {
+    const trigger = $(".filter-trigger", avField);
+    const dropdown = $(".filter-dropdown", avField);
+    const triggerText = $(".filter-trigger_text", trigger);
+
+    trigger.addEventListener("click", (e) => {
       e.stopPropagation();
-      toggleFilterDrop(field);
+      toggleDropdown(trigger, dropdown);
     });
 
-    for (var i = 0; i < opts.length; i++) {
-      (function (opt) {
-        opt.addEventListener('click', function (e) {
-          e.stopPropagation();
-          var val = opt.dataset.value;
-          var anyOpt = field.querySelector('[data-value="Any"]');
-          if (val === 'Any') {
-            for (var k = 0; k < opts.length; k++) opts[k].classList.remove('is-active');
-            opt.classList.add('is-active');
-          } else {
-            if (anyOpt) anyOpt.classList.remove('is-active');
-            opt.classList.toggle('is-active');
-            var hasAny = false;
-            for (var k = 0; k < opts.length; k++) if (opts[k].classList.contains('is-active')) { hasAny = true; break; }
-            if (!hasAny && anyOpt) anyOpt.classList.add('is-active');
-          }
-          var sel = [];
-          for (var k = 0; k < opts.length; k++) {
-            if (opts[k].classList.contains('is-active') && opts[k].dataset.value !== 'Any') sel.push(opts[k].dataset.value);
-          }
-          if (trigText) trigText.textContent = sel.length ? sel.join(', ') : 'Any';
-          if (cb) cb(sel);
-        });
-      })(opts[i]);
+    $$(".filter-option", dropdown).forEach((opt) => {
+      opt.addEventListener("click", () => {
+        state.availability = opt.dataset.value;
+        triggerText.textContent = opt.dataset.value;
+        $$(".filter-option", dropdown).forEach((o) => o.classList.remove("is-selected"));
+        opt.classList.add("is-selected");
+        dropdown.classList.remove("is-open");
+        trigger.classList.remove("is-active");
+      });
+    });
+  }
+
+  // ─── KEYWORD FILTER ───────────────────────────────────────────────────────────
+  function initKeyword() {
+    const input = $(".keyword-input");
+    if (!input) return;
+    input.addEventListener("input", (e) => {
+      state.keyword = e.target.value.trim().toLowerCase();
+    });
+    const form = input.closest("form");
+    if (form) {
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        applyFilters();
+      });
     }
   }
 
-  // ─── Card data ────────────────────────────────────────────────────────────────
-  function getData(card) {
-    var w = card.querySelector('.listings_card-wrapper') || card;
-    return {
-      name:     (w.dataset.name || '').toLowerCase(),
-      code:     (w.dataset.code || '').toLowerCase(),
-      locRaw:   w.dataset.location || '',
-      loc:      norm(w.dataset.location || ''),
-      rooms:    parseInt(w.dataset.rooms || '0', 10),
-      price:    parseFloat(w.dataset.price || '0'),
-      currency: (w.dataset.currency || 'IDR').toUpperCase(),
-      avail:    (w.dataset.availableDate || w.dataset.available || '').toLowerCase()
-    };
+  // ─── CURRENCY FILTER ─────────────────────────────────────────────────────────
+  function initCurrency() {
+    const fields = $$(".filter-field");
+    const curField = fields.find((f) => f.querySelector(".filter-label")?.textContent.trim().startsWith("Currency"));
+    if (!curField) return;
+
+    const trigger = $(".filter-trigger", curField);
+    const dropdown = $(".filter-dropdown", curField);
+    const triggerText = $(".filter-trigger_text", trigger);
+
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleDropdown(trigger, dropdown);
+    });
+
+    $$(".filter-option", dropdown).forEach((opt) => {
+      opt.addEventListener("click", () => {
+        state.currency = opt.dataset.value;
+        triggerText.textContent = opt.dataset.value;
+        $$(".filter-option", dropdown).forEach((o) => o.classList.remove("is-selected"));
+        opt.classList.add("is-selected");
+        dropdown.classList.remove("is-open");
+        trigger.classList.remove("is-active");
+        resetPriceSliderForCurrency();
+        updateChipLabels();
+      });
+    });
+
+    // Mark IDR as default selected
+    const idrOpt = $$(".filter-option", dropdown).find((o) => o.dataset.value === "IDR");
+    if (idrOpt) idrOpt.classList.add("is-selected");
   }
 
-  // ─── Filter passes ────────────────────────────────────────────────────────────
-  function passes(card) {
-    var d = getData(card);
+  // ─── PRICE FILTER ────────────────────────────────────────────────────────────
+  function initPrice() {
+    const priceWrapper = $(".price-trigger-wrapper");
+    if (!priceWrapper) return;
 
-    // Availability
-    if (state.availability !== 'Any') {
-      if (state.availability === 'Available' && d.avail !== 'available') return false;
-      if (state.availability === 'Rented' && d.avail !== 'rented') return false;
+    const trigger = $(".price-trigger", priceWrapper);
+    const dropdown = priceWrapper.closest(".filter-field")?.querySelector(".price-dropdown");
+    if (!trigger || !dropdown) return;
+
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isOpen = dropdown.classList.contains("is-open");
+      closeAllDropdowns(isOpen ? null : dropdown);
+      dropdown.classList.toggle("is-open", !isOpen);
+      trigger.classList.toggle("is-active", !isOpen);
+    });
+
+    initPriceSlider();
+    initPriceChips();
+  }
+
+  function initPriceSlider() {
+    const pwMin = $("#pwMin");
+    const pwMax = $("#pwMax");
+    if (!pwMin || !pwMax) return;
+
+    const cfg = CURRENCY[state.currency];
+    pwMin.min = cfg.min;
+    pwMin.max = cfg.max;
+    pwMin.step = cfg.step;
+    pwMin.value = cfg.min;
+    pwMax.min = cfg.min;
+    pwMax.max = cfg.max;
+    pwMax.step = cfg.step;
+    pwMax.value = cfg.max;
+
+    state.priceMin = cfg.min;
+    state.priceMax = cfg.max;
+
+    updateSliderUI();
+
+    pwMin.addEventListener("input", () => {
+      const minVal = parseInt(pwMin.value);
+      const maxVal = parseInt(pwMax.value);
+      if (minVal >= maxVal) pwMin.value = maxVal - parseInt(pwMin.step);
+      state.priceMin = parseInt(pwMin.value);
+      updateSliderUI();
+    });
+
+    pwMax.addEventListener("input", () => {
+      const minVal = parseInt(pwMin.value);
+      const maxVal = parseInt(pwMax.value);
+      if (maxVal <= minVal) pwMax.value = minVal + parseInt(pwMax.step);
+      state.priceMax = parseInt(pwMax.value);
+      updateSliderUI();
+    });
+  }
+
+  function updateSliderUI() {
+    const pwMin = $("#pwMin");
+    const pwMax = $("#pwMax");
+    const fill = $("#pwFill");
+    const minText = $("#pwMinText");
+    const maxText = $("#pwMaxText");
+    const rangeText = $("#pwRangeText");
+    const scaleMin = $("#pwScaleMin");
+    const scaleMax = $("#pwScaleMax");
+    const symMin = $("#pwSymbolMin");
+    const symMax = $("#pwSymbolMax");
+
+    if (!pwMin || !pwMax) return;
+
+    const cfg = CURRENCY[state.currency];
+    const min = parseInt(pwMin.value);
+    const max = parseInt(pwMax.value);
+    const range = cfg.max - cfg.min;
+    const leftPct = ((min - cfg.min) / range) * 100;
+    const rightPct = ((max - cfg.min) / range) * 100;
+
+    if (fill) {
+      fill.style.left = leftPct + "%";
+      fill.style.width = (rightPct - leftPct) + "%";
     }
 
-    // Bedrooms
-    if (state.bedrooms.length > 0) {
-      var match = false;
-      for (var i = 0; i < state.bedrooms.length; i++) {
-        if (state.bedrooms[i] === '6+' && d.rooms >= 6) { match = true; break; }
-        if (state.bedrooms[i] !== '6+' && d.rooms === parseInt(state.bedrooms[i], 10)) { match = true; break; }
+    if (minText) minText.textContent = cfg.format(min).replace(cfg.symbol, "");
+    if (maxText) maxText.textContent = cfg.format(max).replace(cfg.symbol, "");
+    if (rangeText) rangeText.textContent = cfg.format(min) + " – " + cfg.format(max);
+    if (scaleMin) scaleMin.textContent = cfg.format(cfg.min);
+    if (scaleMax) scaleMax.textContent = cfg.format(cfg.max);
+    if (symMin) symMin.textContent = cfg.symbol;
+    if (symMax) symMax.textContent = cfg.symbol;
+  }
+
+  function resetPriceSliderForCurrency() {
+    const cfg = CURRENCY[state.currency];
+    const pwMin = $("#pwMin");
+    const pwMax = $("#pwMax");
+    if (!pwMin || !pwMax) return;
+
+    pwMin.min = cfg.min;    pwMin.max = cfg.max;    pwMin.step = cfg.step;    pwMin.value = cfg.min;
+    pwMax.min = cfg.min;    pwMax.max = cfg.max;    pwMax.step = cfg.step;    pwMax.value = cfg.max;
+
+    state.priceMin = cfg.min;
+    state.priceMax = cfg.max;
+    updateSliderUI();
+  }
+
+  function initPriceChips() {
+    $$(".pw-chip").forEach((chip, i) => {
+      chip.addEventListener("click", () => {
+        const cfg = CURRENCY[state.currency];
+        const preset = cfg.chips[i];
+        if (!preset) return;
+
+        const pwMin = $("#pwMin");
+        const pwMax = $("#pwMax");
+        if (!pwMin || !pwMax) return;
+
+        pwMin.value = preset.min ?? cfg.min;
+        pwMax.value = preset.max ?? cfg.max;
+        state.priceMin = parseInt(pwMin.value);
+        state.priceMax = parseInt(pwMax.value);
+
+        $$(".pw-chip").forEach((c) => c.classList.remove("is-active"));
+        chip.classList.add("is-active");
+        updateSliderUI();
+      });
+    });
+  }
+
+  function updateChipLabels() {
+    const cfg = CURRENCY[state.currency];
+    $$(".pw-chip").forEach((chip, i) => {
+      const textNode = $(".text-node", chip);
+      if (textNode && cfg.chips[i]) textNode.textContent = cfg.chips[i].label;
+    });
+  }
+
+  // ─── LOCATION FILTER ─────────────────────────────────────────────────────────
+  function initLocation() {
+    const locField = $$(".filter-field").find((f) => f.querySelector(".location-trigger"));
+    if (!locField) return;
+
+    const trigger = $(".location-trigger", locField);
+    const dropdown = $(".location-dropdown", locField);
+    const triggerText = $(".location-trigger_text", trigger);
+
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isOpen = dropdown.classList.contains("is-open");
+      closeAllDropdowns(isOpen ? null : dropdown);
+      dropdown.classList.toggle("is-open", !isOpen);
+      trigger.classList.toggle("is-active", !isOpen);
+      if (!isOpen) {
+        initMap();
+        renderLocationTree();
       }
-      if (!match) return false;
+    });
+
+    // Replace .location-search-input div with real input
+    const searchDiv = $(".location-search-input", dropdown);
+    if (searchDiv) {
+      const realInput = document.createElement("input");
+      realInput.type = "text";
+      realInput.placeholder = "Search...";
+      realInput.className = "location-search-input";
+      realInput.style.cssText = "border:none;outline:none;background:transparent;width:100%;font-size:14px;";
+      searchDiv.replaceWith(realInput);
+
+      realInput.addEventListener("input", () => {
+        renderLocationTree(realInput.value.trim().toLowerCase());
+      });
     }
 
-    // Location
-    if (state.locations.length > 0 && state.locations.indexOf(d.loc) === -1) return false;
-
-    // Price
-    if (state.priceMin !== null || state.priceMax !== null) {
-      var price = isFinite(d.price) ? d.price : 0;
-      if (state.priceMin !== null && price < state.priceMin) return false;
-      if (state.priceMax !== null && price > state.priceMax) return false;
+    // Clear button
+    const clearBtn = $(".loc-btn-clear-inline", dropdown);
+    if (clearBtn) {
+      clearBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        state.selectedLocations = [];
+        renderLocationTree();
+        renderLocationPills();
+        updateLocationTriggerText(triggerText);
+        updateMapMarkers();
+      });
     }
 
-    // Keyword
-    if (state.keyword) {
-      var kw = state.keyword.toLowerCase();
-      if (d.name.indexOf(kw) === -1 && d.code.indexOf(kw) === -1) return false;
+    // Apply button
+    const applyBtn = $(".loc-btn-apply-inline", dropdown);
+    if (applyBtn) {
+      applyBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        dropdown.classList.remove("is-open");
+        trigger.classList.remove("is-active");
+        applyFilters();
+      });
     }
 
+    renderLocationTree();
+    renderLocationPills();
+  }
+
+  function renderLocationTree(filter = "") {
+    const treeScroll = $(".tree-scroll");
+    if (!treeScroll) return;
+    treeScroll.innerHTML = "";
+
+    Object.entries(AREAS).forEach(([area, villages]) => {
+      const filtered = filter
+        ? villages.filter((v) => v.includes(filter) || area.toLowerCase().includes(filter))
+        : villages;
+      if (!filtered.length) return;
+
+      const areaEl = document.createElement("div");
+      areaEl.className = "tree-area";
+
+      const areaLabel = document.createElement("div");
+      areaLabel.className = "tree-area-label";
+      const allSelected = filtered.every((v) => state.selectedLocations.includes(v));
+
+      areaLabel.innerHTML = `
+        <div class="tree-checkbox ${allSelected ? "is-checked" : ""}"></div>
+        <span>${area}</span>
+      `;
+      areaLabel.addEventListener("click", () => {
+        if (allSelected) {
+          state.selectedLocations = state.selectedLocations.filter((l) => !filtered.includes(l));
+        } else {
+          filtered.forEach((v) => { if (!state.selectedLocations.includes(v)) state.selectedLocations.push(v); });
+        }
+        renderLocationTree(filter);
+        renderLocationPills();
+        updateLocationTriggerText($(".location-trigger_text"));
+        updateMapMarkers();
+      });
+      areaEl.appendChild(areaLabel);
+
+      filtered.forEach((village) => {
+        const vEl = document.createElement("div");
+        vEl.className = "tree-village";
+        const isSelected = state.selectedLocations.includes(village);
+        vEl.innerHTML = `
+          <div class="tree-checkbox ${isSelected ? "is-checked" : ""}"></div>
+          <span>${village.charAt(0).toUpperCase() + village.slice(1)}</span>
+        `;
+        vEl.addEventListener("click", () => {
+          if (isSelected) {
+            state.selectedLocations = state.selectedLocations.filter((l) => l !== village);
+          } else {
+            state.selectedLocations.push(village);
+          }
+          renderLocationTree(filter);
+          renderLocationPills();
+          updateLocationTriggerText($(".location-trigger_text"));
+          updateMapMarkers();
+        });
+        areaEl.appendChild(vEl);
+      });
+
+      treeScroll.appendChild(areaEl);
+    });
+  }
+
+  function renderLocationPills() {
+    const pillScroll = $(".pill-scroll");
+    if (!pillScroll) return;
+    pillScroll.innerHTML = "";
+
+    state.selectedLocations.forEach((loc) => {
+      const pill = document.createElement("div");
+      pill.className = "loc-pill";
+      pill.innerHTML = `<span>${loc.charAt(0).toUpperCase() + loc.slice(1)}</span><span class="pill-remove">×</span>`;
+      pill.querySelector(".pill-remove").addEventListener("click", () => {
+        state.selectedLocations = state.selectedLocations.filter((l) => l !== loc);
+        renderLocationTree();
+        renderLocationPills();
+        updateLocationTriggerText($(".location-trigger_text"));
+        updateMapMarkers();
+      });
+      pillScroll.appendChild(pill);
+    });
+
+    const info = $(".loc-selected-info");
+    if (info) {
+      info.textContent = state.selectedLocations.length
+        ? state.selectedLocations.length + " location(s) selected"
+        : "No Location Selected";
+    }
+  }
+
+  function updateLocationTriggerText(triggerText) {
+    if (!triggerText) return;
+    triggerText.textContent = state.selectedLocations.length
+      ? state.selectedLocations.length + " selected"
+      : "All Location";
+  }
+
+  // ─── MAP ─────────────────────────────────────────────────────────────────────
+  const MAP_CENTER = [-8.65, 115.22];
+  const VILLAGE_COORDS = {
+    "canggu":        [115.1333, -8.6478],
+    "pererenan":     [115.1150, -8.6380],
+    "seseh":         [115.1050, -8.6200],
+    "cemagi":        [115.1000, -8.6300],
+    "kaba kaba":     [115.0800, -8.5900],
+    "cepaka":        [115.0900, -8.6100],
+    "tumbak bayuh":  [115.0700, -8.5700],
+    "buwit":         [115.0850, -8.6000],
+    "dalung":        [115.1500, -8.6200],
+    "bingin":        [115.1200, -8.8100],
+    "uluwatu":       [115.0850, -8.8290],
+    "uluwatu center":[115.0900, -8.8250],
+    "ungasan":       [115.1650, -8.8050],
+    "ubud":          [115.2624, -8.5069],
+    "ubud center":   [115.2650, -8.5100],
+    "kedungu":       [115.0600, -8.5600],
+    "nyanyi":        [115.0750, -8.5800],
+    "pandak gede":   [115.0500, -8.5400],
+    "nyambu":        [115.0550, -8.5500],
+    "tanah lot":     [115.0867, -8.6210],
+  };
+
+  function initMap() {
+    if (mapInstance) return;
+    const mapContainer = document.getElementById("bhbMap");
+    if (!mapContainer || typeof maptilersdk === "undefined") {
+      // Load MapTiler SDK if not present
+      if (typeof maptilersdk === "undefined") {
+        const script = document.createElement("script");
+        script.src = "https://cdn.maptiler.com/maptiler-sdk-js/v2/maptiler-sdk.umd.min.js";
+        script.onload = () => {
+          const link = document.createElement("link");
+          link.rel = "stylesheet";
+          link.href = "https://cdn.maptiler.com/maptiler-sdk-js/v2/maptiler-sdk.css";
+          document.head.appendChild(link);
+          buildMap();
+        };
+        document.head.appendChild(script);
+      }
+      return;
+    }
+    buildMap();
+  }
+
+  function buildMap() {
+    const mapContainer = document.getElementById("bhbMap");
+    if (!mapContainer || !window.maptilersdk) return;
+    maptilersdk.config.apiKey = "c43H8q7pFefMtElMtWBS";
+    mapInstance = new maptilersdk.Map({
+      container: "bhbMap",
+      style: "019c8e23-ebd1-7221-bd5f-20ae2dca2ab6",
+      center: MAP_CENTER,
+      zoom: 10,
+    });
+    mapInstance.on("load", updateMapMarkers);
+  }
+
+  function updateMapMarkers() {
+    if (!mapInstance) return;
+    mapMarkers.forEach((m) => m.remove());
+    mapMarkers = [];
+
+    const targets = state.selectedLocations.length
+      ? state.selectedLocations
+      : Object.values(AREAS).flat();
+
+    targets.forEach((loc) => {
+      const coords = VILLAGE_COORDS[loc];
+      if (!coords) return;
+      const el = document.createElement("div");
+      el.className = "map-marker" + (state.selectedLocations.includes(loc) ? " is-selected" : "");
+      el.style.cssText = "width:12px;height:12px;border-radius:50%;background:" +
+        (state.selectedLocations.includes(loc) ? "#e84245" : "#888") +
+        ";border:2px solid #fff;cursor:pointer;";
+
+      const popup = new maptilersdk.Popup({ offset: 16 }).setText(
+        loc.charAt(0).toUpperCase() + loc.slice(1)
+      );
+
+      const marker = new maptilersdk.Marker({ element: el })
+        .setLngLat(coords)
+        .setPopup(popup)
+        .addTo(mapInstance);
+
+      el.addEventListener("click", () => {
+        if (state.selectedLocations.includes(loc)) {
+          state.selectedLocations = state.selectedLocations.filter((l) => l !== loc);
+        } else {
+          state.selectedLocations.push(loc);
+        }
+        renderLocationTree();
+        renderLocationPills();
+        updateLocationTriggerText($(".location-trigger_text"));
+        updateMapMarkers();
+      });
+
+      mapMarkers.push(marker);
+    });
+
+    if (state.selectedLocations.length) {
+      const coords = state.selectedLocations
+        .map((l) => VILLAGE_COORDS[l])
+        .filter(Boolean);
+      if (coords.length) {
+        const lngs = coords.map((c) => c[0]);
+        const lats = coords.map((c) => c[1]);
+        const bounds = [
+          [Math.min(...lngs) - 0.02, Math.min(...lats) - 0.02],
+          [Math.max(...lngs) + 0.02, Math.max(...lats) + 0.02],
+        ];
+        mapInstance.fitBounds(bounds, { padding: 40 });
+      }
+    }
+  }
+
+  // ─── FILTERING ───────────────────────────────────────────────────────────────
+  function getCards() {
+    return $$("#rentals-wrapper .w-dyn-item");
+  }
+
+  function cardMatchesBedrooms(card) {
+    if (state.bedrooms === "Any") return true;
+    const rooms = card.querySelector(".listings_card-wrapper")?.dataset?.rooms || "";
+    if (state.bedrooms === "6+") return parseInt(rooms) >= 6;
+    return rooms === state.bedrooms;
+  }
+
+  function cardMatchesAvailability(card) {
+    if (state.availability === "Any") return true;
+    const avail = card.querySelector(".listings_card-wrapper")?.dataset?.availableDate || "";
+    const isAvailable = avail.toLowerCase() === "available" || avail === "";
+    if (state.availability === "Available") return isAvailable;
+    if (state.availability === "Rented") return !isAvailable;
     return true;
   }
 
-  // ─── Apply & render ───────────────────────────────────────────────────────────
+  function cardMatchesLocation(card) {
+    if (!state.selectedLocations.length) return true;
+    const loc = (card.querySelector(".listings_card-wrapper")?.dataset?.location || "").toLowerCase().trim();
+    return state.selectedLocations.some((sel) => loc.includes(sel) || sel.includes(loc));
+  }
+
+  function cardMatchesPrice(card) {
+    const wrapper = card.querySelector(".listings_card-wrapper");
+    if (!wrapper) return true;
+    const rawPrice = parseFloat(wrapper.dataset?.price || "0");
+    const cardCurrency = (wrapper.dataset?.currency || "IDR").toUpperCase();
+
+    // Only filter if currency matches selected currency
+    if (cardCurrency !== state.currency) return true;
+    return rawPrice >= state.priceMin && rawPrice <= state.priceMax;
+  }
+
+  function cardMatchesKeyword(card) {
+    if (!state.keyword) return true;
+    const wrapper = card.querySelector(".listings_card-wrapper");
+    if (!wrapper) return false;
+    const name = (wrapper.dataset?.name || "").toLowerCase();
+    const code = (wrapper.dataset?.code || "").toLowerCase();
+    const location = (wrapper.dataset?.location || "").toLowerCase();
+    return name.includes(state.keyword) || code.includes(state.keyword) || location.includes(state.keyword);
+  }
+
   function applyFilters() {
-    filtered = allCards.filter(passes);
-    visible = 0;
-    showNext();
-    if (resultsCount) resultsCount.textContent = filtered.length;
-    if (emptyState) emptyState.style.display = filtered.length === 0 ? '' : 'none';
+    const cards = getCards();
+    let visible = [];
+
+    cards.forEach((card) => {
+      const show =
+        cardMatchesBedrooms(card) &&
+        cardMatchesAvailability(card) &&
+        cardMatchesLocation(card) &&
+        cardMatchesPrice(card) &&
+        cardMatchesKeyword(card);
+
+      card.style.display = show ? "" : "none";
+      if (show) visible.push(card);
+    });
+
+    state.page = 1;
+    applyPagination(visible);
+    updateResultsCount(visible.length);
+    toggleEmptyState(visible.length === 0);
   }
 
-  function showNext() {
-    var next = Math.min(visible + STEP, filtered.length);
-    for (var i = 0; i < allCards.length; i++) allCards[i].style.display = 'none';
-    for (var i = 0; i < next; i++) filtered[i].style.display = '';
-    visible = next;
-    updateLoadMore();
-  }
+  function applyPagination(visibleCards) {
+    const end = state.page * state.pageSize;
+    visibleCards.forEach((card, i) => {
+      card.style.display = i < end ? "" : "none";
+    });
 
-  function updateLoadMore() {
-    if (btnLoadMore) btnLoadMore.style.display = visible < filtered.length ? '' : 'none';
-    if (btnBackTop) btnBackTop.style.display = visible >= filtered.length && filtered.length > 0 ? 'flex' : 'none';
-  }
-
-  function injectBackToTop() {
-    if (btnBackTop) return;
-    btnBackTop = document.createElement('button');
-    btnBackTop.innerHTML = '↑ Back to Top';
-    btnBackTop.style.cssText = 'display:none;align-items:center;justify-content:center;padding:12px 28px;border-radius:12px;border:1.5px solid #3a2e28;background:#fff;font-size:14px;font-weight:500;color:#3a2e28;cursor:pointer;margin:16px auto 0;';
-    btnBackTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
-    if (btnLoadMore && btnLoadMore.parentNode) btnLoadMore.parentNode.insertBefore(btnBackTop, btnLoadMore.nextSibling);
-  }
-
-  // ─── Currency ─────────────────────────────────────────────────────────────────
-  function setCurrency(c) {
-    c = (c === 'USD' || c === 'EUR') ? c : 'IDR';
-    state.currency = c;
-    // sync curr field UI
-    if (currField) {
-      var opts = currField.querySelectorAll('.filter-option');
-      for (var i = 0; i < opts.length; i++) opts[i].classList.toggle('is-active', opts[i].dataset.value === c);
-      var tt = currField.querySelector('.filter-trigger_text');
-      if (tt) tt.textContent = c;
-    }
-    updateSlider();
-    updateChips();
-    applyFilters();
-  }
-
-  // ─── Clear ────────────────────────────────────────────────────────────────────
-  function clearAll(e) {
-    if (e) e.preventDefault();
-    function resetField(field, label) {
-      if (!field) return;
-      var opts = field.querySelectorAll('.filter-option');
-      for (var i = 0; i < opts.length; i++) opts[i].classList.remove('is-active');
-      var any = field.querySelector('[data-value="Any"]');
-      if (any) any.classList.add('is-active');
-      var tt = field.querySelector('.filter-trigger_text');
-      if (tt) tt.textContent = label || 'Any';
-    }
-    resetField(bedsField, 'Any');
-    resetField(availField, 'Any');
-    if (currField) {
-      var opts = currField.querySelectorAll('.filter-option');
-      for (var i = 0; i < opts.length; i++) opts[i].classList.remove('is-active');
-      var idr = currField.querySelector('[data-value="IDR"]');
-      if (idr) idr.classList.add('is-active');
-      var tt = currField.querySelector('.filter-trigger_text');
-      if (tt) tt.textContent = 'IDR';
-    }
-    if (kwInput) kwInput.value = '';
-    minRatio = 0; maxRatio = 1;
-    state.availability = 'Any';
-    state.bedrooms = [];
-    state.keyword = '';
-    state.priceMin = null;
-    state.priceMax = null;
-    state.locations = [];
-    draftLocs = [];
-    updateLocText();
-    syncMap([]);
-    setCurrency('IDR');
-  }
-
-  // ─── Price slider ─────────────────────────────────────────────────────────────
-  function computeBounds() {
-    var lo = Infinity, hi = -Infinity;
-    for (var i = 0; i < allCards.length; i++) {
-      var d = getData(allCards[i]);
-      if (d.price > 0 && isFinite(d.price)) {
-        if (d.price < lo) lo = d.price;
-        if (d.price > hi) hi = d.price;
-      }
-    }
-    if (isFinite(lo) && isFinite(hi)) { sliderBase.min = lo; sliderBase.max = hi; }
-    sliderActive = { min: sliderBase.min, max: sliderBase.max };
-  }
-
-  function updateSlider() {
-    sliderActive = { min: sliderBase.min, max: sliderBase.max };
-    renderSlider();
-  }
-
-  function ratioToVal(r) { return sliderActive.min + r * (sliderActive.max - sliderActive.min); }
-  function valToRatio(v) { return (v - sliderActive.min) / (sliderActive.max - sliderActive.min || 1); }
-
-  function renderSlider() {
-    var sym = symFor(state.currency);
-    var minV = ratioToVal(minRatio);
-    var maxV = ratioToVal(maxRatio);
-    state.priceMin = minRatio <= 0 ? null : minV;
-    state.priceMax = maxRatio >= 1 ? null : maxV;
-
-    if (fillEl) {
-      fillEl.style.left  = (minRatio * 100) + '%';
-      fillEl.style.width = ((maxRatio - minRatio) * 100) + '%';
-    }
-    if (thumbMin) thumbMin.style.left = 'calc(' + (minRatio * 100) + '% - 10px)';
-    if (thumbMax) thumbMax.style.left = 'calc(' + (maxRatio * 100) + '% - 10px)';
-
-    var rText = document.getElementById('pwRangeText');
-    if (rText) rText.textContent = sym + short(minV) + ' – ' + sym + short(maxV);
-
-    var minT = document.getElementById('pwMinText');
-    var maxT = document.getElementById('pwMaxText');
-    if (minT) { if (minT.tagName === 'INPUT') minT.value = fmt(minV); else minT.textContent = fmt(minV); }
-    if (maxT) { if (maxT.tagName === 'INPUT') maxT.value = fmt(maxV); else maxT.textContent = fmt(maxV); }
-
-    var symMin = document.getElementById('pwSymbolMin');
-    var symMax = document.getElementById('pwSymbolMax');
-    if (symMin) symMin.textContent = sym;
-    if (symMax) symMax.textContent = sym;
-
-    var scMin = document.getElementById('pwScaleMin');
-    var scMax = document.getElementById('pwScaleMax');
-    if (scMin) scMin.textContent = sym + short(sliderActive.min);
-    if (scMax) scMax.textContent = sym + short(sliderActive.max);
-
-    var full = (minRatio <= 0 && maxRatio >= 1);
-    if (priceTrigText) priceTrigText.textContent = full ? 'Price Range' : sym + short(minV) + ' – ' + sym + short(maxV);
-  }
-
-  function updateChips() {
-    var c = state.currency;
-    var presets = CHIP_PRESETS[c] || CHIP_PRESETS.IDR;
-    var chips = document.querySelectorAll('.pw-chip');
-    for (var i = 0; i < chips.length; i++) {
-      var p = presets[i]; if (!p) continue;
-      chips[i].dataset.min = String(p.min);
-      chips[i].dataset.max = String(p.max !== null ? p.max : sliderActive.max);
-      var tn = chips[i].querySelector('.text-node');
-      if (tn) tn.textContent = p.label; else chips[i].textContent = p.label;
+    const loadMoreBtn = $("#load-more");
+    if (loadMoreBtn) {
+      loadMoreBtn.style.display = visibleCards.length > end ? "" : "none";
     }
   }
 
-  function initSlider() {
-    fillEl  = document.getElementById('pwFill');
-    trackEl = document.querySelector('.pw-track');
-    var sw  = document.querySelector('.pw-slider');
-    if (!sw || !fillEl) return;
+  function updateResultsCount(count) {
+    const el = $("#rental-results-count");
+    if (el) el.textContent = count + " propert" + (count === 1 ? "y" : "ies");
+  }
 
-    // Hide native inputs
-    var embed = sw.querySelector('.w-embed, .code-embed-6');
-    if (embed) embed.style.display = 'none';
+  function toggleEmptyState(isEmpty) {
+    const el = $("#rental-empty-state");
+    if (el) el.style.display = isEmpty ? "" : "none";
+  }
 
-    // Inject thumbs
-    thumbMin = document.createElement('div');
-    thumbMin.className = 'pw-thumb pw-thumb-min';
-    thumbMin.style.cssText = 'position:absolute;top:50%;transform:translateY(-50%);width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid #3a2e28;cursor:grab;z-index:3;';
-    thumbMax = document.createElement('div');
-    thumbMax.className = 'pw-thumb pw-thumb-max';
-    thumbMax.style.cssText = thumbMin.style.cssText;
-    sw.appendChild(thumbMin);
-    sw.appendChild(thumbMax);
+  // ─── LOAD MORE ───────────────────────────────────────────────────────────────
+  function initLoadMore() {
+    const btn = $("#load-more");
+    if (!btn) return;
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      state.page++;
+      const visible = getCards().filter((c) => c._bhbVisible);
+      applyPagination(visible);
+    });
+  }
 
-    var DRAGGING = null, dragTimer = null;
-
-    function getR(clientX) {
-      var rect = trackEl ? trackEl.getBoundingClientRect() : sw.getBoundingClientRect();
-      return clamp((clientX - rect.left) / rect.width, 0, 1);
-    }
-    function onMove(clientX) {
-      if (!DRAGGING) return;
-      var r = getR(clientX);
-      if (DRAGGING === 'min') minRatio = clamp(r, 0, maxRatio - 0.001);
-      else maxRatio = clamp(r, minRatio + 0.001, 1);
-      renderSlider();
-      clearTimeout(dragTimer);
-      dragTimer = setTimeout(applyFilters, 60);
-    }
-    function onUp() {
-      DRAGGING = null;
-      document.removeEventListener('mousemove', onMM);
-      document.removeEventListener('mouseup', onUp);
-      document.removeEventListener('touchmove', onTM);
-      document.removeEventListener('touchend', onUp);
+  // ─── SEARCH BUTTON ────────────────────────────────────────────────────────────
+  function initSearchButton() {
+    const btn = $(".filter-button-2");
+    if (!btn) return;
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeAllDropdowns();
       applyFilters();
-    }
-    function onMM(e) { onMove(e.clientX); }
-    function onTM(e) { e.preventDefault(); onMove(e.touches[0].clientX); }
-    function startDrag(which, e) {
-      DRAGGING = which; e.preventDefault();
-      if (e.type === 'mousedown') { document.addEventListener('mousemove', onMM); document.addEventListener('mouseup', onUp); }
-      else { document.addEventListener('touchmove', onTM, { passive: false }); document.addEventListener('touchend', onUp); }
-    }
-
-    thumbMin.addEventListener('mousedown',  function (e) { startDrag('min', e); });
-    thumbMin.addEventListener('touchstart', function (e) { startDrag('min', e); }, { passive: false });
-    thumbMax.addEventListener('mousedown',  function (e) { startDrag('max', e); });
-    thumbMax.addEventListener('touchstart', function (e) { startDrag('max', e); }, { passive: false });
-
-    if (trackEl) {
-      trackEl.style.cursor = 'pointer';
-      trackEl.addEventListener('mousedown', function (e) {
-        var r = getR(e.clientX);
-        DRAGGING = Math.abs(r - minRatio) < Math.abs(r - maxRatio) ? 'min' : 'max';
-        onMove(e.clientX);
-        document.addEventListener('mousemove', onMM);
-        document.addEventListener('mouseup', onUp);
-      });
-    }
-
-    // Chips
-    var chips = document.querySelectorAll('.pw-chip');
-    for (var i = 0; i < chips.length; i++) {
-      (function (ch) {
-        ch.addEventListener('click', function () {
-          var cMin = Number(ch.dataset.min);
-          var cMax = Number(ch.dataset.max);
-          minRatio = valToRatio(cMin);
-          maxRatio = valToRatio(cMax);
-          renderSlider();
-          applyFilters();
-        });
-      })(chips[i]);
-    }
-
-    updateChips();
-    renderSlider();
-  }
-
-  // ─── Location ─────────────────────────────────────────────────────────────────
-  function buildAreas() {
-    var locSet = {};
-    for (var i = 0; i < allCards.length; i++) {
-      var d = getData(allCards[i]);
-      if (!d.loc) continue;
-      locSet[d.loc] = true;
-      if (!labelByNorm[d.loc]) labelByNorm[d.loc] = d.locRaw;
-    }
-    var cmsLocs = Object.keys(locSet);
-    var used = {};
-    areas = [];
-    for (var a = 0; a < AREA_RULES.length; a++) {
-      var rule = AREA_RULES[a];
-      var kids = cmsLocs.filter(function (l) { var h = rule.keys.indexOf(l) > -1; if (h) used[l] = true; return h; });
-      if (kids.length) areas.push({ id: rule.id, label: rule.label, children: kids });
-    }
-    var other = cmsLocs.filter(function (l) { return !used[l]; });
-    if (other.length) areas.push({ id: 'other', label: 'Other', children: other });
-  }
-
-  function mountLocUI() {
-    if (!locDropdown) return;
-    var panel = locDropdown.querySelector('.location-panel');
-    if (!panel) return;
-
-    // Replace div.location-search-input with real input
-    var lsDiv = panel.querySelector('.location-search-input');
-    if (lsDiv && lsDiv.tagName !== 'INPUT') {
-      var inp = document.createElement('input');
-      inp.type = 'text'; inp.placeholder = 'Search location...'; inp.className = 'location-search-input';
-      inp.style.cssText = 'width:100%;padding:6px 10px;border:1px solid #e5e0db;border-radius:8px;font-size:13px;box-sizing:border-box;';
-      lsDiv.parentNode.replaceChild(inp, lsDiv);
-    }
-
-    locUI = {
-      search:    panel.querySelector('.location-search-input'),
-      tree:      panel.querySelector('.tree-scroll'),
-      pills:     panel.querySelector('.pill-scroll'),
-      info:      panel.querySelector('.loc-selected-info'),
-      btnClear:  panel.querySelector('.loc-btn-clear-inline'),
-      btnApply:  panel.querySelector('.loc-btn-apply-inline')
-    };
-
-    if (locUI.search) locUI.search.addEventListener('input', renderLocTree);
-    if (locUI.btnClear) locUI.btnClear.addEventListener('click', function (e) {
-      e.preventDefault(); draftLocs = []; renderLocTree(); syncMap(draftLocs); updateLocInfo();
-    });
-    if (locUI.btnApply) locUI.btnApply.addEventListener('click', function (e) {
-      e.preventDefault(); commitLoc();
     });
   }
 
-  function renderLocTree() {
-    if (!locUI.tree) return;
-    var q = norm(locUI.search ? locUI.search.value : '');
-    locUI.tree.innerHTML = '';
-    if (locUI.pills) locUI.pills.innerHTML = '';
+  // ─── CLEAR BUTTON ────────────────────────────────────────────────────────────
+  function initClearButton() {
+    const btn = $(".filter-button-1");
+    if (!btn) return;
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
 
-    for (var a = 0; a < areas.length; a++) {
-      var area = areas[a];
-      var aHit = !q || norm(area.label).indexOf(q) > -1;
-      var kids = area.children.filter(function (c) { return aHit || c.indexOf(q) > -1; });
-      if (!kids.length) continue;
-      var aActive = area.children.some(function (c) { return draftLocs.indexOf(c) > -1; });
+      state.bedrooms = "Any";
+      state.availability = "Any";
+      state.keyword = "";
+      state.currency = "IDR";
+      state.selectedLocations = [];
 
-      // Tree item
-      var item = document.createElement('div'); item.className = 'tree-item';
-      var par = document.createElement('div');
-      par.className = 'tree-parent' + (aActive ? ' is-active' : '');
-      par.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px;cursor:pointer;border-radius:8px;font-weight:500;font-size:14px;';
-      par.innerHTML = '<img src="' + PIN_URL + '" style="width:16px;height:16px;" alt=""><span>' + area.label + '</span><span style="margin-left:auto;font-size:10px;">▾</span>';
-
-      var childWrap = document.createElement('div');
-      childWrap.style.cssText = 'display:none;padding-left:24px;';
-      (function (cw) { par.addEventListener('click', function () { cw.style.display = cw.style.display === 'none' ? 'block' : 'none'; }); })(childWrap);
-
-      for (var k = 0; k < kids.length; k++) {
-        (function (loc) {
-          var row = document.createElement('div');
-          row.style.cssText = 'padding:6px 8px;cursor:pointer;border-radius:6px;font-size:13px;display:flex;align-items:center;gap:6px;';
-          if (draftLocs.indexOf(loc) > -1) row.style.background = '#3a2e28', row.style.color = '#fff';
-          row.innerHTML = '<img src="' + PIN_URL + '" style="width:12px;height:12px;" alt=""><span>' + (labelByNorm[loc] || loc) + '</span>';
-          row.addEventListener('click', function (e) {
-            e.stopPropagation();
-            var idx = draftLocs.indexOf(loc);
-            if (idx > -1) draftLocs.splice(idx, 1); else draftLocs.push(loc);
-            renderLocTree(); syncMap(draftLocs);
-          });
-          childWrap.appendChild(row);
-        })(kids[k]);
+      // Reset bedroom trigger text
+      const bedField = $$(".filter-field").find((f) => f.querySelector(".filter-label")?.textContent.trim().startsWith("Bed"));
+      if (bedField) {
+        const tt = $(".filter-trigger_text", bedField);
+        if (tt) tt.textContent = "Any";
+        $$(".filter-option", bedField).forEach((o) => o.classList.remove("is-selected"));
       }
 
-      item.appendChild(par); item.appendChild(childWrap);
-      locUI.tree.appendChild(item);
-
-      // Pill
-      if (locUI.pills) {
-        var pill = document.createElement('div');
-        pill.style.cssText = 'padding:5px 12px;border:1.5px solid ' + (aActive ? '#3a2e28' : '#e5e0db') + ';border-radius:20px;font-size:12px;cursor:pointer;' + (aActive ? 'background:#3a2e28;color:#fff;' : '');
-        pill.textContent = area.label;
-        (function (aObj) {
-          pill.addEventListener('click', function () {
-            var allOn = aObj.children.every(function (c) { return draftLocs.indexOf(c) > -1; });
-            if (allOn) draftLocs = draftLocs.filter(function (l) { return aObj.children.indexOf(l) === -1; });
-            else aObj.children.forEach(function (c) { if (draftLocs.indexOf(c) === -1) draftLocs.push(c); });
-            renderLocTree(); syncMap(draftLocs);
-          });
-        })(area);
-        locUI.pills.appendChild(pill);
+      // Reset availability trigger text
+      const avField = $$(".filter-field").find((f) => f.querySelector(".filter-label")?.textContent.trim().startsWith("Avail"));
+      if (avField) {
+        const tt = $(".filter-trigger_text", avField);
+        if (tt) tt.textContent = "Any";
+        $$(".filter-option", avField).forEach((o) => o.classList.remove("is-selected"));
       }
-    }
-    updateLocInfo();
+
+      // Reset keyword
+      const keyInput = $(".keyword-input");
+      if (keyInput) keyInput.value = "";
+
+      // Reset currency
+      const curField = $$(".filter-field").find((f) => f.querySelector(".filter-label")?.textContent.trim().startsWith("Currency"));
+      if (curField) {
+        const tt = $(".filter-trigger_text", curField);
+        if (tt) tt.textContent = "IDR";
+        $$(".filter-option", curField).forEach((o) => o.classList.remove("is-selected"));
+        const idrOpt = $$(".filter-option", curField).find((o) => o.dataset.value === "IDR");
+        if (idrOpt) idrOpt.classList.add("is-selected");
+      }
+
+      // Reset price
+      resetPriceSliderForCurrency();
+      updateChipLabels();
+      $$(".pw-chip").forEach((c) => c.classList.remove("is-active"));
+
+      // Reset location
+      renderLocationTree();
+      renderLocationPills();
+      updateLocationTriggerText($(".location-trigger_text"));
+
+      closeAllDropdowns();
+      applyFilters();
+    });
   }
 
-  function updateLocInfo() {
-    if (!locUI.info) return;
-    var n = draftLocs.length;
-    locUI.info.textContent = n === 0 ? 'No location selected' : n === 1 ? (labelByNorm[draftLocs[0]] || draftLocs[0]) : n + ' locations selected';
+  // ─── CLOSE ON OUTSIDE CLICK ──────────────────────────────────────────────────
+  function initOutsideClick() {
+    document.addEventListener("click", (e) => {
+      const inside = e.target.closest(".filter-field, .price-trigger-wrapper");
+      if (!inside) closeAllDropdowns();
+    });
   }
 
-  function updateLocText() {
-    if (!locTrigText) return;
-    var n = state.locations.length;
-    locTrigText.textContent = n === 0 ? 'All Location' : n === 1 ? (labelByNorm[state.locations[0]] || state.locations[0]) : n + ' locations';
+  // ─── MOBILE CLOSE BUTTON ─────────────────────────────────────────────────────
+  function initCloseBtn() {
+    const closeBtn = $(".close-btn");
+    if (!closeBtn) return;
+    closeBtn.addEventListener("click", () => {
+      $(".rent-filter_form-block")?.classList.remove("is-open");
+    });
   }
 
-  function commitLoc() {
-    state.locations = draftLocs.slice();
-    updateLocText();
-    syncMap(state.locations);
-    closeLocDrop();
+  // ─── BACK TO TOP ─────────────────────────────────────────────────────────────
+  function initBackToTop() {
+    const btn = document.querySelector("[data-back-top]") || document.querySelector("#back-to-top");
+    if (!btn) return;
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
+  // ─── INIT ────────────────────────────────────────────────────────────────────
+  function init() {
+    initBedrooms();
+    initAvailability();
+    initKeyword();
+    initCurrency();
+    initPrice();
+    initLocation();
+    initSearchButton();
+    initClearButton();
+    initLoadMore();
+    initOutsideClick();
+    initCloseBtn();
+    initBackToTop();
+    updateChipLabels();
     applyFilters();
   }
 
-  function openLocDrop() {
-    locDropOpen = true;
-    locDropdown.style.display = 'block';
-    if (locTrigger) locTrigger.classList.add('is-active');
-    draftLocs = state.locations.slice();
-    renderLocTree();
-    syncMap(draftLocs);
-    if (!map) loadMap(initMap); else setTimeout(function () { map.resize(); }, 80);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
   }
-
-  function closeLocDrop() {
-    locDropOpen = false;
-    if (locDropdown) locDropdown.style.display = 'none';
-    if (locTrigger) locTrigger.classList.remove('is-active');
-  }
-
-  // ─── Map ──────────────────────────────────────────────────────────────────────
-  function loadMap(cb) {
-    if (window.maptilersdk) return cb();
-    if (!document.querySelector('link[data-mt]')) {
-      var css = document.createElement('link'); css.rel = 'stylesheet';
-      css.href = 'https://cdn.maptiler.com/maptiler-sdk-js/v3.10.2/maptiler-sdk.css';
-      css.setAttribute('data-mt', '1'); document.head.appendChild(css);
-    }
-    var s = document.createElement('script');
-    s.src = 'https://cdn.maptiler.com/maptiler-sdk-js/v3.10.2/maptiler-sdk.umd.min.js';
-    s.async = true; s.onload = cb; document.head.appendChild(s);
-  }
-
-  function initMap() {
-    if (map) return;
-    var el = document.getElementById('bhbMap');
-    if (!el || !window.maptilersdk) return;
-    maptilersdk.config.apiKey = MAPTILER_KEY;
-    map = new maptilersdk.Map({ container: 'bhbMap', style: MAP_STYLE, center: [115.19, -8.41], zoom: 9.3 });
-    map.on('load', function () { mapReady = true; syncMap(state.locations); setTimeout(function () { map.resize(); }, 80); });
-  }
-
-  function syncMap(locs) {
-    if (!map || !mapReady) return;
-    for (var i = 0; i < markers.length; i++) markers[i].remove();
-    markers = [];
-    if (!locs || !locs.length) { map.flyTo({ center: [115.19, -8.41], zoom: 9.3, duration: 400 }); return; }
-    var pts = [], seen = {};
-    for (var i = 0; i < locs.length; i++) {
-      var p = LOC_COORDS[locs[i]]; if (!p) continue;
-      var k = p.join(','); if (seen[k]) continue; seen[k] = true;
-      var el2 = document.createElement('div');
-      el2.innerHTML = '<img src="' + PIN_URL + '" style="width:26px;height:26px;">';
-      markers.push(new maptilersdk.Marker({ element: el2, anchor: 'bottom' }).setLngLat(p).addTo(map));
-      pts.push(p);
-    }
-    if (pts.length === 1) { map.flyTo({ center: pts[0], zoom: 12, duration: 400 }); return; }
-    var b = new maptilersdk.LngLatBounds();
-    pts.forEach(function (p) { b.extend(p); });
-    map.fitBounds(b, { padding: 40, maxZoom: 12, duration: 400 });
-  }
-
-  // ─── Bind events ──────────────────────────────────────────────────────────────
-  function bindEvents() {
-    initMulti(bedsField, function (sel) { state.bedrooms = sel; applyFilters(); });
-    initSingle(availField, function (val) { state.availability = val; applyFilters(); });
-    initSingle(currField, function (val) { setCurrency(val); });
-
-    if (kwInput) {
-      var kwForm = kwInput.closest('form');
-      if (kwForm) kwForm.addEventListener('submit', function (e) { e.preventDefault(); });
-      var kwTimer;
-      kwInput.addEventListener('input', function () {
-        clearTimeout(kwTimer);
-        kwTimer = setTimeout(function () { state.keyword = kwInput.value.trim(); applyFilters(); }, 300);
-      });
-      kwInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { e.preventDefault(); state.keyword = kwInput.value.trim(); applyFilters(); }
-      });
-    }
-
-    if (priceTrigger) {
-      priceTrigger.addEventListener('click', function (e) { e.stopPropagation(); togglePriceDrop(); });
-    }
-    if (priceDropdown) {
-      priceDropdown.addEventListener('click', function (e) { e.stopPropagation(); });
-    }
-
-    if (locTrigger) {
-      locTrigger.addEventListener('click', function (e) {
-        e.stopPropagation();
-        if (locDropOpen) closeLocDrop(); else openLocDrop();
-      });
-    }
-    if (locDropdown) locDropdown.addEventListener('click', function (e) { e.stopPropagation(); });
-
-    if (btnClear) btnClear.addEventListener('click', clearAll);
-    if (btnSearch) btnSearch.addEventListener('click', function (e) { e.preventDefault(); commitLoc(); applyFilters(); closeAllDropdowns(); });
-    if (btnLoadMore) btnLoadMore.addEventListener('click', function (e) { e.preventDefault(); showNext(); });
-
-    document.addEventListener('click', function () { closeAllDropdowns(); if (locDropOpen) closeLocDrop(); });
-
-    window.addEventListener('bhb:currency-changed', function (e) {
-      if (e.detail && e.detail.currency) setCurrency(e.detail.currency);
-    });
-  }
-
-  // ─── Init ─────────────────────────────────────────────────────────────────────
-  function init() {
-    cacheDom();
-    if (!grid) return;
-
-    // Hide all dropdowns
-    var drops = document.querySelectorAll('.filter-dropdown, .price-dropdown, .location-dropdown');
-    for (var i = 0; i < drops.length; i++) drops[i].style.display = 'none';
-
-    allCards = Array.from(grid.querySelectorAll(CARD_SEL));
-    if (!allCards.length) return;
-
-    buildAreas();
-    mountLocUI();
-    computeBounds();
-    initSlider();
-    injectBackToTop();
-    updateLocText();
-    bindEvents();
-    setCurrency('IDR');
-    filtered = allCards.slice();
-    showNext();
-    if (resultsCount) resultsCount.textContent = filtered.length;
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
-
 })();
