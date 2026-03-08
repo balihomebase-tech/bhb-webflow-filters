@@ -1165,11 +1165,7 @@
       if (children.length)
         areas.push({ id: rule.id, label: rule.label, children: children });
     }
-    var other = cmsLocs.filter(function (loc) {
-      return !used[loc];
-    });
-    if (other.length)
-      areas.push({ id: "other-area", label: "Other area", children: other });
+    // Removed 'Other area' logic. All locations are now grouped under defined areas.
     state.locations = state.locations.filter(function (loc) {
       return locSet[loc];
     });
