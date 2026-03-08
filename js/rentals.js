@@ -2,15 +2,15 @@
   'use strict';
 
   // ─── Guard ───────────────────────────────────────────────────────────────────
-  if (window.__bhbVillasFilterInited) return;
-  window.__bhbVillasFilterInited = true;
+  if (window.__bhbFilterInited) return;
+  window.__bhbFilterInited = true;
 
   // ─── Config ──────────────────────────────────────────────────────────────────
-  var CFG = { GRID_ID: 'villas-wrapper', CARD_SEL: '.w-dyn-item', STEP: 9 };
+  var CFG = { GRID_ID: 'rentals-wrapper', CARD_SEL: '.w-dyn-item', STEP: 9 };
   var MAPTILER_KEY = 'c43H8q7pFefMtElMtWBS';
   var MAP_STYLE = '019c8e23-ebd1-7221-bd5f-20ae2dca2ab6';
   var PIN_URL = 'https://cdn.prod.website-files.com/67344ae68adf4fc1f539002d/69a009335d3c16a421dd917a_Icon.svg';
-  var FILTER_PANEL = '.villas-filter_form-block';
+  var FILTER_PANEL = '.rent-filter_form-block';
 
   // ─── Area Rules ──────────────────────────────────────────────────────────────
   var AREA_RULES = [
@@ -22,45 +22,45 @@
 
   // ─── Map Coordinates ─────────────────────────────────────────────────────────
   var LOC_COORDS = {
-    'canggu':        [115.13650, -8.65062],
-    'pererenan':     [115.12346, -8.64904],
-    'seseh':         [115.11505, -8.64560],
-    'cemagi':        [115.11502, -8.62971],
-    'kaba kaba':     [115.13919, -8.59345],
-    'kaba-kaba':     [115.13919, -8.59345],
-    'cepaka':        [115.14526, -8.59917],
-    'tumbak bayuh':  [115.14562, -8.61484],
-    'buwit':         [115.12362, -8.59905],
-    'dalung':        [115.17258, -8.61147],
-    'bingin':        [115.09200, -8.81200],
-    'uluwatu':       [115.08800, -8.82828],
-    'uluwatu center':[115.08800, -8.82828],
-    'ungasan':       [115.16562, -8.82695],
-    'ubud':          [115.26229, -8.50690],
-    'ubud center':   [115.26229, -8.50690],
-    'kedungu':       [115.09045, -8.60254],
-    'nyanyi':        [115.11025, -8.61237],
-    'pandak gede':   [115.12800, -8.58500],
-    'nyambu':        [115.13200, -8.57800],
-    'tanah lot':     [115.12604, -8.58208]
+    'canggu':       [115.13650, -8.65062],
+    'pererenan':    [115.12346, -8.64904],
+    'seseh':        [115.11505, -8.64560],
+    'cemagi':       [115.11502, -8.62971],
+    'kaba kaba':    [115.13919, -8.59345],
+    'kaba-kaba':    [115.13919, -8.59345],
+    'cepaka':       [115.14526, -8.59917],
+    'tumbak bayuh': [115.14562, -8.61484],
+    'buwit':        [115.12362, -8.59905],
+    'dalung':       [115.17258, -8.61147],
+    'bingin':       [115.09200, -8.81200],
+    'uluwatu':      [115.08800, -8.82828],
+    'uluwatu center':[115.08800,-8.82828],
+    'ungasan':      [115.16562, -8.82695],
+    'ubud':         [115.26229, -8.50690],
+    'ubud center':  [115.26229, -8.50690],
+    'kedungu':      [115.09045, -8.60254],
+    'nyanyi':       [115.11025, -8.61237],
+    'pandak gede':  [115.12800, -8.58500],
+    'nyambu':       [115.13200, -8.57800],
+    'tanah lot':    [115.12604, -8.58208]
   };
 
   // ─── Price Chip Presets ───────────────────────────────────────────────────────
   var CHIP_PRESETS = {
     IDR: [
-      { label: '< Rp3B',       min: 0,           max: 3000000000  },
-      { label: 'Rp3B – Rp10B', min: 3000000000,  max: 10000000000 },
-      { label: '> Rp10B',      min: 10000000000, max: null        }
+      { label: '< Rp3B',        min: 0,           max: 3000000000  },
+      { label: 'Rp3B – Rp10B',  min: 3000000000,  max: 10000000000 },
+      { label: '> Rp10B',       min: 10000000000, max: null        }
     ],
     USD: [
-      { label: '< $250k',       min: 0,      max: 250000 },
-      { label: '$250k – $600k', min: 250000, max: 600000 },
-      { label: '> $600k',       min: 600000, max: null   }
+      { label: '< $250k',          min: 0,      max: 250000 },
+      { label: '$250k – $600k',    min: 250000, max: 600000 },
+      { label: '> $600k',          min: 600000, max: null   }
     ],
     EUR: [
-      { label: '< €250k',       min: 0,      max: 250000 },
-      { label: '€250k – €600k', min: 250000, max: 600000 },
-      { label: '> €600k',       min: 600000, max: null   }
+      { label: '< €250k',          min: 0,      max: 250000 },
+      { label: '€250k – €600k',    min: 250000, max: 600000 },
+      { label: '> €600k',          min: 600000, max: null   }
     ]
   };
 
@@ -69,9 +69,8 @@
   var locDropOpen = false, map = null, mapReady = false, markers = [];
   var areas = [], draftLocs = [], labelByNorm = {};
   var state = {
-    ownership: 'Any',
+    availability: 'Any',
     bedrooms: [],
-    lease: 'Any',
     locations: [],
     currency: 'IDR',
     priceMin: null,
@@ -102,7 +101,9 @@
     return String(Math.round(n));
   }
 
-  function symFor(c) { return c === 'USD' ? '$' : c === 'EUR' ? '€' : 'Rp'; }
+  function symFor(c) {
+    return c === 'USD' ? '$' : c === 'EUR' ? '€' : 'Rp';
+  }
 
   function convertAmount(amount, from, to) {
     if (from === to) return amount;
@@ -158,19 +159,19 @@
         }
         return null;
       })(),
-      locTrigger:    document.querySelector('.location-trigger'),
-      locTrigText:   document.querySelector('.location-trigger_text'),
-      locDropdown:   document.querySelector('.location-dropdown'),
-      priceTrigger:  document.querySelector('.price-trigger'),
-      priceTrigText: document.querySelector('.price-trigger_text'),
-      priceDropdown: document.querySelector('.price-dropdown'),
-      btnClear:      document.querySelector('.filter-button-1'),
-      btnSearch:     document.querySelector('.filter-button-2'),
-      resultsCount:  document.getElementById('rental-results-count'),
-      emptyState:    document.getElementById('rental-empty-state'),
-      btnLoadMore:   document.getElementById('load-more'),
-      btnBackTop:    null,
-      grid:          document.getElementById(CFG.GRID_ID)
+      locTrigger:   document.querySelector('.location-trigger'),
+      locTrigText:  document.querySelector('.location-trigger_text'),
+      locDropdown:  document.querySelector('.location-dropdown'),
+      priceTrigger: document.querySelector('.price-trigger'),
+      priceTrigText:document.querySelector('.price-trigger_text'),
+      priceDropdown:document.querySelector('.price-dropdown'),
+      btnClear:     document.querySelector('.filter-button-1'),
+      btnSearch:    document.querySelector('.filter-button-2'),
+      resultsCount: document.getElementById('rental-results-count'),
+      emptyState:   document.getElementById('rental-empty-state'),
+      btnLoadMore:  document.getElementById('load-more'),
+      btnBackTop:   null,
+      grid:         document.getElementById(CFG.GRID_ID)
     };
 
     // Detect filter fields by label text
@@ -182,15 +183,12 @@
       var opts = field.querySelectorAll('.filter-option');
       if (!opts.length) continue;
 
-      if (labelTxt.indexOf('ownership') > -1) {
-        el.ownershipField = field;
-        el.ownershipTrigText = field.querySelector('.filter-trigger_text');
+      if (labelTxt.indexOf('availability') > -1) {
+        el.availField = field;
+        el.availTrigText = field.querySelector('.filter-trigger_text');
       } else if (labelTxt.indexOf('bedroom') > -1 || labelTxt.indexOf('bed') > -1) {
         el.bedsField = field;
         el.bedsTrigText = field.querySelector('.filter-trigger_text');
-      } else if (labelTxt.indexOf('lease') > -1) {
-        el.leaseField = field;
-        el.leaseTrigText = field.querySelector('.filter-trigger_text');
       } else if (labelTxt.indexOf('currency') > -1) {
         el.currField = field;
         el.currTrigText = field.querySelector('.filter-trigger_text');
@@ -292,9 +290,8 @@
       if (trigText) trigText.textContent = label || 'Any';
     }
 
-    resetToAny(el.ownershipField, el.ownershipTrigText, 'Any');
+    resetToAny(el.availField, el.availTrigText, 'Any');
     resetToAny(el.bedsField, el.bedsTrigText, 'Any');
-    resetToAny(el.leaseField, el.leaseTrigText, 'Any');
 
     if (el.currField) {
       var opts = el.currField.querySelectorAll('.filter-option');
@@ -307,9 +304,8 @@
     if (el.keywordInput) el.keywordInput.value = '';
     slider.minRatio = 0;
     slider.maxRatio = 1;
-    state.ownership = 'Any';
+    state.availability = 'Any';
     state.bedrooms = [];
-    state.lease = 'Any';
     state.keyword = '';
     state.currency = 'IDR';
     state.priceMin = null;
@@ -356,9 +352,8 @@
 
   // ─── Bind Events ─────────────────────────────────────────────────────────────
   function bindEvents() {
-    initSingle(el.ownershipField, function (val) { state.ownership = val; applyFilters(); });
+    initSingle(el.availField, function (val) { state.availability = val; applyFilters(); });
     initMulti(el.bedsField, function (selected) { state.bedrooms = selected; applyFilters(); });
-    initSingle(el.leaseField, function (val) { state.lease = val; applyFilters(); });
     initSingle(el.currField, function (val) { setCurrency(val); });
 
     if (el.keywordInput) {
@@ -394,15 +389,24 @@
 
     var closeBtns = document.querySelectorAll('.close-btn');
     for (var i = 0; i < closeBtns.length; i++) {
-      closeBtns[i].addEventListener('click', function (e) { e.stopPropagation(); closeMobilePanel(); });
+      closeBtns[i].addEventListener('click', function (e) {
+        e.stopPropagation();
+        closeMobilePanel();
+      });
     }
 
     if (el.btnLoadMore) {
-      el.btnLoadMore.addEventListener('click', function (e) { e.preventDefault(); showNext(); });
+      el.btnLoadMore.addEventListener('click', function (e) {
+        e.preventDefault();
+        showNext();
+      });
     }
 
     if (el.priceTrigger && el.priceDropdown) {
-      el.priceTrigger.addEventListener('click', function (e) { e.stopPropagation(); toggleDrop(el.priceDropdown); });
+      el.priceTrigger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        toggleDrop(el.priceDropdown);
+      });
       el.priceDropdown.addEventListener('click', function (e) { e.stopPropagation(); });
     }
 
@@ -447,16 +451,8 @@
       rooms:     parseInt(inner.dataset.rooms || '0', 10),
       price:     parseFloat(inner.dataset.price || '0'),
       currency:  (inner.dataset.currency || '').toUpperCase(),
-      ownership: (inner.dataset.available || '').toLowerCase()
+      avail:     inner.dataset.availableDate ? 'Rented' : 'Available'
     };
-  }
-
-  // ─── Lease Years from DOM ─────────────────────────────────────────────────────
-  function getLeaseYears(card) {
-    var el2 = card.querySelector('.leasehold-year-container .u-txt-bold');
-    if (!el2) return null;
-    var v = parseInt(el2.textContent.trim(), 10);
-    return isFinite(v) ? v : null;
   }
 
   // ─── Filter Logic ─────────────────────────────────────────────────────────────
@@ -470,21 +466,9 @@
     return true;
   }
 
-  function passesLease(card) {
-    if (state.lease === 'Any') return true;
-    var years = getLeaseYears(card);
-    if (years === null) return false;
-    var lbl = state.lease.toLowerCase();
-    if (lbl === '10 – 20 years' || lbl === '10 - 20 years') return years >= 10 && years <= 20;
-    if (lbl === '20 – 25 years' || lbl === '20 - 25 years') return years >= 20 && years <= 25;
-    if (lbl === '25 – 30 years' || lbl === '25 - 30 years') return years >= 25 && years <= 30;
-    if (lbl === '30+ years') return years > 30;
-    return true;
-  }
-
   function passes(card) {
     var d = getData(card);
-    if (state.ownership !== 'Any' && d.ownership !== state.ownership.toLowerCase()) return false;
+    if (state.availability !== 'Any' && d.avail !== state.availability) return false;
     if (state.bedrooms.length > 0) {
       var match = false;
       for (var i = 0; i < state.bedrooms.length; i++) {
@@ -494,7 +478,6 @@
       }
       if (!match) return false;
     }
-    if (!passesLease(card)) return false;
     if (state.locations.length > 0 && state.locations.indexOf(d.loc) === -1) return false;
     if (!passesPrice(d, card)) return false;
     if (state.keyword) {
@@ -606,6 +589,10 @@
       var inputs = embed.querySelectorAll('input[type=range]');
       for (var i = 0; i < inputs.length; i++) inputs[i].style.pointerEvents = 'auto';
     }
+    var minEl = document.getElementById('pwMin');
+    var maxEl = document.getElementById('pwMax');
+    if (minEl) minEl.value = minEl.min;
+    if (maxEl) maxEl.value = maxEl.max;
   }
 
   function updateSliderForCurrency(currency) {
@@ -618,8 +605,16 @@
     var symMaxEl = document.getElementById('pwSymbolMax');
     if (symMinEl) symMinEl.textContent = sym;
     if (symMaxEl) symMaxEl.textContent = sym;
+    var scaleMin = document.getElementById('pwScaleMin');
+    var scaleMax = document.getElementById('pwScaleMax');
+    if (scaleMin) scaleMin.textContent = sym + short(newMin);
+    if (scaleMax) scaleMax.textContent = sym + short(newMax);
     var minV = newMin + slider.minRatio * (newMax - newMin);
     var maxV = newMin + slider.maxRatio * (newMax - newMin);
+    var minT = document.getElementById('pwMinText');
+    var maxT = document.getElementById('pwMaxText');
+    if (minT) minT.value = Number(minV).toLocaleString('en-US', { maximumFractionDigits: 0 });
+    if (maxT) maxT.value = Number(maxV).toLocaleString('en-US', { maximumFractionDigits: 0 });
     state.priceMin = minV;
     state.priceMax = maxV;
     var rangeText = document.getElementById('pwRangeText');
@@ -647,6 +642,7 @@
     if (!el.priceTrigger || !el.priceDropdown) return;
     fixSliderDOM();
 
+    // Convert div boxes to inputs if needed
     var minTextEl = document.getElementById('pwMinText');
     if (minTextEl && minTextEl.tagName !== 'INPUT') {
       var minInput = document.createElement('input');
@@ -716,7 +712,9 @@
 
     function getRatio(clientX) {
       var rect = sw.getBoundingClientRect();
-      return clamp((clientX - rect.left - THUMB_SIZE / 2) / (rect.width - THUMB_SIZE), 0, 1);
+      var half = THUMB_SIZE / 2;
+      var width = rect.width - THUMB_SIZE;
+      return clamp((clientX - rect.left - half) / width, 0, 1);
     }
 
     var dragTimer = null;
@@ -752,8 +750,10 @@
     if (!thumbMax) { thumbMax = document.createElement('div'); thumbMax.className = 'pw-thumb pw-thumb-max'; sw.appendChild(thumbMax); }
 
     function positionThumbs() {
-      thumbMin.style.left = 'calc(' + (slider.minRatio * 100) + '% - ' + (THUMB_SIZE / 2) + 'px)';
-      thumbMax.style.left = 'calc(' + (slider.maxRatio * 100) + '% - ' + (THUMB_SIZE / 2) + 'px)';
+      var left = slider.minRatio * 100;
+      var right = slider.maxRatio * 100;
+      thumbMin.style.left = 'calc(' + left + '% - ' + (THUMB_SIZE / 2) + 'px)';
+      thumbMax.style.left = 'calc(' + right + '% - ' + (THUMB_SIZE / 2) + 'px)';
     }
 
     function fullRender() { render(); positionThumbs(); }
@@ -781,7 +781,8 @@
       trackEl.style.cursor = 'pointer';
       trackEl.addEventListener('mousedown', function (e) {
         var r = getRatio(e.clientX);
-        dragging = r <= (slider.minRatio + slider.maxRatio) / 2 ? 'min' : 'max';
+        var mid = (slider.minRatio + slider.maxRatio) / 2;
+        dragging = r <= mid ? 'min' : 'max';
         onMove(e.clientX);
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', onUp);
@@ -810,20 +811,25 @@
     for (var i = 0; i < chips.length; i++) {
       (function (ch) {
         ch.addEventListener('click', function () {
-          slider.minRatio = valToRatio(clamp(Number(ch.dataset.min), slider.active.min, slider.active.max));
-          slider.maxRatio = valToRatio(clamp(Number(ch.dataset.max), slider.active.min, slider.active.max));
+          var cMin = Number(ch.dataset.min);
+          var cMax = Number(ch.dataset.max);
+          slider.minRatio = valToRatio(clamp(cMin, slider.active.min, slider.active.max));
+          slider.maxRatio = valToRatio(clamp(cMax, slider.active.min, slider.active.max));
           fullRender();
           applyFilters();
         });
       })(chips[i]);
     }
 
+    // Inject scale labels if missing
     var scaleEl = document.querySelector('.pw-scale');
     if (!scaleEl) {
-      scaleEl = document.createElement('div'); scaleEl.className = 'pw-scale';
+      scaleEl = document.createElement('div');
+      scaleEl.className = 'pw-scale';
       var sMin = document.createElement('span'); sMin.id = 'pwScaleMin'; sMin.className = 'pw-scale-min';
       var sMax = document.createElement('span'); sMax.id = 'pwScaleMax'; sMax.className = 'pw-scale-max';
-      scaleEl.appendChild(sMin); scaleEl.appendChild(sMax);
+      scaleEl.appendChild(sMin);
+      scaleEl.appendChild(sMax);
       sw.parentNode.insertBefore(scaleEl, sw.nextSibling);
     }
 
@@ -862,12 +868,14 @@
     if (!el.locDropdown) return;
     var panel = el.locDropdown.querySelector('.location-panel');
     if (!panel) return;
+
     var lsd = panel.querySelector('.location-search-input');
     if (lsd && lsd.tagName !== 'INPUT') {
       var ri = document.createElement('input');
       ri.type = 'text'; ri.placeholder = 'Search...'; ri.className = 'location-search-input';
       lsd.parentNode.replaceChild(ri, lsd);
     }
+
     locUI = {
       searchInput:  panel.querySelector('.location-search-input'),
       treeScroll:   panel.querySelector('.tree-scroll'),
@@ -876,10 +884,19 @@
       btnClear:     panel.querySelector('.loc-btn-clear-inline'),
       btnApply:     panel.querySelector('.loc-btn-apply-inline')
     };
+
     if (!locUI.searchInput || !locUI.treeScroll || !locUI.pillScroll) return;
     locUI.searchInput.addEventListener('input', renderLocLists);
-    if (locUI.btnClear) locUI.btnClear.addEventListener('click', function () { draftLocs = []; renderLocLists(); syncMapWith(draftLocs); updateDraftInfo(); });
-    if (locUI.btnApply) locUI.btnApply.addEventListener('click', function () { commitDraft(); openLocDrop(false); });
+    if (locUI.btnClear) locUI.btnClear.addEventListener('click', function () {
+      draftLocs = [];
+      renderLocLists();
+      syncMapWith(draftLocs);
+      updateDraftInfo();
+    });
+    if (locUI.btnApply) locUI.btnApply.addEventListener('click', function () {
+      commitDraft();
+      openLocDrop(false);
+    });
   }
 
   function renderLocLists() {
@@ -894,24 +911,29 @@
     }
     locUI.treeScroll.innerHTML = '';
     locUI.pillScroll.innerHTML = '';
+
     for (var a = 0; a < areas.length; a++) {
       var area = areas[a];
       var areaHit = !q || norm(area.label).indexOf(q) > -1;
       var visKids = area.children.filter(function (c) { return areaHit || c.indexOf(q) > -1; });
       if (!visKids.length && !areaHit) continue;
       var areaActive = area.children.some(function (c) { return draftLocs.indexOf(c) > -1; });
+
       var item = document.createElement('div'); item.className = 'tree-item';
       var parent = document.createElement('div');
       parent.className = 'tree-parent' + (areaActive ? ' is-active' : '');
       parent.innerHTML = '<div class="pin-box"><img src="' + PIN_URL + '" class="pin-icon" alt=""></div><span class="parent-name">' + area.label + '</span><div class="tree-chevron"></div>';
+
       var isOpen = openAreas[area.label] || draftLocs.some(function (l) { return area.children.indexOf(l) > -1; });
       var childWrap = document.createElement('div');
       childWrap.className = isOpen ? 'children open' : 'children';
       (function (cw) { parent.addEventListener('click', function () { cw.classList.toggle('open'); }); })(childWrap);
+
       item.appendChild(parent);
       var inner = document.createElement('div'); inner.className = 'children-inner';
       inner.innerHTML = '<div class="branch"></div>';
       var list = document.createElement('div'); list.className = 'child-list';
+
       for (var k = 0; k < visKids.length; k++) {
         (function (loc) {
           var row = document.createElement('div');
@@ -921,8 +943,12 @@
           list.appendChild(row);
         })(visKids[k]);
       }
-      inner.appendChild(list); childWrap.appendChild(inner); item.appendChild(childWrap);
+
+      inner.appendChild(list);
+      childWrap.appendChild(inner);
+      item.appendChild(childWrap);
       locUI.treeScroll.appendChild(item);
+
       var pill = document.createElement('div');
       pill.className = 'pill' + (areaActive ? ' is-active' : '');
       pill.textContent = area.label;
@@ -934,8 +960,10 @@
 
   function toggleLoc(loc) {
     var idx = draftLocs.indexOf(loc);
-    if (idx > -1) draftLocs.splice(idx, 1); else draftLocs.push(loc);
-    renderLocLists(); syncMapWith(draftLocs);
+    if (idx > -1) draftLocs.splice(idx, 1);
+    else draftLocs.push(loc);
+    renderLocLists();
+    syncMapWith(draftLocs);
   }
 
   function toggleArea(areaId) {
@@ -943,9 +971,15 @@
     for (var i = 0; i < areas.length; i++) { if (areas[i].id === areaId) { area = areas[i]; break; } }
     if (!area) return;
     var allOn = area.children.every(function (c) { return draftLocs.indexOf(c) > -1; });
-    if (allOn) { draftLocs = draftLocs.filter(function (l) { return area.children.indexOf(l) === -1; }); }
-    else { for (var i = 0; i < area.children.length; i++) { if (draftLocs.indexOf(area.children[i]) === -1) draftLocs.push(area.children[i]); } }
-    renderLocLists(); syncMapWith(draftLocs);
+    if (allOn) {
+      draftLocs = draftLocs.filter(function (l) { return area.children.indexOf(l) === -1; });
+    } else {
+      for (var i = 0; i < area.children.length; i++) {
+        if (draftLocs.indexOf(area.children[i]) === -1) draftLocs.push(area.children[i]);
+      }
+    }
+    renderLocLists();
+    syncMapWith(draftLocs);
   }
 
   function updateDraftInfo() {
@@ -964,12 +998,22 @@
     else el.locTrigText.textContent = n + ' locations';
   }
 
-  function commitDraft() { state.locations = draftLocs.slice(); updateLocText(); syncMapWith(state.locations); applyFilters(); }
+  function commitDraft() {
+    state.locations = draftLocs.slice();
+    updateLocText();
+    syncMapWith(state.locations);
+    applyFilters();
+  }
 
   function openLocDrop(force) {
     locDropOpen = (force !== undefined) ? force : !locDropOpen;
     if (!el.locDropdown) return;
-    if (locDropOpen) { draftLocs = state.locations.slice(); if (locUI.searchInput) locUI.searchInput.value = ''; renderLocLists(); syncMapWith(draftLocs); }
+    if (locDropOpen) {
+      draftLocs = state.locations.slice();
+      if (locUI.searchInput) locUI.searchInput.value = '';
+      renderLocLists();
+      syncMapWith(draftLocs);
+    }
     el.locDropdown.style.display = locDropOpen ? 'block' : 'none';
     el.locDropdown.classList.toggle('is-open', locDropOpen);
     if (locDropOpen && map) setTimeout(function () { map.resize(); }, 80);
@@ -980,15 +1024,19 @@
   function loadMapSDK(cb) {
     if (window.maptilersdk) return cb();
     if (!document.querySelector('link[data-mt-css]')) {
-      var css = document.createElement('link'); css.rel = 'stylesheet';
+      var css = document.createElement('link');
+      css.rel = 'stylesheet';
       css.href = 'https://cdn.maptiler.com/maptiler-sdk-js/v3.10.2/maptiler-sdk.css';
-      css.setAttribute('data-mt-css', '1'); document.head.appendChild(css);
+      css.setAttribute('data-mt-css', '1');
+      document.head.appendChild(css);
     }
     var ex = document.querySelector('script[data-mt-js]');
     if (ex) return ex.addEventListener('load', cb, { once: true });
     var js = document.createElement('script');
     js.src = 'https://cdn.maptiler.com/maptiler-sdk-js/v3.10.2/maptiler-sdk.umd.min.js';
-    js.async = true; js.setAttribute('data-mt-js', '1'); js.onload = cb;
+    js.async = true;
+    js.setAttribute('data-mt-js', '1');
+    js.onload = cb;
     document.head.appendChild(js);
   }
 
@@ -997,18 +1045,32 @@
     var mapEl = document.getElementById('bhbMap');
     if (!mapEl || !window.maptilersdk) return;
     maptilersdk.config.apiKey = MAPTILER_KEY;
-    map = new maptilersdk.Map({ container: 'bhbMap', style: MAP_STYLE, center: [115.1889, -8.4095], zoom: 9.3 });
-    map.on('load', function () { mapReady = true; syncMapWith(state.locations); setTimeout(function () { map.resize(); }, 80); });
+    map = new maptilersdk.Map({
+      container: 'bhbMap',
+      style: MAP_STYLE,
+      center: [115.1889, -8.4095],
+      zoom: 9.3
+    });
+    map.on('load', function () {
+      mapReady = true;
+      syncMapWith(state.locations);
+      setTimeout(function () { map.resize(); }, 80);
+    });
   }
 
-  function clearMarkers() { for (var i = 0; i < markers.length; i++) markers[i].remove(); markers = []; }
+  function clearMarkers() {
+    for (var i = 0; i < markers.length; i++) markers[i].remove();
+    markers = [];
+  }
 
   function makePin(label) {
     var wrap = document.createElement('div'); wrap.className = 'map-marker-wrap';
-    var img = document.createElement('img'); img.src = PIN_URL; img.alt = 'marker';
+    var img = document.createElement('img');
+    img.src = PIN_URL; img.alt = 'marker';
     img.style.cssText = 'width:26px;height:26px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))';
     var txt = document.createElement('div'); txt.className = 'map-marker-label'; txt.textContent = label;
-    wrap.appendChild(img); wrap.appendChild(txt); return wrap;
+    wrap.appendChild(img); wrap.appendChild(txt);
+    return wrap;
   }
 
   function syncMap() { syncMapWith(state.locations); }
@@ -1046,14 +1108,19 @@
   }
 
   function decodeEntities(s) {
-    return String(s || '').replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#x3D;|&#61;/g, '=').replace(/&#x2F;|&#47;/g, '/');
+    return String(s || '')
+      .replace(/&quot;/g, '"').replace(/&amp;/g, '&')
+      .replace(/&#x3D;|&#61;/g, '=').replace(/&#x2F;|&#47;/g, '/');
   }
 
   function extractLatLng(embed) {
     var s = decodeEntities(embed), m;
-    m = s.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/); if (m) return [parseFloat(m[2]), parseFloat(m[1])];
-    m = s.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),[\d.]+z/); if (m) return [parseFloat(m[2]), parseFloat(m[1])];
-    m = s.match(/[?&]q=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/); if (m) return [parseFloat(m[2]), parseFloat(m[1])];
+    m = s.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
+    if (m) return [parseFloat(m[2]), parseFloat(m[1])];
+    m = s.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),[\d.]+z/);
+    if (m) return [parseFloat(m[2]), parseFloat(m[1])];
+    m = s.match(/[?&]q=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+    if (m) return [parseFloat(m[2]), parseFloat(m[1])];
     return null;
   }
 
