@@ -514,6 +514,12 @@
         e.detail && e.detail.currency ? e.detail.currency : savedCurrency();
       setCurrency(c);
     });
+
+    window.addEventListener("bhb:rates-ready", function () {
+      computeBaseBounds();
+      updateSliderForCurrency(state.currency);
+      updateChips(state.currency);
+    });
   }
   function getData(card) {
     var inner = card.querySelector(".listings_card-wrapper") || card;
