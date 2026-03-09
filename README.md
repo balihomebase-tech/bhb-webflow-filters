@@ -197,29 +197,146 @@ bhb-webflow-filters/
 5. **Map markers refresh** to show matching locations
 6. **UI updates** (result count, empty state, buttons)
 
-### Price Filtering Differences
+---
+
+## Price Filter Components
+
+The price filtering system is divided into **three UI sections**:
+
+### QUICK SELECTION
+
+Preset chips automatically generated from CMS price data. These divide the price range into three equal tiers for quick filtering.
+
+**Workflow**:
+1. System calculates min/max prices from CMS listings
+2. Divides range by 3 to create three equal tiers
+3. Generates chips labeled with formatted price ranges
+4. User clicks a chip to filter to that price tier
+
+### CUSTOM RANGE
+
+User-adjustable slider allowing manual min/max selection. The slider always reflects the current price range calculated from CMS data.
+
+**Workflow**:
+1. System calculates min/max prices from CMS listings
+2. Slider bounds are set to these values
+3. User drags handles to select custom price range
+4. Filter applies in real-time as user adjusts
+
+### PRICE RANGE
+
+The calculated minimum and maximum values derived from CMS listings. This range varies depending on:
+
+- **Rentals**: All rental listings in CMS (monthly rental prices)
+- **Villas**: Listings matching the current ownership filter (Freehold, Leasehold, or All)
+- **Land**: All land listings in CMS (price-per-are values)
+
+---
+
+## Price Filtering by Page
 
 All three pages calculate dynamic price ranges directly from CMS data. Price chips are generated dynamically by dividing the min/max range into thirds:
 
-**Example**: If CMS has properties ranging from Rp 100jt to Rp 1B:
-- Min: Rp100jt, Max: Rp1B, Range: Rp900jt
-- Divide by 3: Rp300jt per tier
-- Chips: `< Rp300jt` | `Rp300jt–Rp600jt` | `> Rp600jt`
+### Rentals
 
-**Rentals**: Calculates dynamic price range from all rental listings
-- Chips: Auto-generated thirds based on actual CMS prices
-- No preset values; range adapts to data
+**Data Source**: Monthly rental prices from all rental listings in CMS.
 
-**Villas**: Calculates dynamic price range from CMS data
-- When ownership filter changes → price range recalculates to reflect only matching villas
-- Chips: Auto-generated thirds based on filtered villa prices
-- If ownership = "Any" → uses all villa prices
-- If ownership = "Freehold" → uses only freehold villa prices
-- If ownership = "Leasehold" → uses only leasehold villa prices
+**Range Calculation**:
+- Scans all rental cards
+- Extracts monthly rental prices
+- Converts all prices to IDR (base currency)
+- Calculates min/max from the dataset
 
-**Land**: Calculates dynamic price range from CMS data (per are)
-- Chips: Auto-generated thirds based on actual price-per-are from listings
-- Dynamic range reflects land availability in CMS
+**Quick Selection**: Auto-generated chips divide the rental price range into thirds.
+
+**Example**:
+```
+Min: Rp15jt (monthly)
+Max: Rp150jt (monthly)
+Range: Rp135jt
+
+Quick Selection chips:
+< Rp45jt
+Rp45jt – Rp90jt
+> Rp90jt
+```
+
+**Behavior**:
+- Price range reflects **all available rentals**
+- No filtering by ownership or other criteria affects price range
+- Chips update when currency changes
+- Slider bounds always match CMS data
+
+### Villas
+
+**Data Source**: Villa prices from CMS listings, filtered by ownership type.
+
+**Range Calculation**:
+- Filters villas by current **Ownership** setting (Any/Freehold/Leasehold)
+- Extracts prices from matching villas
+- Converts all prices to IDR (base currency)
+- Calculates min/max from the filtered dataset
+- **Re-calculates when ownership filter changes**
+
+**Quick Selection**: Auto-generated chips divide the villas' price range into thirds.
+
+**Ownership Behavior**:
+
+If ownership = **Any**
+```
+Price range = min/max from ALL villas in CMS
+Example: Rp500jt – Rp5B (all property types)
+```
+
+If ownership = **Freehold**
+```
+Price range = min/max from freehold villas only
+Example: Rp800jt – Rp3B (freehold properties)
+Quick Selection: < Rp1.4B | Rp1.4B–Rp2.3B | > Rp2.3B
+```
+
+If ownership = **Leasehold**
+```
+Price range = min/max from leasehold villas only
+Example: Rp500jt – Rp1.5B (leasehold properties)
+Quick Selection: < Rp833jt | Rp833jt–Rp1.17B | > Rp1.17B
+```
+
+**Behavior**:
+- Price range **changes when ownership filter changes**
+- Slider and chips are recalculated immediately
+- No delay; updates are synchronous
+- Reflects only villas matching the current ownership type
+
+### Land
+
+**Data Source**: Land price-per-are values from CMS listings.
+
+**Range Calculation**:
+- Scans all land cards
+- Extracts **price-per-are** values (not total price)
+- Converts all prices to IDR (base currency)
+- Calculates min/max per-are values
+
+**Quick Selection**: Auto-generated chips divide the per-are price range into thirds.
+
+**Example**:
+```
+Min: Rp300jt / are
+Max: Rp900jt / are
+Range: Rp600jt
+
+Quick Selection chips:
+< Rp500jt / are
+Rp500jt – Rp700jt / are
+> Rp700jt / are
+```
+
+**Behavior**:
+- Price range reflects **all available land plots**
+- Currency conversion applies to per-are values
+- Slider bounds match actual per-are pricing in CMS
+- Users can filter by price-per-are, land size (m²), and other criteria independently
 
 ---
 
@@ -255,30 +372,52 @@ var LOC_COORDS = {
 };
 ```
 
-### Price Presets (Dynamic Chips)
+### Price Chips (Dynamic Generation)
 
-Price chips are automatically generated by dividing the CMS data range into thirds for each currency:
+Price chips (Quick Selection buttons) are automatically generated from CMS data using a **three-tier division algorithm**:
+
+**Algorithm**:
+```
+1. Calculate range = max_price - min_price
+2. Divide by 3:
+   - Tier 1: < (min + range/3)
+   - Tier 2: (min + range/3) to (min + 2×range/3)
+   - Tier 3: > (min + 2×range/3)
+3. Convert to each currency (IDR/USD/EUR)
+4. Format labels with currency symbol
+```
+
+**Example**: Rentals ranging from Rp15jt to Rp150jt:
+```
+Range = Rp135jt
+Tier 1 = Rp15jt + (Rp135jt / 3) = Rp60jt
+Tier 2 = Rp15jt + (2 × Rp135jt / 3) = Rp105jt
+
+Generated chips:
+< Rp60jt
+Rp60jt – Rp105jt
+> Rp105jt
+```
+
+**No Static Presets**: 
+The `CHIP_PRESETS` object in config files serves only as a fallback. All active chips are dynamically calculated from your CMS data:
 
 ```javascript
-// Example: If min: 100,000, max: 100,000,000
-// Chips generated as:
-// < 33,400,000
-// 33,400,000 – 66,700,000
-// > 66,700,000
-
 var CHIP_PRESETS = {
   IDR: [
-    // Note: These are template values. Actual chips are calculated from CMS data
-    { label: "< 1/3", min: 0, max: null },
-    { label: "1/3 – 2/3", min: null, max: null },
-    { label: "> 2/3", min: null, max: null }
+    { label: "< 50jt", min: 0, max: 50000000 },      // fallback only
+    { label: "50jt – 200jt", min: 50000000, max: 200000000 },
+    { label: "> 200jt", min: 200000000, max: null }
   ],
-  USD: [ /* ... calculated from CMS data ... */ ],
-  EUR: [ /* ... calculated from CMS data ... */ ]
+  // Actual chips displayed come from generateDynamicChips() calculation
 };
 ```
 
-> **Note**: Chips are dynamically calculated from actual CMS price data, divided into three equal ranges. The values shown above are placeholders; real values are computed from the min/max prices in your listings.
+**When Chips Update**:
+- On page load: Calculated from all CMS listings
+- On currency change: Converted to new currency, labels updated
+- On Villas ownership change: Recalculated from filtered dataset
+- In real-time as CMS data changes (if dynamic CMS updates used)
 
 ### Grid & Card Settings
 

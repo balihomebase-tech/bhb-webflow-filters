@@ -50,6 +50,45 @@
     'pererenan':    [115.12346, -8.64904]
   };
 
+  // ─── PRICE FILTERING SYSTEM ──────────────────────────────────────────────────
+  //
+  // LAND: Dynamic price range from price-per-are values
+  //
+  // The price filter has three components:
+  //   1. PRICE RANGE: Calculated min/max from CMS price-per-are (not total price)
+  //   2. QUICK SELECTION: Three chips dividing per-are range into equal thirds
+  //   3. CUSTOM RANGE: User-adjustable slider for per-are price selection
+  //
+  // Price-Per-Are Range Calculation:
+  //   - Scans all land listings in CMS
+  //   - Extracts getPricePerAre() values from each card
+  //   - Can come from data-price-are attribute OR calculated (priceTotal / size)
+  //   - Converts all prices to IDR (base currency)
+  //   - Sets slider.base = { min, max } in IDR per-are values
+  //   - Generates three chips by dividing per-are range by 3
+  //
+  // Quick Selection Algorithm:
+  //   range = max - min (in IDR per-are)
+  //   tier1 = min + (range / 3)           // chip 1 max (per-are)
+  //   tier2 = min + (2 × range / 3)       // chip 2 max (per-are)
+  //   Chips divide per-are pricing into three tiers
+  //
+  // Example:
+  //   Min: Rp300jt/are, Max: Rp900jt/are, Range: Rp600jt
+  //   Tier 1 max: Rp300jt + Rp200jt = Rp500jt/are
+  //   Tier 2 max: Rp300jt + Rp400jt = Rp700jt/are
+  //   Chips:
+  //     < Rp500jt / are
+  //     Rp500jt – Rp700jt / are
+  //     > Rp700jt / are
+  //
+  // Currency Handling:
+  //   - All calculations done in IDR (base)
+  //   - Display values converted to user's selected currency (IDR/USD/EUR)
+  //   - Per-are labels always include currency symbol
+  //   - Slider updates in real-time when currency changes
+  //
+
   // ─── PRICE CHIP PRESETS (per are) ────────────────────────────────────────────
 
   var CHIP_PRESETS = {
