@@ -1556,6 +1556,7 @@
     allCards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
     if (!allCards.length) return;
 
+    areas = []; 
     buildAreas();
     mountLocUI();
     computeBaseBounds(); // initial bounds — may exclude non-IDR cards until rates load
