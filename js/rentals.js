@@ -1151,9 +1151,7 @@
     for (var a = 0; a < AREA_RULES.length; a++) {
       var rule = AREA_RULES[a];
       var children = cmsLocs.filter(function (loc) {
-        var hit = rule.keys.indexOf(loc) > -1;
-        if (hit) used[loc] = true;
-        return hit;
+        return rule.keys.includes(loc);
       });
       if (children.length)
         areas.push({ id: rule.id, label: rule.label, children: children });
@@ -1556,7 +1554,7 @@
     allCards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
     if (!allCards.length) return;
 
-    areas = []; 
+    areas = [];
     buildAreas();
     mountLocUI();
     computeBaseBounds(); // initial bounds — may exclude non-IDR cards until rates load
