@@ -4,36 +4,76 @@ Custom JavaScript filters for the [Bali Home Base](https://balihomebase.com) Web
 
 ---
 
-## Files
+## Files & Modular Structure
+
+The codebase has been refactored into a modular architecture for maintainability and code reuse:
 
 ```
 js/
-  filter.js          → Rentals page
-  villas-filter.js   → Villas page
-  lands-filter.js    → Lands page
+  configs/               → Configuration per page
+    land-config.js       → Land page config (AREA_RULES, LOC_COORDS, CHIP_PRESETS)
+    rentals-config.js    → Rentals page config
+    villas-config.js     → Villas page config
+  
+  core/                  → Shared core logic
+    filter-engine.js     → Filter pipeline, pagination, dropdown helpers
+  
+  pages/                 → Page-specific implementations
+    land.js              → Land page script
+    rentals.js           → Rentals page script
+    villas.js            → Villas page script
+  
+  utils/                 → Shared utilities
+    currency.js          → Currency conversion, formatting, normalization
+    map.js               → Map initialization, markers, bounds
+
 css/
-  filter.css         → Shared styles (dropdowns, slider, map, chips)
+  filter.css             → Shared styles
 ```
+
+**Location Grouping** is defined in each config's `AREA_RULES`. All three now use the same area structure for consistency.
 
 ---
 
 ## CDN URLs (jsDelivr)
 
+Each page loads its config + core + page script in order:
+
+**Rentals**
 ```html
-<!-- Rentals -->
-<script src="https://cdn.jsdelivr.net/gh/USERNAME/bhb-webflow-filters@main/js/filter.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/USERNAME/bhb-webflow-filters@main/js/configs/rentals-config.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/USERNAME/bhb-webflow-filters@main/js/utils/currency.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/USERNAME/bhb-webflow-filters@main/js/utils/map.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/USERNAME/bhb-webflow-filters@main/js/core/filter-engine.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/USERNAME/bhb-webflow-filters@main/js/pages/rentals.js"></script>
+```
 
-<!-- Villas -->
-<script src="https://cdn.jsdelivr.net/gh/USERNAME/bhb-webflow-filters@main/js/villas-filter.js"></script>
+**Villas**
+```html
+<script src="https://cdn.jsdelivr.net/gh/USERNAME/bhb-webflow-filters@main/js/configs/villas-config.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/USERNAME/bhb-webflow-filters@main/js/utils/currency.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/USERNAME/bhb-webflow-filters@main/js/utils/map.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/USERNAME/bhb-webflow-filters@main/js/core/filter-engine.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/USERNAME/bhb-webflow-filters@main/js/pages/villas.js"></script>
+```
 
-<!-- Lands -->
-<script src="https://cdn.jsdelivr.net/gh/USERNAME/bhb-webflow-filters@main/js/lands-filter.js"></script>
+**Lands**
+```html
+<script src="https://cdn.jsdelivr.net/gh/USERNAME/bhb-webflow-filters@main/js/configs/land-config.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/USERNAME/bhb-webflow-filters@main/js/utils/currency.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/USERNAME/bhb-webflow-filters@main/js/utils/map.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/USERNAME/bhb-webflow-filters@main/js/core/filter-engine.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/USERNAME/bhb-webflow-filters@main/js/pages/land.js"></script>
+```
 
-<!-- CSS (add to <head>) -->
+**CSS (add to <head>)**
+```html
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/USERNAME/bhb-webflow-filters@main/css/filter.css">
 ```
 
 Replace `USERNAME` with your GitHub username.
+
+> **Script order matters**: Config → Utils → Core → Page script. This ensures utilities and filter logic are available before the page script runs.
 
 > **Cache note:** jsDelivr caches aggressively. To bust cache after an update, use a version tag instead of `@main`:
 > `@v1.0.1` → bump the tag on each release.
@@ -104,16 +144,20 @@ Lease years are read from `.leasehold-year-container .u-txt-bold`.
 
 ## Area Groups
 
-Locations are grouped into areas for the map and location picker:
+Locations are grouped into areas for the map and location picker. All three pages (Rentals, Villas, Lands) now use the **same area structure** for consistency:
 
 | Area | Locations |
 |---|---|
-| Canggu area | Canggu, Pererenan, Seseh, Cemagi, Kaba Kaba, Cepaka, Tumbak Bayuh, Buwit, Dalung |
-| Uluwatu area | Bingin, Uluwatu, Uluwatu Center, Ungasan |
-| Ubud area | Ubud, Ubud Center |
-| Tabanan area | Kedungu, Nyanyi, Pandak Gede, Nyambu, Tanah Lot |
+| Canggu area | Canggu, Pererenan, Seseh, Cemagi, **Buduk**, Kaba Kaba, Kaba-Kaba, Cepaka, Tumbak Bayuh, Buwit, Dalung |
+| Uluwatu area | **Bingin**, Uluwatu, Uluwatu Center, Ungasan |
+| Ubud area | Ubud, **Ubud Center** |
+| Tabanan area | Kedungu, Nyanyi, **Pandak Gede**, **Nyambu**, Tanah Lot |
 
-To add a new location, add it to the relevant `keys` array in `AREA_RULES` and add its coordinates to `LOC_COORDS` inside the JS file.
+**Configuration**: Edit `AREA_RULES` in the respective config file (`configs/land-config.js`, `configs/rentals-config.js`, or `configs/villas-config.js`).
+
+To add a new location:
+1. Add it to the proper `keys` array in `AREA_RULES` 
+2. Add its coordinates to `LOC_COORDS` in the same config file
 
 ---
 
@@ -172,12 +216,66 @@ The scripts call `window.debugCurrency.convertAmount(amount, from, to)` and `win
 
 ---
 
+## Modular Architecture
+
+The refactored structure separates concerns for better maintainability:
+
+### configs/
+Each page has a configuration file defining:
+- `CFG`: Grid ID, card selector, pagination step
+- `AREA_RULES`: Location groupings (standardized across all pages)
+- `LOC_COORDS`: Map coordinates for each location
+- `CHIP_PRESETS`: Price range presets per currency
+- `MAPTILER_KEY`, `MAP_STYLE`, `PIN_URL`: Map settings
+- `FILTER_PANEL`: Page-specific filter form selector
+
+### core/filter-engine.js
+Shared core logic:
+- `applyFilters()`: Main filter pipeline
+- `passes()`: Individual card filter checks (per-page)
+- `closeAll()`, `toggleDrop()`: Dropdown management
+- `showNext()`, `updateUI()`: Pagination and display
+- `injectBackToTop()`, `updateLoadMore()`: UI enhancements
+
+### pages/
+Page-specific code that:
+- Initializes page-specific DOM elements and state
+- Implements page-specific filters (e.g., `passesAvailability()` for rentals, `passesLeaseYear()` for villas)
+- Handles price slider with page-specific logic
+- Creates and manages location dropdowns and map
+
+### utils/
+Reusable utility functions:
+
+**currency.js**: String and currency utilities
+- `norm()`: Normalize strings for comparison
+- `normCurrency()`: Validate currency codes
+- `convertAmount()`: Price conversion
+- `symFor()`: Get currency symbol
+- `short()`: Format large numbers
+- `savedCurrency()`: Read from localStorage
+
+**map.js**: Map initialization and markers
+- `initMap()`: Set up MapTiler map
+- `syncMapWith()`: Update markers for location filter
+- `makePin()`: Create custom marker HTML
+- `clearMarkers()`: Remove all markers
+
+---
+
 ## Updating
 
-1. Edit the JS/CSS file locally
+1. Edit the relevant file locally (config, utility, core, or page script)
 2. Commit and push to `main`
 3. Create a new git tag: `git tag v1.x.x && git push --tags`
-4. Update the jsDelivr URL in Webflow to the new tag
+4. Update jsDelivr URLs in Webflow to the new tag (if using version tags instead of `@main`)
+
+**Tips for common updates**:
+- **Add a new location**: Edit `AREA_RULES` in the config file(s)
+- **Change price presets**: Edit `CHIP_PRESETS` in the config file(s)
+- **Fix a filter bug**: Update the page-specific script or core filter logic
+- **Adjust map behavior**: Edit `utils/map.js`
+- **Add currency support**: Update `utils/currency.js` and config presets
 
 ---
 
