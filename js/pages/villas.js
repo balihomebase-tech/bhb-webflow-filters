@@ -392,8 +392,7 @@
   function bindEvents() {
     initSingle(el.ownershipField, function (val) {
       state.ownership = val;
-      updatePriceRangeForOwnership();
-      applyFilters();
+      refreshPriceSystem();
     });
     initMulti(el.bedsField, function (selected) {
       state.bedrooms = selected;
@@ -637,6 +636,13 @@
       if (el.btnBackTop) el.btnBackTop.style.display = "none";
     }
   }
+  function refreshPriceSystem() {
+    updatePriceRangeForOwnership();
+    updateSliderForCurrency(state.currency);
+    updateChips(state.currency);
+    applyFilters();
+  }
+
   function setCurrency(currency) {
     var c = normCurrency(currency || "IDR");
     state.currency = c;
@@ -653,11 +659,7 @@
     ) {
       window.debugCurrency.setCurrency(c);
     }
-    updateSliderForCurrency(c);
-    updateChips(c);
-    setTimeout(function () {
-      applyFilters();
-    }, 80);
+    refreshPriceSystem();
   }
   var dynamicChips = { IDR: [], USD: [], EUR: [] };
   
