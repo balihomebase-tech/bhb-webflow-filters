@@ -1105,29 +1105,69 @@
 
   // ─── location UI ──────────────────────────────────────────────────────────
 
-  function buildAreas() {
-    var locSet = {};
-    for (var i = 0; i < allCards.length; i++) {
-      var d = getData(allCards[i]);
-      if (!d.loc) continue;
-      locSet[d.loc] = true;
-      if (!labelByNorm[d.loc]) labelByNorm[d.loc] = d.locRaw;
+function buildAreas() {
+  var locSet = {};
+
+  // collect unique locations from CMS cards
+  for (var i = 0; i < allCards.length; i++) {
+    var d = getData(allCards[i]);
+    if (!d.loc) continue;
+
+    locSet[d.loc] = true;
+
+    // keep original label
+    if (!labelByNorm[d.loc]) {
+      labelByNorm[d.loc] = d.locRaw;
     }
-    var cmsLocs = Object.keys(locSet);
-    var used = {};
-    areas = [];
-    for (var a = 0; a < AREA_RULES.length; a++) {
-      var rule = AREA_RULES[a];
-      var children = cmsLocs.filter(function (loc) {
-        return rule.keys.includes(loc);
+  }
+
+  var cmsLocs = Object.keys(locSet);
+  var used = {};
+  areas = [];
+
+  // match locations to defined AREA_RULES
+  for (var a = 0; a < AREA_RULES.length; a++) {
+    var rule = AREA_RULES[a];
+
+    var children = cmsLocs.filter(function (loc) {
+      return rule.keys.some(function (key) {
+        return loc.includes(key);   // partial match instead of exact match
       });
-      if (children.length)
-        areas.push({ id: rule.id, label: rule.label, children: children });
+    });
+
+    if (children.length) {
+      areas.push({
+        id: rule.id,
+        label: rule.label,
+        children: children
+      });
+
+      // mark locations as used
+      for (var c = 0; c < children.length; c++) {
+        used[children[c]] = true;
+      }
     }
-    state.locations = state.locations.filter(function (loc) {
-      return locSet[loc];
+  }
+
+  // detect locations not assigned to any area
+  var other = cmsLocs.filter(function (loc) {
+    return !used[loc];
+  });
+
+  // only create "Other area" if needed
+  if (other.length) {
+    areas.push({
+      id: "other-area",
+      label: "Other area",
+      children: other
     });
   }
+
+  // keep only valid selected locations
+  state.locations = state.locations.filter(function (loc) {
+    return locSet[loc];
+  });
+}
 
   function mountLocUI() {
     if (!el.locDropdown) return;
