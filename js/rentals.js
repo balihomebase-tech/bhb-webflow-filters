@@ -27,8 +27,8 @@
         "cepaka",
         "tumbak bayuh",
         "buwit",
-        "dalung",
         "buduk",
+        "dalung",
       ],
     },
     {
@@ -60,7 +60,7 @@
     "tumbak bayuh": [115.14562, -8.61484],
     buwit: [115.12362, -8.59905],
     dalung: [115.17258, -8.61147],
-    buduk: [115.16343, -8.60770],
+    buduk: [115.16263, -8.59877],
     bingin: [115.092, -8.812],
     uluwatu: [115.088, -8.82828],
     "uluwatu center": [115.088, -8.82828],
@@ -605,13 +605,6 @@
       updateSliderForCurrency(state.currency);
       updateChips(state.currency);
     });
-
-    // fallback: if rates loaded before rent.js registered the listener
-    if (window.debugCurrency && typeof window.debugCurrency.convertAmount === "function") {
-      computeBaseBounds();
-      updateSliderForCurrency(state.currency);
-      updateChips(state.currency);
-    }
   }
 
   // ─── card data ────────────────────────────────────────────────────────────
@@ -1165,7 +1158,6 @@
       if (children.length)
         areas.push({ id: rule.id, label: rule.label, children: children });
     }
-    // Removed 'Other area' logic. All locations are now grouped under defined areas.
     state.locations = state.locations.filter(function (loc) {
       return locSet[loc];
     });
