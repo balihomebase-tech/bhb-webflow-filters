@@ -70,6 +70,8 @@
     ]
   };
 
+  var dynamicChips = { IDR: [], USD: [], EUR: [] };
+
   // ─── STATE ───────────────────────────────────────────────────────────────────
 
   var allCards = [], filtered = [], visible = 0;
@@ -611,7 +613,29 @@
       if (idr < lo) lo = idr;
       if (idr > hi) hi = idr;
     }
-    if (isFinite(lo) && isFinite(hi)) slider.base = { min: lo, max: hi };
+    if (isFinite(lo) && isFinite(hi)) {
+      slider.base = { min: lo, max: hi };
+      generateDynamicChips(lo, hi);
+    }
+  }
+
+  function generateDynamicChips(minPrice, maxPrice) {
+    var range = maxPrice - minPrice;
+    var tier1Max = minPrice + range / 3;
+    var tier2Max = minPrice + (2 * range) / 3;
+
+    var currencies = ['IDR', 'USD', 'EUR'];
+    for (var c = 0; c < currencies.length; c++) {
+      var curr = currencies[c];
+      var tier1 = convertAmount(tier1Max, 'IDR', curr);
+      var tier2 = convertAmount(tier2Max, 'IDR', curr);
+
+      dynamicChips[curr] = [
+        { label: '< ' + short(tier1), min: 0, max: tier1 },
+        { label: short(tier1) + ' \u2013 ' + short(tier2), min: tier1, max: tier2 },
+        { label: '> ' + short(tier2), min: tier2, max: null }
+      ];
+    }
   }
 
   function fixSliderDOM() {

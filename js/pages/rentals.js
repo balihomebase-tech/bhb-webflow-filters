@@ -730,6 +730,9 @@
   // converts all CMS prices to IDR first to get a consistent base range.
   // cards with non-IDR prices are skipped if conversion fails (rates not loaded yet).
   // bounds recompute correctly once bhb:rates-ready fires.
+  // also generates dynamic chips by dividing the range into thirds.
+  var dynamicChips = { IDR: [], USD: [], EUR: [] };
+  
   function computeBaseBounds() {
     var lo = Infinity,
       hi = -Infinity;
@@ -742,7 +745,31 @@
       if (idr < lo) lo = idr;
       if (idr > hi) hi = idr;
     }
-    if (isFinite(lo) && isFinite(hi)) slider.base = { min: lo, max: hi };
+    if (isFinite(lo) && isFinite(hi)) {
+      slider.base = { min: lo, max: hi };
+      generateDynamicChips(lo, hi);
+    }
+  }
+  
+  function generateDynamicChips(minPrice, maxPrice) {
+    var range = maxPrice - minPrice;
+    var tier1Max = minPrice + range / 3;
+    var tier2Max = minPrice + (2 * range) / 3;
+    
+    var currencies = ['IDR', 'USD', 'EUR'];
+    for (var c = 0; c < currencies.length; c++) {
+      var curr = currencies[c];
+      var min1 = convertAmount(minPrice, 'IDR', curr);
+      var tier1 = convertAmount(tier1Max, 'IDR', curr);
+      var tier2 = convertAmount(tier2Max, 'IDR', curr);
+      var max1 = convertAmount(maxPrice, 'IDR', curr);
+      
+      dynamicChips[curr] = [
+        { label: '< ' + short(tier1), min: 0, max: tier1 },
+        { label: short(tier1) + ' \u2013 ' + short(tier2), min: tier1, max: tier2 },
+        { label: '> ' + short(tier2), min: tier2, max: null }
+      ];
+    }
   }
 
   // ─── price slider ─────────────────────────────────────────────────────────
@@ -825,10 +852,10 @@
     }
   }
 
-  // update quick-select chip labels for selected currency
+  // update quick-select chip labels for selected currency using dynamically generated chips
   function updateChips(currency) {
     var c = normCurrency(currency);
-    var presets = CHIP_PRESETS[c] || CHIP_PRESETS["IDR"];
+    var presets = dynamicChips[c] && dynamicChips[c].length > 0 ? dynamicChips[c] : CHIP_PRESETS[c] || CHIP_PRESETS["IDR"];
     var chips = document.querySelectorAll(".pw-chip");
     for (var i = 0; i < chips.length; i++) {
       var p = presets[i];

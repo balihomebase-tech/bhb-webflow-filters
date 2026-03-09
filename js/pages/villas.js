@@ -77,6 +77,7 @@
       { label: "> \u20ac12k", min: 12000, max: null },
     ],
   };
+  var dynamicChips = { IDR: [], USD: [], EUR: [] };
   var allCards = [],
     filtered = [],
     visible = 0;
@@ -658,6 +659,8 @@
       applyFilters();
     }, 80);
   }
+  var dynamicChips = { IDR: [], USD: [], EUR: [] };
+  
   function computeBaseBounds() {
     var lo = Infinity,
       hi = -Infinity;
@@ -668,7 +671,29 @@
       if (idr < lo) lo = idr;
       if (idr > hi) hi = idr;
     }
-    if (isFinite(lo) && isFinite(hi)) slider.base = { min: lo, max: hi };
+    if (isFinite(lo) && isFinite(hi)) {
+      slider.base = { min: lo, max: hi };
+      generateDynamicChips(lo, hi);
+    }
+  }
+  
+  function generateDynamicChips(minPrice, maxPrice) {
+    var range = maxPrice - minPrice;
+    var tier1Max = minPrice + range / 3;
+    var tier2Max = minPrice + (2 * range) / 3;
+    
+    var currencies = ['IDR', 'USD', 'EUR'];
+    for (var c = 0; c < currencies.length; c++) {
+      var curr = currencies[c];
+      var tier1 = convertAmount(tier1Max, 'IDR', curr);
+      var tier2 = convertAmount(tier2Max, 'IDR', curr);
+      
+      dynamicChips[curr] = [
+        { label: '< ' + short(tier1), min: 0, max: tier1 },
+        { label: short(tier1) + ' \u2013 ' + short(tier2), min: tier1, max: tier2 },
+        { label: '> ' + short(tier2), min: tier2, max: null }
+      ];
+    }
   }
   function fixSliderDOM() {
     var sw = document.querySelector(".pw-slider");
@@ -783,19 +808,35 @@
     slider.minRatio = 0;
     slider.maxRatio = 1;
 
+    // Regenerate chips for this ownership filter
+    generateDynamicChips(range.min, range.max);
+
     // Re-render slider UI for current currency
     updateSliderForCurrency(state.currency);
+  }
 
-    // Hide price chips since villas use dynamic range
-    var chips = document.querySelectorAll(".pw-chip");
-    for (var i = 0; i < chips.length; i++) {
-      chips[i].style.display = "none";
+  function generateDynamicChips(minPrice, maxPrice) {
+    var range = maxPrice - minPrice;
+    var tier1Max = minPrice + range / 3;
+    var tier2Max = minPrice + (2 * range) / 3;
+
+    var currencies = ['IDR', 'USD', 'EUR'];
+    for (var c = 0; c < currencies.length; c++) {
+      var curr = currencies[c];
+      var tier1 = convertAmount(tier1Max, 'IDR', curr);
+      var tier2 = convertAmount(tier2Max, 'IDR', curr);
+
+      dynamicChips[curr] = [
+        { label: '< ' + short(tier1), min: 0, max: tier1 },
+        { label: short(tier1) + ' \u2013 ' + short(tier2), min: tier1, max: tier2 },
+        { label: '> ' + short(tier2), min: tier2, max: null }
+      ];
     }
   }
 
   function updateChips(currency) {
     var c = normCurrency(currency);
-    var presets = CHIP_PRESETS[c] || CHIP_PRESETS["IDR"];
+    var presets = dynamicChips[c] && dynamicChips[c].length > 0 ? dynamicChips[c] : CHIP_PRESETS[c] || CHIP_PRESETS["IDR"];
     var chips = document.querySelectorAll(".pw-chip");
     for (var i = 0; i < chips.length; i++) {
       var p = presets[i];
@@ -803,6 +844,7 @@
       chips[i].dataset.min = String(p.min);
       chips[i].dataset.max = String(p.max !== null ? p.max : slider.active.max);
       chips[i].textContent = p.label;
+      chips[i].style.display = "";
     }
   }
   function initPricePanel() {
