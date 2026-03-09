@@ -1164,6 +1164,28 @@
   // ─── location UI ──────────────────────────────────────────────────────────
 
 function buildAreas() {
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // LOCATION FILTER: Fully CMS-driven
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // This function scans all CMS cards and builds location groups dynamically.
+  // Only locations that exist in CMS data are displayed in the filter.
+  //
+  // Workflow:
+  //   1. Scan all cards for data-location attributes
+  //   2. Normalize location names (lowercase, trim, normalize spacing)
+  //   3. Keep mapping of normalized → original labels
+  //   4. Match normalized locations to predefined AREA_RULES
+  //   5. Group locations into areas
+  //   6. Create "Other area" for unmatched locations
+  //   7. Filter state.locations to keep only CMS locations
+  //
+  // Result:
+  //   - Locations automatically update when CMS changes
+  //   - Only shows locations that exist in listings
+  //   - No hardcoded location lists
+  //   - Map coordinates still work via LOC_COORDS lookup
+  //
+  
   var locSet = {};
 
   // collect unique locations from CMS cards
@@ -1173,7 +1195,7 @@ function buildAreas() {
 
     locSet[d.loc] = true;
 
-    // keep original label
+    // keep original label for display (e.g., "Batu Bolong" instead of "batu bolong")
     if (!labelByNorm[d.loc]) {
       labelByNorm[d.loc] = d.locRaw;
     }
@@ -1184,13 +1206,14 @@ function buildAreas() {
   areas = [];
 
   // match locations to defined AREA_RULES
+  // uses exact match (not partial) to avoid false matches
   for (var a = 0; a < AREA_RULES.length; a++) {
     var rule = AREA_RULES[a];
 
     var children = cmsLocs.filter(function (loc) {
-      return rule.keys.some(function (key) {
-        return loc.includes(key);   // partial match instead of exact match
-      });
+      var hit = rule.keys.indexOf(loc) > -1;
+      if (hit) used[loc] = true;
+      return hit;
     });
 
     if (children.length) {
@@ -1199,11 +1222,6 @@ function buildAreas() {
         label: rule.label,
         children: children
       });
-
-      // mark locations as used
-      for (var c = 0; c < children.length; c++) {
-        used[children[c]] = true;
-      }
     }
   }
 
@@ -1221,7 +1239,7 @@ function buildAreas() {
     });
   }
 
-  // keep only valid selected locations
+  // keep only valid selected locations (filter out locations no longer in CMS)
   state.locations = state.locations.filter(function (loc) {
     return locSet[loc];
   });
@@ -1289,6 +1307,17 @@ function buildAreas() {
   }
 
   function renderLocLists() {
+    // Render location filter UI from dynamically-built areas array
+    // (populated by buildAreas() from CMS data)
+    //
+    // Features:
+    //   - Shows only locations that exist in CMS
+    //   - Organized by predefined areas (Canggu, Uluwatu, etc.)
+    //   - Includes "Other area" for locations not in area rules
+    //   - Supports search/filtering of location list
+    //   - Displays original location labels (not normalized)
+    //   - Updates area pills and tree structure in real-time
+    //
     if (!locUI.treeScroll || !locUI.pillScroll) return;
     var q = norm(locUI.searchInput ? locUI.searchInput.value : "");
     var openAreas = {};

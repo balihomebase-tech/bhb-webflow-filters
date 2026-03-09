@@ -1009,6 +1009,28 @@
   // ─── LOCATION PANEL ──────────────────────────────────────────────────────────
 
   function buildAreas() {
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // LOCATION FILTER: Fully CMS-driven
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // This function scans all CMS cards and builds location groups dynamically.
+    // Only locations that exist in CMS data are displayed in the filter.
+    //
+    // Workflow:
+    //   1. Scan all cards for data-location attributes
+    //   2. Normalize location names (lowercase, trim, normalize spacing)
+    //   3. Keep mapping of normalized → original labels
+    //   4. Match normalized locations to predefined AREA_RULES (exact match)
+    //   5. Group locations into areas
+    //   6. Create "Other area" for unmatched locations
+    //   7. Filter state.locations to keep only CMS locations
+    //
+    // Result:
+    //   - Locations automatically update when CMS changes
+    //   - Only shows locations that exist in land listings
+    //   - No hardcoded location lists
+    //   - Map coordinates still work via LOC_COORDS lookup
+    //
+    
     var locSet = {};
     for (var i = 0; i < allCards.length; i++) {
       var d = getData(allCards[i]);
@@ -1107,6 +1129,17 @@
   }
 
   function renderLocLists() {
+    // Render location filter UI from dynamically-built areas array
+    // (populated by buildAreas() from CMS data)
+    //
+    // Features:
+    //   - Shows only locations that exist in CMS
+    //   - Organized by predefined areas (Canggu, Uluwatu, etc.)
+    //   - Includes "Other area" for locations not in area rules
+    //   - Supports search/filtering of location list
+    //   - Displays original location labels (not normalized)
+    //   - Updates area pills and tree structure in real-time
+    //
     if (!locUI.treeScroll || !locUI.pillScroll) return;
     var q = norm(locUI.searchInput ? locUI.searchInput.value : '');
 
