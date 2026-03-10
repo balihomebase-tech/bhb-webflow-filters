@@ -901,26 +901,6 @@
     if (!el.priceTrigger || !el.priceDropdown) return;
     fixSliderDOM();
 
-    // replace any non-input elements with actual input fields
-    var minTextEl = document.getElementById("pwMinText");
-    if (minTextEl && minTextEl.tagName !== "INPUT") {
-      var minInput = document.createElement("input");
-      minInput.type = "text";
-      minInput.id = "pwMinText";
-      minInput.className = minTextEl.className;
-      minInput.inputMode = "numeric";
-      minTextEl.parentNode.replaceChild(minInput, minTextEl);
-    }
-    var maxTextEl = document.getElementById("pwMaxText");
-    if (maxTextEl && maxTextEl.tagName !== "INPUT") {
-      var maxInput = document.createElement("input");
-      maxInput.type = "text";
-      maxInput.id = "pwMaxText";
-      maxInput.className = maxTextEl.className;
-      maxInput.inputMode = "numeric";
-      maxTextEl.parentNode.replaceChild(maxInput, maxTextEl);
-    }
-
     var nativeMin = document.getElementById("pwMin");
     var nativeMax = document.getElementById("pwMax");
     var fillEl = document.getElementById("pwFill");
@@ -1249,37 +1229,6 @@ function buildAreas() {
     if (!el.locDropdown) return;
     var panel = el.locDropdown.querySelector(".location-panel");
     if (!panel) return;
-    var leftCol = panel.querySelector(".location-col.is-left");
-    if (leftCol && !leftCol.querySelector(".location-col-header")) {
-      var sh = document.createElement("div");
-      sh.className = "location-col-header";
-      sh.textContent = "Search Locations";
-      leftCol.insertBefore(sh, leftCol.firstChild);
-    }
-    if (leftCol && !leftCol.querySelector(".location-popular-label")) {
-      var pl = document.createElement("div");
-      pl.className = "location-popular-label";
-      pl.textContent = "Popular Locations";
-      var treeEl = leftCol.querySelector(".tree-scroll");
-      if (treeEl) leftCol.insertBefore(pl, treeEl);
-    }
-    var midCol = panel.querySelector(".location-col.is-middle");
-    if (midCol && !midCol.querySelector(".location-col-header")) {
-      var mh = document.createElement("div");
-      mh.className = "location-col-header";
-      mh.textContent = "Property Locations";
-      var oldH = midCol.querySelector(".select-locations-header");
-      if (oldH) oldH.parentNode.replaceChild(mh, oldH);
-      else midCol.insertBefore(mh, midCol.firstChild);
-    }
-    var lsd = panel.querySelector(".location-search-input");
-    if (lsd && lsd.tagName !== "INPUT") {
-      var ri = document.createElement("input");
-      ri.type = "text";
-      ri.placeholder = "Search...";
-      ri.className = "location-search-input";
-      lsd.parentNode.replaceChild(ri, lsd);
-    }
     locUI = {
       searchInput: panel.querySelector(".location-search-input"),
       treeScroll: panel.querySelector(".tree-scroll"),
@@ -1289,6 +1238,44 @@ function buildAreas() {
       btnApply: panel.querySelector(".loc-btn-apply-inline"),
     };
     if (!locUI.searchInput || !locUI.treeScroll || !locUI.pillScroll) return;
+
+    // Attach listeners to existing elements
+    var pills = locUI.pillScroll.querySelectorAll('.pill');
+    for (var i = 0; i < pills.length; i++) {
+      var pill = pills[i];
+      var areaId = pill.dataset.areaId;
+      if (areaId) {
+        pill.addEventListener('click', (function(aId) {
+          return function() { toggleArea(aId); };
+        })(areaId));
+      }
+    }
+
+    var treeParents = locUI.treeScroll.querySelectorAll('.tree-parent');
+    for (var i = 0; i < treeParents.length; i++) {
+      var parent = treeParents[i];
+      var children = parent.parentNode.querySelector('.children');
+      if (children) {
+        parent.addEventListener('click', (function(cw) {
+          return function() { cw.classList.toggle('open'); };
+        })(children));
+      }
+    }
+
+    var children = locUI.treeScroll.querySelectorAll('.child');
+    for (var i = 0; i < children.length; i++) {
+      var child = children[i];
+      var loc = child.dataset.location;
+      if (loc) {
+        child.addEventListener('click', (function(l) {
+          return function(e) {
+            e.stopPropagation();
+            toggleLoc(l);
+          };
+        })(loc));
+      }
+    }
+
     locUI.searchInput.addEventListener("input", renderLocLists);
     if (locUI.btnClear) {
       locUI.btnClear.addEventListener("click", function () {
@@ -1307,98 +1294,59 @@ function buildAreas() {
   }
 
   function renderLocLists() {
-    // Render location filter UI from dynamically-built areas array
-    // (populated by buildAreas() from CMS data)
-    //
-    // Features:
-    //   - Shows only locations that exist in CMS
-    //   - Organized by predefined areas (Canggu, Uluwatu, etc.)
-    //   - Includes "Other area" for locations not in area rules
-    //   - Supports search/filtering of location list
-    //   - Displays original location labels (not normalized)
-    //   - Updates area pills and tree structure in real-time
+    // Update location filter UI based on search and selection
+    // Assumes UI elements are already in DOM from Webflow
     //
     if (!locUI.treeScroll || !locUI.pillScroll) return;
     var q = norm(locUI.searchInput ? locUI.searchInput.value : "");
     var openAreas = {};
-    var existingItems = locUI.treeScroll.querySelectorAll(".tree-item");
-    for (var x = 0; x < existingItems.length; x++) {
-      var pName = existingItems[x].querySelector(".parent-name");
-      var cw = existingItems[x].querySelector(".children");
+    var treeItems = locUI.treeScroll.querySelectorAll(".tree-item");
+    for (var x = 0; x < treeItems.length; x++) {
+      var pName = treeItems[x].querySelector(".parent-name");
+      var cw = treeItems[x].querySelector(".children");
       if (pName && cw && cw.classList.contains("open"))
         openAreas[pName.textContent.trim()] = true;
     }
-    locUI.treeScroll.innerHTML = "";
-    locUI.pillScroll.innerHTML = "";
     for (var a = 0; a < areas.length; a++) {
       var area = areas[a];
       var areaHit = !q || norm(area.label).indexOf(q) > -1;
       var visKids = area.children.filter(function (c) {
-        return areaHit || c.indexOf(q) > -1;
+        return areaHit || norm(c).indexOf(q) > -1;
       });
-      if (!visKids.length && !areaHit) continue;
       var areaActive = area.children.some(function (c) {
         return draftLocs.indexOf(c) > -1;
       });
-      var item = document.createElement("div");
-      item.className = "tree-item";
-      var parent = document.createElement("div");
-      parent.className = "tree-parent" + (areaActive ? " is-active" : "");
-      parent.innerHTML =
-        '<div class="pin-box"><img src="' +
-        PIN_URL +
-        '" class="pin-icon" alt=""></div><span class="parent-name">' +
-        area.label +
-        '</span><div class="tree-chevron"></div>';
-      var isOpen =
-        openAreas[area.label] ||
-        draftLocs.some(function (l) {
-          return area.children.indexOf(l) > -1;
-        });
-      var childWrap = document.createElement("div");
-      childWrap.className = isOpen ? "children open" : "children";
-      (function (cw) {
-        parent.addEventListener("click", function () {
-          cw.classList.toggle("open");
-        });
-      })(childWrap);
-      item.appendChild(parent);
-      var inner = document.createElement("div");
-      inner.className = "children-inner";
-      inner.innerHTML = '<div class="branch"></div>';
-      var list = document.createElement("div");
-      list.className = "child-list";
-      for (var k = 0; k < visKids.length; k++) {
-        (function (loc) {
-          var row = document.createElement("div");
-          row.className =
-            "child" + (draftLocs.indexOf(loc) > -1 ? " is-active" : "");
-          row.innerHTML =
-            '<div class="mini-pin-box"><img src="' +
-            PIN_URL +
-            '" class="pin-icon-sm" alt=""></div><span>' +
-            (labelByNorm[loc] || loc) +
-            "</span>";
-          row.addEventListener("click", function (e) {
-            e.stopPropagation();
-            toggleLoc(loc);
-          });
-          list.appendChild(row);
-        })(visKids[k]);
+      // Update pill
+      var pill = locUI.pillScroll.querySelector('.pill[data-area-id="' + area.id + '"]');
+      if (pill) {
+        pill.classList.toggle('is-active', areaActive);
+        pill.style.display = visKids.length || areaHit ? '' : 'none';
       }
-      inner.appendChild(list);
-      childWrap.appendChild(inner);
-      item.appendChild(childWrap);
-      locUI.treeScroll.appendChild(item);
-      var pill = document.createElement("div");
-      pill.className = "pill" + (areaActive ? " is-active" : "");
-      pill.textContent = area.label;
-      (function (aId) {
-        pill.addEventListener("click", function () {
-          toggleArea(aId);
-        });
-      })(area.id);
-      locUI.pillScroll.appendChild(pill);
+      // Update tree item
+      var treeItem = locUI.treeScroll.querySelector('.tree-item[data-area-id="' + area.id + '"]');
+      if (treeItem) {
+        var parent = treeItem.querySelector('.tree-parent');
+        if (parent) {
+          parent.classList.toggle('is-active', areaActive);
+        }
+        var children = treeItem.querySelector('.children');
+        if (children) {
+          var isOpen = openAreas[area.label] || areaActive;
+          children.classList.toggle('open', isOpen);
+        }
+        treeItem.style.display = visKids.length || areaHit ? '' : 'none';
+        // Update children
+        var childElements = treeItem.querySelectorAll('.child');
+        for (var k = 0; k < childElements.length; k++) {
+          var childEl = childElements[k];
+          var loc = childEl.dataset.location;
+          if (loc) {
+            var isActive = draftLocs.indexOf(loc) > -1;
+            childEl.classList.toggle('is-active', isActive);
+            childEl.style.display = visKids.indexOf(loc) > -1 ? '' : 'none';
+          }
+        }
+      }
     }
     updateDraftInfo();
   }
