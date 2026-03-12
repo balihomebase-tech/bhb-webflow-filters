@@ -527,7 +527,16 @@
   .pw-chip { height: 38px; font-size: 12px; }
 }
 
-@media (max-width: 767px) {
+@media screen and (max-width: 767px) {
+
+  /* On mobile phones the hero overlap is too aggressive — reset to normal flow */
+  html body .rent-filter_form-block {
+    position: relative !important;
+    inset: auto !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    transform: none !important;
+  }
 
   .location-panel { width: 100%; overflow: hidden; }
 
