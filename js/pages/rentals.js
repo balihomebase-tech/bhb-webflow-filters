@@ -1225,6 +1225,85 @@ function buildAreas() {
   });
 }
 
+  function buildLocDOM() {
+    if (!el.locDropdown) return;
+    var panel = el.locDropdown.querySelector(".location-panel");
+    if (!panel) return;
+    var treeScroll = panel.querySelector(".tree-scroll");
+    var pillScroll = panel.querySelector(".pill-scroll");
+    if (!treeScroll || !pillScroll) return;
+
+    treeScroll.innerHTML = "";
+    pillScroll.innerHTML = "";
+
+    for (var a = 0; a < areas.length; a++) {
+      var area = areas[a];
+
+      // pill
+      var pill = document.createElement("div");
+      pill.className = "pill";
+      pill.dataset.areaId = area.id;
+      pill.textContent = area.label;
+      pillScroll.appendChild(pill);
+
+      // tree item
+      var treeItem = document.createElement("div");
+      treeItem.className = "tree-item";
+      treeItem.dataset.areaId = area.id;
+
+      var treeParent = document.createElement("div");
+      treeParent.className = "tree-parent";
+
+      var chevron = document.createElement("div");
+      chevron.className = "tree-chevron";
+
+      var parentName = document.createElement("div");
+      parentName.className = "parent-name";
+      parentName.textContent = area.label;
+
+      treeParent.appendChild(chevron);
+      treeParent.appendChild(parentName);
+
+      var childrenWrap = document.createElement("div");
+      childrenWrap.className = "children";
+
+      var childrenInner = document.createElement("div");
+      childrenInner.className = "children-inner";
+
+      var branch = document.createElement("div");
+      branch.className = "branch";
+
+      var childList = document.createElement("div");
+      childList.className = "child-list";
+
+      for (var k = 0; k < area.children.length; k++) {
+        var loc = area.children[k];
+        var label = labelByNorm[loc] || (loc.charAt(0).toUpperCase() + loc.slice(1));
+
+        var childEl = document.createElement("div");
+        childEl.className = "child";
+        childEl.dataset.location = loc;
+
+        var miniPin = document.createElement("div");
+        miniPin.className = "mini-pin";
+
+        var span = document.createElement("span");
+        span.textContent = label;
+
+        childEl.appendChild(miniPin);
+        childEl.appendChild(span);
+        childList.appendChild(childEl);
+      }
+
+      childrenInner.appendChild(branch);
+      childrenInner.appendChild(childList);
+      childrenWrap.appendChild(childrenInner);
+      treeItem.appendChild(treeParent);
+      treeItem.appendChild(childrenWrap);
+      treeScroll.appendChild(treeItem);
+    }
+  }
+
   function mountLocUI() {
     if (!el.locDropdown) return;
     var panel = el.locDropdown.querySelector(".location-panel");
@@ -1599,6 +1678,7 @@ function buildAreas() {
 
     areas = [];
     buildAreas();
+    buildLocDOM();
     mountLocUI();
     computeBaseBounds(); // initial bounds — may exclude non-IDR cards until rates load
     initPricePanel();
