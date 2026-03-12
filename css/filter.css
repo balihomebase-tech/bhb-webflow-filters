@@ -529,15 +529,6 @@
 
 @media screen and (max-width: 767px) {
 
-  /* On mobile phones the hero overlap is too aggressive — reset to normal flow */
-  html body .rent-filter_form-block {
-    position: relative !important;
-    inset: auto !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    transform: none !important;
-  }
-
   .location-panel { width: 100%; overflow: hidden; }
 
   .price-panel { width: 100%; padding: 18px; gap: 16px; }
@@ -877,29 +868,7 @@
 }
 
 @media (min-width: 992px) {
-  /* Match the pattern: position:absolute, negative top for hero overlap,
-     left:0 + right:0 + margin:auto for centering (like w-full inside mx-auto container).
-     Use inset shorthand to beat Webflow's inset declarations in a single rule.
-     NO transform — it creates a stacking context that breaks position:fixed dropdowns. */
-  html body .rent-filter_form-block {
-    position: absolute !important;
-    inset: -140px 0 auto 0 !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    transform: none !important;
-  }
-
   .location-dropdown {
     overflow: hidden !important;
-  }
-}
-
-@media (min-width: 1280px) {
-  /* Webflow's 1280px breakpoint uses inset:-140px auto auto 150px + margin:0.
-     Override the whole inset in one declaration so nothing bleeds through. */
-  html body .rent-filter_form-block {
-    inset: -140px 0 auto 0 !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
   }
 }
