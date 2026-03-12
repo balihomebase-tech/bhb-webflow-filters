@@ -804,22 +804,6 @@
 
 @media (max-width: 991px) {
 
-  html body div.price-dropdown,
-  html body .filter-field div.price-dropdown,
-  html body .rent-filter_bottom-left div.price-dropdown {
-    position: fixed !important;
-    top: auto !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    inset: auto !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    border-radius: 20px 20px 0 0 !important;
-    z-index: 9999 !important;
-  }
-
   html body #bhbMap {
     min-height: 220px !important;
     height: 220px !important;
@@ -837,10 +821,6 @@
 }
 
 @media (max-width: 479px) {
-
-  html body div.price-dropdown {
-    max-height: 90vh;
-  }
 
   html body #bhbMap {
     min-height: 180px !important;
