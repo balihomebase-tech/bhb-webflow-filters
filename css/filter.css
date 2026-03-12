@@ -868,14 +868,15 @@
 }
 
 @media (min-width: 992px) {
-  /* Webflow's base CSS already handles position:absolute + top:-140px overlap.
-     Just restore the horizontal centering that Webflow's 1280px breakpoint breaks
-     (it sets left:150px and clears margins). */
+  /* Override Webflow's inset/left/margin rules (base + 1280px breakpoint)
+     that push the panel off-center. Use left:50% + translateX(-50%) so
+     centering is independent of parent width and margin state. */
   html body .rent-filter_form-block {
-    left: 0 !important;
-    right: 0 !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    transform: translateX(-50%) !important;
   }
 
   .location-dropdown {
