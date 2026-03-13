@@ -441,40 +441,11 @@
   }
 
   function closeMobilePanel() {
-    if (window.innerWidth < 768) {
-      var panel = document.querySelector(".rent-filter_form-block");
-      if (panel) panel.style.display = "none";
-    }
     closeAll();
     if (locDropOpen) openLocDrop(false);
   }
 
   // inject close buttons into filter dropdowns
-  function injectDropdownCloseBtns() {
-    var drops = document.querySelectorAll(".filter-dropdown,.price-dropdown");
-    for (var i = 0; i < drops.length; i++) {
-      if (drops[i].querySelector(".drop-close-btn")) continue;
-      var btn = document.createElement("button");
-      btn.className = "drop-close-btn";
-      btn.innerHTML =
-        '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1L11 11M11 1L1 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
-      btn.setAttribute("aria-label", "Close");
-      drops[i].insertBefore(btn, drops[i].firstChild);
-      (function (drop) {
-        btn.addEventListener("click", function (e) {
-          e.stopPropagation();
-          drop.style.display = "none";
-          drop.classList.remove("is-open");
-          var field = drop.closest(".filter-field");
-          if (field) {
-            var trig = field.querySelector(".filter-trigger,.price-trigger");
-            if (trig) trig.classList.remove("is-active");
-          }
-        });
-      })(drops[i]);
-    }
-  }
-
   // ─── event binding ────────────────────────────────────────────────────────
 
   function bindEvents() {
@@ -517,10 +488,6 @@
         applyFilters();
         closeAll();
         if (locDropOpen) openLocDrop(false);
-        if (window.innerWidth < 768) {
-          var panel = document.querySelector(".rent-filter_form-block");
-          if (panel) panel.style.display = "none";
-        }
       });
     }
 
@@ -1660,18 +1627,256 @@ function buildAreas() {
     return null;
   }
 
+  // ─── UI builder ───────────────────────────────────────────────────────────
+  // Creates entire filter HTML and injects into #bhb-filter.
+  // Replaces the native Webflow filter form elements.
+
+  function buildUI() {
+    var root = document.getElementById('bhb-filter');
+    if (!root) return;
+
+    var CLOSE_SVG = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+
+    function mk(tag, attrs, children) {
+      var e = document.createElement(tag);
+      if (attrs) {
+        for (var k in attrs) {
+          if (!attrs.hasOwnProperty(k)) continue;
+          if (k === 'class') e.className = attrs[k];
+          else if (k === 'html')  e.innerHTML = attrs[k];
+          else if (k === 'text')  e.textContent = attrs[k];
+          else e.setAttribute(k, attrs[k]);
+        }
+      }
+      if (children) {
+        for (var i = 0; i < children.length; i++) {
+          if (children[i]) e.appendChild(children[i]);
+        }
+      }
+      return e;
+    }
+
+    function makeLabel(text) {
+      return mk('div', { class: 'filter-label', text: text });
+    }
+
+    function makeTrigger(text) {
+      return mk('div', { class: 'filter-trigger' }, [
+        mk('div', { class: 'filter-trigger_text', text: text })
+      ]);
+    }
+
+    function makeOption(value, label, checked, withCheckbox) {
+      var children = [];
+      if (withCheckbox !== false) children.push(mk('div', { class: 'filter-checkbox' }));
+      children.push(mk('div', { class: 'text-size-small filter-option_label', text: label }));
+      return mk('div', {
+        class: 'filter-option' + (checked ? ' is-active' : ''),
+        'data-value': value
+      }, children);
+    }
+
+    function makeField(children) {
+      return mk('div', { class: 'filter-field' }, children);
+    }
+
+    function makeDropdown(children) {
+      return mk('div', { class: 'filter-dropdown' }, [
+        mk('div', { class: 'filter-options' }, children)
+      ]);
+    }
+
+    // ── Bedrooms ──
+    var bedsField = makeField([
+      makeLabel('Bed Rooms'),
+      makeTrigger('Any'),
+      makeDropdown([
+        makeOption('Any', 'Any', true),
+        makeOption('1',  '1 Br',  false),
+        makeOption('2',  '2 Br',  false),
+        makeOption('3',  '3 Br',  false),
+        makeOption('4',  '4 Br',  false),
+        makeOption('5',  '5 Br',  false),
+        makeOption('6+', '6+ Br', false)
+      ])
+    ]);
+
+    // ── Availability ──
+    var availField = makeField([
+      makeLabel('Availability'),
+      makeTrigger('Any'),
+      makeDropdown([
+        makeOption('Any',       'Any',       true,  false),
+        makeOption('Available', 'Available', false, false),
+        makeOption('Rented',    'Rented',    false, false)
+      ])
+    ]);
+
+    // ── Keyword ──
+    var kwInput = mk('input', {
+      class: 'keyword-input',
+      type: 'search',
+      placeholder: 'Search\u2026',
+      maxlength: '256'
+    });
+    var kwField = makeField([
+      makeLabel('Keyword / Listing Code'),
+      mk('div', { class: 'filter-trigger' }, [kwInput])
+    ]);
+
+    // ── Location ──
+    var locSearchInput = mk('input', {
+      class: 'location-search-input',
+      type: 'text',
+      placeholder: 'Search locations\u2026'
+    });
+    var treeScrollEl  = mk('div', { class: 'tree-scroll' });
+    var pillScrollEl  = mk('div', { class: 'pill-scroll' });
+    var mapContEl     = mk('div', { id: 'bhbMap' });
+    var locSelInfo    = mk('div', { id: 'locSelectedInfo', class: 'loc-selected-info', text: 'No Location Selected' });
+    var locBtnClear   = mk('a',  { href: '#', class: 'loc-btn-clear-inline',  text: 'Clear' });
+    var locBtnApply   = mk('a',  { href: '#', class: 'loc-btn-apply-inline',  text: 'Search' });
+    var locCloseBtn   = mk('div', { class: 'close-btn', html: CLOSE_SVG });
+
+    var locDropdown = mk('div', { class: 'location-dropdown' }, [
+      locCloseBtn,
+      mk('div', { class: 'location-panel' }, [
+        mk('div', { class: 'location-col is-left' }, [
+          mk('div', { class: 'location-search' }, [
+            mk('img', { src: PIN_URL, alt: '' }),
+            locSearchInput
+          ]),
+          treeScrollEl
+        ]),
+        mk('div', { class: 'location-col is-middle' }, [pillScrollEl]),
+        mk('div', { class: 'location-col is-right' }, [
+          mk('div', { class: 'map-wrap' }, [mapContEl]),
+          mk('div', { class: 'loc-map-footer' }, [
+            locSelInfo,
+            mk('div', { class: 'loc-actions' }, [locBtnClear, locBtnApply])
+          ])
+        ])
+      ])
+    ]);
+
+    var locTrigger = mk('div', { class: 'location-trigger' }, [
+      mk('div', { class: 'location-trigger_text', text: 'All Location' })
+    ]);
+
+    var locField = makeField([
+      makeLabel('Location'),
+      locTrigger,
+      locDropdown
+    ]);
+
+    // ── Price ──
+    var pwFillEl    = mk('div', { id: 'pwFill',      class: 'pw-fill' });
+    var pwTrackEl   = mk('div', {                     class: 'pw-track' });
+    var pwSliderEl  = mk('div', {                     class: 'pw-slider' }, [pwTrackEl, pwFillEl]);
+    var pwMinText   = mk('input', { id: 'pwMinText', class: 'pw-box', type: 'text', value: '0' });
+    var pwMaxText   = mk('input', { id: 'pwMaxText', class: 'pw-box', type: 'text', value: '0' });
+    var pwScaleMinEl = mk('span', { id: 'pwScaleMin', class: 'pw-scale-min', text: 'Rp0' });
+    var pwScaleMaxEl = mk('span', { id: 'pwScaleMax', class: 'pw-scale-max', text: 'Rp0' });
+    var pwRangeTextEl = mk('div', { id: 'pwRangeText', class: 'pw-range-value', text: '0' });
+    var priceCloseBtn = mk('div', { class: 'close-btn', html: CLOSE_SVG });
+
+    var priceDropdown = mk('div', { class: 'price-dropdown' }, [
+      mk('div', { class: 'price-panel' }, [
+        mk('div', { class: 'pp-section' }, [
+          mk('div', { class: 'pp-section-title', text: 'QUICK\u00a0SELECTION' }),
+          mk('div', { class: 'pw-quick' }, [
+            mk('div', { class: 'pw-chip', 'data-chip': '0', text: '< 50jt' }),
+            mk('div', { class: 'pw-chip', 'data-chip': '1', text: '50jt \u2013 200jt' }),
+            mk('div', { class: 'pw-chip', 'data-chip': '2', text: '> 200jt' })
+          ])
+        ]),
+        mk('div', { class: 'pp-section' }, [
+          mk('div', { class: 'pp-section-title', text: 'CUSTOM\u00a0RANGE' }),
+          mk('div', { class: 'pw-rows' }, [
+            mk('div', { class: 'pw-row-item' }, [
+              mk('div', { class: 'pw-label', text: 'Minimum Price' }),
+              mk('div', { class: 'pw-box-wrap' }, [
+                mk('div', { id: 'pwSymbolMin', class: 'pw-symbol', text: 'Rp' }),
+                pwMinText
+              ])
+            ]),
+            mk('div', { class: 'pw-row-item' }, [
+              mk('div', { class: 'pw-label', text: 'Maximum Price' }),
+              mk('div', { class: 'pw-box-wrap' }, [
+                mk('div', { id: 'pwSymbolMax', class: 'pw-symbol', text: 'Rp' }),
+                pwMaxText
+              ])
+            ])
+          ])
+        ]),
+        mk('div', { class: 'pp-section pp-section--slider' }, [
+          mk('div', { class: 'pw-range-head' }, [
+            mk('div', { class: 'pw-range-label', text: 'PRICE RANGE' }),
+            pwRangeTextEl
+          ]),
+          pwSliderEl,
+          mk('div', { class: 'pw-scale' }, [pwScaleMinEl, pwScaleMaxEl])
+        ])
+      ]),
+      priceCloseBtn
+    ]);
+
+    var priceTrigText = mk('div', { class: 'price-trigger_text', text: 'Price Range' });
+    var priceTrigger  = mk('div', { class: 'price-trigger' }, [priceTrigText]);
+
+    var priceField = makeField([
+      makeLabel('Price'),
+      mk('div', { class: 'price-trigger-wrapper' }, [
+        priceTrigger,
+        mk('div', { class: 'price-note', html: '<strong>Price for reference only. Payments in IDR.</strong>' })
+      ]),
+      priceDropdown
+    ]);
+
+    // ── Currency ──
+    var currField = makeField([
+      makeLabel('Currency'),
+      makeTrigger('IDR'),
+      makeDropdown([
+        makeOption('IDR', 'IDR', true,  true),
+        makeOption('USD', 'USD', false, true),
+        makeOption('EUR', 'EUR', false, true)
+      ])
+    ]);
+
+    // ── Form close (mobile) ──
+    var formCloseBtn = mk('div', { class: 'close-btn', html: CLOSE_SVG });
+
+    // ── Action buttons ──
+    var btnClear  = mk('a', { href: '#', class: 'filter-button-1', text: 'Clear' });
+    var btnSearch = mk('a', { href: '#', class: 'filter-button-2', text: 'Search Properties' });
+
+    // ── Assemble ──
+    var filterForm = mk('div', { class: 'rent-filter_form' }, [
+      formCloseBtn,
+      mk('div', { class: 'rent-filter_items' }, [
+        mk('div', { class: 'rent-filter_top' }, [bedsField, availField, kwField]),
+        mk('div', { class: 'rent-filter_divider' }),
+        mk('div', { class: 'rent-filter_bottom' }, [
+          mk('div', { class: 'rent-filter_bottom-left' }, [locField, priceField]),
+          currField,
+          mk('div', { class: 'rent-filter_bottom-right' }, [
+            mk('div', { class: 'filter-button-style-1' }, [btnClear]),
+            mk('div', { class: 'filter-button-style-1 dark-btn' }, [btnSearch])
+          ])
+        ])
+      ])
+    ]);
+
+    root.appendChild(filterForm);
+  }
+
   // ─── init ─────────────────────────────────────────────────────────────────
 
   function init() {
+    buildUI();
     cacheEls();
     if (!el.grid) return;
-
-    // hide all dropdowns on load
-    var allDrops = document.querySelectorAll(
-      ".filter-dropdown,.price-dropdown,.location-dropdown",
-    );
-    for (var i = 0; i < allDrops.length; i++)
-      allDrops[i].style.display = "none";
 
     allCards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
     if (!allCards.length) return;
@@ -1682,7 +1887,6 @@ function buildAreas() {
     mountLocUI();
     computeBaseBounds(); // initial bounds — may exclude non-IDR cards until rates load
     initPricePanel();
-    injectDropdownCloseBtns();
     hydrateCoordsFromCMS();
     loadMapSDK(initMap);
     updateLocText();
