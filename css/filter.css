@@ -834,7 +834,7 @@
    html body prefix + !important on every property for maximum specificity
    ========================================================================== */
 
-@media (min-width: 992px) {
+@media screen and (min-width: 992px) {
 
   html body .location-dropdown {
     position: absolute !important;
@@ -851,7 +851,7 @@
   }
 }
 
-@media (max-width: 991px) {
+@media screen and (max-width: 991px) {
 
   html body .location-dropdown,
   html body .price-dropdown {
@@ -866,7 +866,7 @@
   }
 }
 
-@media (max-width: 479px) {
+@media screen and (max-width: 479px) {
 
   html body .location-dropdown,
   html body .price-dropdown {
