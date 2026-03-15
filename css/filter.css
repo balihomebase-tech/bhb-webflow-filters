@@ -21,6 +21,11 @@
 /* ── Form layout ── */
 #bhb-filter .rent-filter_form {
   position: relative;
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 1px 10px rgba(0, 0, 0, 0.07);
+  border: 1px solid #ece8e3;
 }
 
 #bhb-filter .rent-filter_items {
@@ -31,33 +36,34 @@
 
 #bhb-filter .rent-filter_top {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: flex-end;
 }
 
 #bhb-filter .rent-filter_divider {
   height: 1px;
-  background: #e8e3dd;
-  margin: 16px 0;
+  background: #ede9e4;
+  margin: 14px 0;
 }
 
 #bhb-filter .rent-filter_bottom {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: flex-end;
 }
 
 #bhb-filter .rent-filter_bottom-left {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: flex-end;
   flex: 1;
+  min-width: 0;
 }
 
 #bhb-filter .rent-filter_bottom-right {
   display: flex;
   gap: 8px;
-  align-items: center;
+  align-items: flex-end;
   flex-shrink: 0;
 }
 
@@ -66,15 +72,18 @@
   position: relative;
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 #bhb-filter .filter-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #78716c;
+  font-size: 10px;
+  font-weight: 700;
+  color: #9c9289;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.09em;
   margin-bottom: 6px;
+  white-space: nowrap;
 }
 
 /* ── Trigger buttons ── */
@@ -83,20 +92,22 @@
 #bhb-filter .price-trigger {
   display: flex;
   align-items: center;
-  height: 44px;
-  padding: 0 14px;
-  background: #f3f3f3;
-  border-radius: 8px;
+  height: 42px;
+  padding: 0 13px;
+  background: #f8f6f3;
+  border-radius: 9px;
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  border: 1.5px solid transparent;
+  transition: background 0.12s, border-color 0.15s, box-shadow 0.15s;
+  border: 1px solid #e4dfd9;
   user-select: none;
+  white-space: nowrap;
 }
 
 #bhb-filter .filter-trigger:hover,
 #bhb-filter .location-trigger:hover,
 #bhb-filter .price-trigger:hover {
-  background: #ece8e3;
+  background: #f0ebe5;
+  border-color: #cec8c0;
 }
 
 #bhb-filter .filter-trigger.is-active,
@@ -109,7 +120,7 @@
 #bhb-filter .filter-trigger_text,
 #bhb-filter .location-trigger_text,
 #bhb-filter .price-trigger_text {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #3a3530;
   white-space: nowrap;
@@ -130,7 +141,7 @@
   outline: none;
   background: transparent;
   width: 100%;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #3a3530;
   font-family: inherit;
@@ -145,12 +156,13 @@
 #bhb-filter .price-trigger-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
 }
 
 #bhb-filter .price-note {
-  font-size: 11px;
-  color: #999;
+  font-size: 10px;
+  color: #b0a8a0;
+  font-weight: 400;
 }
 
 /* ── Generic filter dropdown (bedrooms, availability, currency) ── */
@@ -188,18 +200,18 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
   cursor: pointer;
   transition: background 0.12s;
 }
 
 #bhb-filter .filter-option:hover {
-  background: rgba(240, 236, 227, 0.6);
+  background: #f5f0ea;
 }
 
 #bhb-filter .filter-option_label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #3a3530;
 }
@@ -241,6 +253,15 @@
 
 #bhb-filter .filter-option.is-active .filter-checkbox::after {
   transform: translate(-50%, -60%) rotate(-45deg) scale(1);
+}
+
+/* ── Location & Price field widths ── */
+#bhb-filter .filter-field:has(.location-trigger) {
+  min-width: 130px;
+}
+
+#bhb-filter .filter-field:has(.price-trigger-wrapper) {
+  min-width: 120px;
 }
 
 /* ── Location dropdown ── */
@@ -790,19 +811,23 @@
 #bhb-filter .filter-button-style-1 {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 10px 18px;
-  border-radius: 10px;
-  border: 1.5px solid #d6d0ca;
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 9px;
+  border: 1px solid #d6d0ca;
   background: #fff;
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.12s, border-color 0.12s;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 #bhb-filter .filter-button-1,
 #bhb-filter .filter-button-2 {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #3a2e28;
   text-decoration: none;
@@ -811,7 +836,7 @@
 
 #bhb-filter .filter-button-style-1:hover {
   background: #f5f2ec;
-  border-color: #b8b0a8;
+  border-color: #bbb3aa;
 }
 
 #bhb-filter .filter-button-style-1.dark-btn {
@@ -877,6 +902,11 @@
    ========================================================================== */
 
 @media (max-width: 991px) {
+
+  #bhb-filter .rent-filter_form {
+    padding: 16px;
+    border-radius: 12px;
+  }
 
   #bhb-filter .rent-filter_top {
     flex-wrap: wrap;
@@ -990,6 +1020,10 @@
    ========================================================================== */
 
 @media (max-width: 767px) {
+
+  #bhb-filter .rent-filter_form {
+    padding: 14px;
+  }
 
   #bhb-filter .location-dropdown,
   #bhb-filter .price-dropdown {

@@ -445,7 +445,6 @@
     if (locDropOpen) openLocDrop(false);
   }
 
-  // inject close buttons into filter dropdowns
   // ─── event binding ────────────────────────────────────────────────────────
 
   function bindEvents() {
@@ -1828,7 +1827,7 @@ function buildAreas() {
       makeLabel('Price'),
       mk('div', { class: 'price-trigger-wrapper' }, [
         priceTrigger,
-        mk('div', { class: 'price-note', html: '<strong>Price for reference only. Payments in IDR.</strong>' })
+        mk('div', { class: 'price-note', text: 'Price for reference only. Payments in IDR.' })
       ]),
       priceDropdown
     ]);
