@@ -23,9 +23,8 @@
   position: relative;
   background: #fff;
   border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 1px 10px rgba(0, 0, 0, 0.07);
-  border: 1px solid #ece8e3;
+  padding: 32px 36px 28px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.11);
 }
 
 #bhb-filter .rent-filter_items {
@@ -34,35 +33,36 @@
   gap: 0;
 }
 
+/* Row 1: 4 equal columns */
 #bhb-filter .rent-filter_top {
-  display: flex;
-  gap: 10px;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0 32px;
+  align-items: end;
+  margin-bottom: 24px;
 }
 
+/* Divider — hidden, rows separated by margin */
 #bhb-filter .rent-filter_divider {
-  height: 1px;
-  background: #ede9e4;
-  margin: 14px 0;
+  display: none;
 }
 
+/* Row 2: price wider, currency, then buttons */
 #bhb-filter .rent-filter_bottom {
-  display: flex;
-  gap: 10px;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: 1.6fr 0.8fr auto;
+  gap: 0 32px;
+  align-items: end;
 }
 
+/* No longer used but kept for safety */
 #bhb-filter .rent-filter_bottom-left {
-  display: flex;
-  gap: 10px;
-  align-items: flex-end;
-  flex: 1;
-  min-width: 0;
+  display: contents;
 }
 
 #bhb-filter .rent-filter_bottom-right {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: flex-end;
   flex-shrink: 0;
 }
@@ -70,59 +70,55 @@
 /* ── Filter field ── */
 #bhb-filter .filter-field {
   position: relative;
-  flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
 }
 
 #bhb-filter .filter-label {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
-  color: #9c9289;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  margin-bottom: 6px;
+  color: #1a1412;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-bottom: 8px;
   white-space: nowrap;
 }
 
-/* ── Trigger buttons ── */
+/* ── Trigger buttons — underline style ── */
 #bhb-filter .filter-trigger,
 #bhb-filter .location-trigger,
 #bhb-filter .price-trigger {
   display: flex;
   align-items: center;
-  height: 42px;
-  padding: 0 13px;
-  background: #f8f6f3;
-  border-radius: 9px;
+  height: 38px;
+  padding: 0 2px 6px;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid #d0cac3;
+  border-radius: 0;
   cursor: pointer;
-  transition: background 0.12s, border-color 0.15s, box-shadow 0.15s;
-  border: 1px solid #e4dfd9;
+  transition: border-color 0.15s;
   user-select: none;
-  white-space: nowrap;
 }
 
 #bhb-filter .filter-trigger:hover,
 #bhb-filter .location-trigger:hover,
 #bhb-filter .price-trigger:hover {
-  background: #f0ebe5;
-  border-color: #cec8c0;
+  border-bottom-color: #a09890;
 }
 
 #bhb-filter .filter-trigger.is-active,
 #bhb-filter .location-trigger.is-active,
 #bhb-filter .price-trigger.is-active {
-  border-color: #b0703b;
-  box-shadow: 0 0 0 3px rgba(176, 112, 59, 0.12);
+  border-bottom-color: #b0703b;
 }
 
 #bhb-filter .filter-trigger_text,
 #bhb-filter .location-trigger_text,
 #bhb-filter .price-trigger_text {
-  font-size: 13px;
-  font-weight: 500;
-  color: #3a3530;
+  font-size: 14px;
+  font-weight: 400;
+  color: #888078;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -141,14 +137,14 @@
   outline: none;
   background: transparent;
   width: 100%;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 400;
   color: #3a3530;
   font-family: inherit;
 }
 
 #bhb-filter .keyword-input::placeholder {
-  color: #aaa;
+  color: #888078;
   font-weight: 400;
 }
 
@@ -156,13 +152,11 @@
 #bhb-filter .price-trigger-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 0;
 }
 
 #bhb-filter .price-note {
-  font-size: 10px;
-  color: #b0a8a0;
-  font-weight: 400;
+  display: none;
 }
 
 /* ── Generic filter dropdown (bedrooms, availability, currency) ── */
@@ -255,13 +249,13 @@
   transform: translate(-50%, -60%) rotate(-45deg) scale(1);
 }
 
-/* ── Location & Price field widths ── */
+/* ── Location & Price field widths — grid handles sizing, just guard minimums ── */
 #bhb-filter .filter-field:has(.location-trigger) {
-  min-width: 130px;
+  min-width: 0;
 }
 
 #bhb-filter .filter-field:has(.price-trigger-wrapper) {
-  min-width: 120px;
+  min-width: 0;
 }
 
 /* ── Location dropdown ── */
@@ -813,10 +807,10 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 42px;
-  padding: 0 18px;
-  border-radius: 9px;
-  border: 1px solid #d6d0ca;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 8px;
+  border: 1.5px solid #d6d0ca;
   background: #fff;
   cursor: pointer;
   text-decoration: none;
@@ -828,7 +822,7 @@
 #bhb-filter .filter-button-1,
 #bhb-filter .filter-button-2 {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: #3a2e28;
   text-decoration: none;
   white-space: nowrap;
@@ -840,8 +834,8 @@
 }
 
 #bhb-filter .filter-button-style-1.dark-btn {
-  background: #3a2e28;
-  border-color: #3a2e28;
+  background: #1c1412;
+  border-color: #1c1412;
 }
 
 #bhb-filter .filter-button-style-1.dark-btn .filter-button-2 {
@@ -904,28 +898,28 @@
 @media (max-width: 991px) {
 
   #bhb-filter .rent-filter_form {
-    padding: 16px;
+    padding: 20px 20px 18px;
     border-radius: 12px;
   }
 
   #bhb-filter .rent-filter_top {
-    flex-wrap: wrap;
-    gap: 8px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px 20px;
+    margin-bottom: 20px;
   }
 
   #bhb-filter .rent-filter_bottom {
-    flex-wrap: wrap;
-    gap: 8px;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 20px;
   }
 
-  #bhb-filter .rent-filter_bottom-left {
-    flex-wrap: wrap;
-    width: 100%;
+  #bhb-filter .rent-filter_bottom-right {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
   }
 
   #bhb-filter .filter-field {
-    flex: 1 1 auto;
-    min-width: 140px;
+    min-width: 0;
   }
 
   #bhb-filter .location-col.is-right {
@@ -1022,7 +1016,17 @@
 @media (max-width: 767px) {
 
   #bhb-filter .rent-filter_form {
-    padding: 14px;
+    padding: 16px 16px 14px;
+  }
+
+  #bhb-filter .rent-filter_top {
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 16px;
+  }
+
+  #bhb-filter .rent-filter_bottom {
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 16px;
   }
 
   #bhb-filter .location-dropdown,

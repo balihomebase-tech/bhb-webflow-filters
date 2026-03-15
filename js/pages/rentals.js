@@ -1854,10 +1854,9 @@ function buildAreas() {
     var filterForm = mk('div', { class: 'rent-filter_form' }, [
       formCloseBtn,
       mk('div', { class: 'rent-filter_items' }, [
-        mk('div', { class: 'rent-filter_top' }, [bedsField, availField, kwField]),
-        mk('div', { class: 'rent-filter_divider' }),
+        mk('div', { class: 'rent-filter_top' }, [bedsField, availField, kwField, locField]),
         mk('div', { class: 'rent-filter_bottom' }, [
-          mk('div', { class: 'rent-filter_bottom-left' }, [locField, priceField]),
+          priceField,
           currField,
           mk('div', { class: 'rent-filter_bottom-right' }, [
             mk('div', { class: 'filter-button-style-1' }, [btnClear]),
