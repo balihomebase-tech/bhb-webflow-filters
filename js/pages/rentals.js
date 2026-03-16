@@ -443,6 +443,11 @@
   function closeMobilePanel() {
     closeAll();
     if (locDropOpen) openLocDrop(false);
+    var form = document.querySelector('.rent-filter_form');
+    if (form) form.classList.remove('is-mobile-open');
+    var overlay = document.getElementById('bhbOverlay');
+    if (overlay) overlay.style.display = '';
+    document.body.style.overflow = '';
   }
 
   // ─── event binding ────────────────────────────────────────────────────────
@@ -494,6 +499,26 @@
     for (var i = 0; i < closeBtns.length; i++) {
       closeBtns[i].addEventListener("click", function (e) {
         e.stopPropagation();
+        closeMobilePanel();
+      });
+    }
+
+    // mobile collapsed search trigger → open bottom sheet
+    var mobileSearchTrigger = document.querySelector(".bhb-mobile-search-trigger");
+    if (mobileSearchTrigger) {
+      mobileSearchTrigger.addEventListener("click", function () {
+        var form = document.querySelector(".rent-filter_form");
+        var overlay = document.getElementById("bhbOverlay");
+        if (form) form.classList.add("is-mobile-open");
+        if (overlay) overlay.style.display = "block";
+        document.body.style.overflow = "hidden";
+      });
+    }
+
+    // overlay click → close panel
+    var overlay = document.getElementById("bhbOverlay");
+    if (overlay) {
+      overlay.addEventListener("click", function () {
         closeMobilePanel();
       });
     }
@@ -1863,8 +1888,17 @@ function buildAreas() {
     // ── Assemble ──
     priceField.classList.add('is-price');
 
+    // ── Mobile collapsed card (≤991px) ──
+    var mobileCollapsed = mk('div', { class: 'bhb-mobile-collapsed' }, [
+      mk('div', { class: 'bhb-mobile-title', text: 'Search Your Property' }),
+      mk('div', { class: 'bhb-mobile-search-trigger' }, [
+        mk('span', { class: 'bhb-mobile-search-placeholder', text: 'Search\u2026' })
+      ])
+    ]);
+
     var filterForm = mk('div', { class: 'rent-filter_form' }, [
       formCloseBtn,
+      mobileCollapsed,
       mk('div', { class: 'rent-filter_grid' }, [
         bedsField, availField, kwField, locField,
         priceField, currField
@@ -1875,6 +1909,9 @@ function buildAreas() {
       ])
     ]);
 
+    // ── Overlay backdrop for mobile panel ──
+    var overlay = mk('div', { id: 'bhbOverlay', class: 'bhb-overlay' });
+    root.appendChild(overlay);
     root.appendChild(filterForm);
   }
 
