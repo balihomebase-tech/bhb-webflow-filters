@@ -1218,10 +1218,8 @@ function buildAreas() {
 
   function buildLocDOM() {
     if (!el.locDropdown) return;
-    var panel = el.locDropdown.querySelector(".location-panel");
-    if (!panel) return;
-    var treeScroll = panel.querySelector(".tree-scroll");
-    var pillScroll = panel.querySelector(".pill-scroll");
+    var treeScroll = el.locDropdown.querySelector(".tree-scroll");
+    var pillScroll = el.locDropdown.querySelector(".pill-scroll");
     if (!treeScroll || !pillScroll) return;
 
     treeScroll.innerHTML = "";
@@ -1297,30 +1295,17 @@ function buildAreas() {
 
   function mountLocUI() {
     if (!el.locDropdown) return;
-    var panel = el.locDropdown.querySelector(".location-panel");
-    if (!panel) return;
     locUI = {
-      searchInput: panel.querySelector(".location-search-input"),
-      treeScroll: panel.querySelector(".tree-scroll"),
-      pillScroll: panel.querySelector(".pill-scroll"),
-      selectedInfo: panel.querySelector("#locSelectedInfo"),
-      btnClear: panel.querySelector(".loc-btn-clear-inline"),
-      btnApply: panel.querySelector(".loc-btn-apply-inline"),
+      searchInput: el.locDropdown.querySelector(".location-search-input"),
+      treeScroll:  el.locDropdown.querySelector(".tree-scroll"),
+      pillScroll:  el.locDropdown.querySelector(".pill-scroll"),
+      selectedInfo: el.locDropdown.querySelector("#locSelectedInfo"),
+      btnClear: el.locDropdown.querySelector(".loc-btn-clear-inline"),
+      btnApply: el.locDropdown.querySelector(".loc-btn-apply-inline"),
     };
     if (!locUI.searchInput || !locUI.treeScroll || !locUI.pillScroll) return;
 
-    // Attach listeners to existing elements
-    var pills = locUI.pillScroll.querySelectorAll('.pill');
-    for (var i = 0; i < pills.length; i++) {
-      var pill = pills[i];
-      var areaId = pill.dataset.areaId;
-      if (areaId) {
-        pill.addEventListener('click', (function(aId) {
-          return function() { toggleArea(aId); };
-        })(areaId));
-      }
-    }
-
+    // ── Tree parents: expand/collapse ──
     var treeParents = locUI.treeScroll.querySelectorAll('.tree-parent');
     for (var i = 0; i < treeParents.length; i++) {
       var parent = treeParents[i];
@@ -1332,6 +1317,7 @@ function buildAreas() {
       }
     }
 
+    // ── Tree children: individual location toggle ──
     var children = locUI.treeScroll.querySelectorAll('.child');
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
@@ -1346,7 +1332,19 @@ function buildAreas() {
       }
     }
 
-    // SVG map region click handlers
+    // ── Pills: area toggle ──
+    var pills = locUI.pillScroll.querySelectorAll('.pill');
+    for (var i = 0; i < pills.length; i++) {
+      var pill = pills[i];
+      var areaId = pill.dataset.areaId;
+      if (areaId) {
+        pill.addEventListener('click', (function(aId) {
+          return function() { toggleArea(aId); };
+        })(areaId));
+      }
+    }
+
+    // ── SVG map region click handlers (area-level) ──
     var svgEl = el.locDropdown.querySelector('.bali-svg-map');
     if (svgEl) {
       var areaRegions = svgEl.querySelectorAll('.bali-area-region');
@@ -1356,6 +1354,27 @@ function buildAreas() {
         })(areaRegions[r].getAttribute('data-area')));
       }
     }
+
+    // ── Tab switching ──
+    var tabAreaBtn  = el.locDropdown.querySelector('.loc-tab-area');
+    var tabMapsBtn  = el.locDropdown.querySelector('.loc-tab-maps');
+    var panelArea   = el.locDropdown.querySelector('.loc-panel-area');
+    var panelMaps   = el.locDropdown.querySelector('.loc-panel-maps');
+    function switchLocTab(toMaps) {
+      if (toMaps) {
+        if (tabAreaBtn) tabAreaBtn.classList.remove('is-active');
+        if (tabMapsBtn) tabMapsBtn.classList.add('is-active');
+        if (panelArea)  panelArea.classList.remove('is-active');
+        if (panelMaps)  panelMaps.classList.add('is-active');
+      } else {
+        if (tabMapsBtn) tabMapsBtn.classList.remove('is-active');
+        if (tabAreaBtn) tabAreaBtn.classList.add('is-active');
+        if (panelMaps)  panelMaps.classList.remove('is-active');
+        if (panelArea)  panelArea.classList.add('is-active');
+      }
+    }
+    if (tabAreaBtn) tabAreaBtn.addEventListener('click', function() { switchLocTab(false); });
+    if (tabMapsBtn) tabMapsBtn.addEventListener('click', function() { switchLocTab(true); });
 
     locUI.searchInput.addEventListener("input", renderLocLists);
     if (locUI.btnClear) {
@@ -1598,10 +1617,66 @@ function buildAreas() {
     for (var i = 0; i < regionPaths.length; i++) {
       var path = regionPaths[i];
       var areaId = path.getAttribute('data-area');
-      if (activeAreaIds[areaId]) {
-        path.classList.add('is-active');
-      } else {
-        path.classList.remove('is-active');
+      path.classList.toggle('is-active', !!activeAreaIds[areaId]);
+    }
+    // update individual location dots
+    var dots = svgEl.querySelectorAll('.loc-dot');
+    for (var i = 0; i < dots.length; i++) {
+      var dot = dots[i];
+      dot.classList.toggle('is-active', locations.indexOf(dot.getAttribute('data-location')) > -1);
+    }
+  }
+
+  // ─── geo → SVG coordinate projection ─────────────────────────────────────
+  // Linear transform calibrated from Bali SVG (323×436 viewBox).
+  // Reference anchors: Canggu [115.1365, -8.65062] → (132, 215)
+  //                    Ubud   [115.2623, -8.5069]  → (235, 100)
+  function geoToSvg(lng, lat) {
+    var x = (lng - 115.1365) * 819 + 132;
+    var y = (-8.65062 - lat) * 800 + 215;
+    return { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 };
+  }
+
+  // ─── build location dots on SVG ───────────────────────────────────────────
+  function buildMapDots() {
+    if (!el.locDropdown) return;
+    var svgEl = el.locDropdown.querySelector('.bali-svg-map');
+    if (!svgEl) return;
+    var NS = 'http://www.w3.org/2000/svg';
+    // remove any old dots
+    var old = svgEl.querySelectorAll('.loc-dot, .loc-dot-label');
+    for (var i = 0; i < old.length; i++) old[i].remove();
+    // add a dot + label per location
+    for (var a = 0; a < areas.length; a++) {
+      var area = areas[a];
+      for (var k = 0; k < area.children.length; k++) {
+        var loc = area.children[k];
+        var coords = LOC_COORDS[loc];
+        if (!coords) continue;
+        var pos = geoToSvg(coords[0], coords[1]);
+        var circle = document.createElementNS(NS, 'circle');
+        circle.setAttribute('cx', pos.x);
+        circle.setAttribute('cy', pos.y);
+        circle.setAttribute('r', '5');
+        circle.setAttribute('class', 'loc-dot');
+        circle.setAttribute('data-location', loc);
+        circle.setAttribute('data-area', area.id);
+        (function(l) {
+          circle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleLoc(l);
+          });
+        })(loc);
+        svgEl.appendChild(circle);
+        var lbl = labelByNorm[loc] || (loc.charAt(0).toUpperCase() + loc.slice(1));
+        var text = document.createElementNS(NS, 'text');
+        text.setAttribute('x', pos.x + 7);
+        text.setAttribute('y', pos.y + 4);
+        text.setAttribute('class', 'loc-dot-label');
+        text.setAttribute('data-location', loc);
+        text.setAttribute('pointer-events', 'none');
+        text.textContent = lbl;
+        svgEl.appendChild(text);
       }
     }
   }
@@ -1822,24 +1897,26 @@ var BALI_SVG = ''
     var locBtnApply   = mk('a',  { href: '#', class: 'loc-btn-apply-inline',  text: 'Search' });
     var locCloseBtn   = mk('div', { class: 'close-btn', html: CLOSE_SVG });
 
+    var locTabArea = mk('button', { class: 'loc-tab loc-tab-area is-active', type: 'button', text: 'Area' });
+    var locTabMaps = mk('button', { class: 'loc-tab loc-tab-maps', type: 'button', text: 'Maps' });
+
     var locDropdown = mk('div', { class: 'location-dropdown' }, [
       locCloseBtn,
-      mk('div', { class: 'location-panel' }, [
-        mk('div', { class: 'location-col is-left' }, [
-          mk('div', { class: 'location-search' }, [
-            mk('img', { src: PIN_URL, alt: '' }),
-            locSearchInput
-          ]),
-          treeScrollEl
+      mk('div', { class: 'loc-tabs' }, [locTabArea, locTabMaps]),
+      mk('div', { class: 'loc-panel-area is-active' }, [
+        mk('div', { class: 'location-search' }, [
+          mk('img', { src: PIN_URL, alt: '' }),
+          locSearchInput
         ]),
-        mk('div', { class: 'location-col is-middle' }, [pillScrollEl]),
-        mk('div', { class: 'location-col is-right' }, [
-          mk('div', { class: 'map-wrap' }, [svgMapWrap]),
-          mk('div', { class: 'loc-map-footer' }, [
-            locSelInfo,
-            mk('div', { class: 'loc-actions' }, [locBtnClear, locBtnApply])
-          ])
-        ])
+        treeScrollEl
+      ]),
+      mk('div', { class: 'loc-panel-maps' }, [
+        pillScrollEl,
+        mk('div', { class: 'bali-map-wrap' }, [svgMapWrap])
+      ]),
+      mk('div', { class: 'loc-map-footer' }, [
+        locSelInfo,
+        mk('div', { class: 'loc-actions' }, [locBtnClear, locBtnApply])
       ])
     ]);
 
@@ -1992,6 +2069,7 @@ var BALI_SVG = ''
     areas = [];
     buildAreas();
     buildLocDOM();
+    buildMapDots();
     mountLocUI();
     computeBaseBounds(); // initial bounds — may exclude non-IDR cards until rates load
     initPricePanel();

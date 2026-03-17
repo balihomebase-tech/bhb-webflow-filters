@@ -293,7 +293,7 @@
   top: calc(100% + 8px);
   left: 0;
   z-index: 9999;
-  width: 850px;
+  width: 420px;
   background: #fff;
   border-radius: 20px;
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
@@ -341,37 +341,130 @@
   background: #e5dfd9;
 }
 
-/* ── Location panel ── */
-#bhb-filter .location-panel {
+/* ── Location tabs ── */
+#bhb-filter .loc-tabs {
   display: flex;
-  gap: 0;
-  height: 360px;
+  gap: 6px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e8e3dd;
+  margin-bottom: 14px;
 }
 
-#bhb-filter .location-col {
+#bhb-filter .loc-tab {
+  flex: 1;
+  height: 36px;
+  border-radius: 8px;
+  border: 1.5px solid #e8e3dd;
+  background: transparent;
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #78716c;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+#bhb-filter .loc-tab:hover:not(.is-active) {
+  background: #f5f0ea;
+  border-color: #c8b99a;
+  color: #3a2e28;
+}
+
+#bhb-filter .loc-tab.is-active {
+  background: #262626;
+  border-color: #262626;
+  color: #fff;
+}
+
+/* ── Location panels ── */
+#bhb-filter .loc-panel-area,
+#bhb-filter .loc-panel-maps {
+  display: none;
+}
+
+#bhb-filter .loc-panel-area.is-active,
+#bhb-filter .loc-panel-maps.is-active {
   display: flex;
   flex-direction: column;
 }
 
-#bhb-filter .location-col.is-left {
-  width: 220px;
-  border-right: 1px solid #e8e3dd;
-  padding-right: 16px;
-  margin-right: 16px;
-  flex-shrink: 0;
+/* Area panel: search + scrollable tree */
+#bhb-filter .loc-panel-area {
+  height: 320px;
+  overflow: hidden;
 }
 
-#bhb-filter .location-col.is-middle {
-  width: 140px;
-  border-right: 1px solid #e8e3dd;
-  padding-right: 16px;
-  margin-right: 16px;
-  flex-shrink: 0;
+/* Maps panel: horizontal pills + map */
+#bhb-filter .loc-panel-maps {
+  gap: 10px;
 }
 
-#bhb-filter .location-col.is-right {
+#bhb-filter .loc-panel-maps .pill-scroll {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-height: none;
+  gap: 6px;
+  flex-shrink: 0;
+  padding-bottom: 4px;
+}
+
+#bhb-filter .loc-panel-maps .pill {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Bali SVG map container (Maps tab) */
+#bhb-filter .bali-map-wrap {
   flex: 1;
-  min-width: 0;
+  min-height: 260px;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+#bhb-filter .bali-map-wrap .bali-svg-wrap {
+  width: 100%;
+  height: 100%;
+}
+
+#bhb-filter .bali-map-wrap .bali-svg-map {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Location dot markers on SVG ── */
+#bhb-filter .loc-dot {
+  fill: #fff;
+  stroke: #9a8a78;
+  stroke-width: 1.5;
+  cursor: pointer;
+  transition: fill 0.15s, stroke 0.15s, r 0.15s;
+}
+
+#bhb-filter .loc-dot:hover {
+  fill: #e8ddd4;
+  stroke: #b0703b;
+  r: 6;
+}
+
+#bhb-filter .loc-dot.is-active {
+  fill: #b0703b;
+  stroke: #7a4e28;
+  r: 6;
+}
+
+#bhb-filter .loc-dot-label {
+  font-family: Inter, sans-serif;
+  font-size: 9px;
+  font-weight: 500;
+  fill: #5a4e46;
+}
+
+#bhb-filter .loc-dot.is-active ~ .loc-dot-label[data-location] {
+  font-weight: 700;
+  fill: #b0703b;
 }
 
 #bhb-filter .location-search {
@@ -411,6 +504,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   flex: 1;
+  min-height: 0;
 }
 
 #bhb-filter .tree-item {
@@ -1161,8 +1255,14 @@
     padding: 12px 0 0;
   }
 
-  /* ── SVG map in mobile inline location dropdown ── */
-  #bhb-filter .rent-filter_form.is-mobile-open .location-col.is-right .map-wrap {
+  /* ── Location panels on mobile (inline expand) ── */
+  #bhb-filter .rent-filter_form.is-mobile-open .loc-panel-area {
+    height: auto;
+    max-height: 220px;
+  }
+
+  #bhb-filter .rent-filter_form.is-mobile-open .bali-map-wrap {
+    min-height: 200px;
     height: 200px;
   }
 
@@ -1180,62 +1280,8 @@
     flex: 1;
   }
 
-  #bhb-filter .location-col.is-right {
-    display: block;
-    width: 100%;
-  }
-
-  #bhb-filter .location-col.is-right .map-wrap {
-    height: 220px;
-    border-radius: 12px;
-    overflow: hidden;
-    margin-top: 8px;
-  }
-
-  #bhb-filter .location-col.is-right .loc-map-footer {
-    padding-top: 8px;
-  }
-
-  #bhb-filter .location-col.is-left {
-    border-right: none;
-    border-bottom: 1px solid #d6d3d1;
-    padding-right: 0;
-    margin-right: 0;
-    padding-bottom: 16px;
-    margin-bottom: 16px;
-    width: 100%;
-  }
-
-  #bhb-filter .location-col.is-middle {
-    border-right: none;
-    border-bottom: 1px solid #d6d3d1;
-    padding-right: 0;
-    margin-right: 0;
-    padding-bottom: 16px;
-    margin-bottom: 16px;
-    width: 100%;
-  }
-
-  #bhb-filter .location-panel {
-    flex-direction: column;
-    height: auto;
-  }
-
   #bhb-filter .tree-scroll {
-    max-height: 180px;
-  }
-
-  #bhb-filter .pill-scroll {
-    flex-direction: row;
-    flex-wrap: wrap;
-    max-height: none;
-    gap: 6px;
-  }
-
-  #bhb-filter .pill {
-    flex: 0 0 auto;
-    padding: 7px 14px;
-    font-size: 12px;
+    max-height: 160px;
   }
 
   #bhb-filter .price-panel {
