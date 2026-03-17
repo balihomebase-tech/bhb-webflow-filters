@@ -973,6 +973,7 @@
 
   /* Keep card floating in hero on tablet/mobile */
   #bhb-filter .rent-filter_form {
+    inset: -170px 0% auto;
     width: 92%;
     padding: 24px 20px;
     border-radius: 16px;
