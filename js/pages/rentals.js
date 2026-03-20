@@ -1977,8 +1977,8 @@
     ]);
 
     // ── Action buttons ──
-    var btnClear  = mk('a', { href: '#', class: 'filter-button-1', text: 'Clear' });
-    var btnSearch = mk('a', { href: '#', class: 'filter-button-2', text: 'Search Properties' });
+    var btnClear  = mk('button', { type: 'button', class: 'filter-button-1', text: 'Clear' });
+    var btnSearch = mk('button', { type: 'button', class: 'filter-button-2', text: 'Search Properties' });
 
     // ── Assemble ──
 
