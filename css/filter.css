@@ -972,13 +972,16 @@
 #bhb-filter .filter-button-1,
 #bhb-filter .filter-button-1 span,
 #bhb-filter .filter-button-1 svg {
-  color: #404040;
+  color: #404040 !important;
+  -webkit-text-fill-color: #404040 !important;
+  background-color: transparent !important;
 }
 
 #bhb-filter .filter-button-2,
 #bhb-filter .filter-button-2 span,
 #bhb-filter .filter-button-2 svg {
-  color: #fff;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
 }
 
 #bhb-filter .filter-button-1 {
