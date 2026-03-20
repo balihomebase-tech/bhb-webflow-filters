@@ -1995,7 +1995,6 @@
       mk('div', { class: 'rent-filter_top' }, [
         bedsField, availField, kwField
       ]),
-      mk('div', { class: 'rent-filter_divider' }),
       mk('div', { class: 'rent-filter_bottom' }, [
         mk('div', { class: 'rent-filter_bottom-fields' }, [
           locField, priceField, currField

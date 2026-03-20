@@ -1195,13 +1195,6 @@
     border-bottom: none;
   }
 
-  #bhb-filter .rent-filter_form.is-mobile-open .rent-filter_divider {
-    display: block;
-    height: 1px;
-    background: #000;
-    width: 100%;
-  }
-
   #bhb-filter .rent-filter_form.is-mobile-open .rent-filter_bottom {
     display: flex;
     flex-direction: column;
