@@ -415,56 +415,18 @@
   white-space: nowrap;
 }
 
-/* Bali SVG map container (Maps tab) */
+/* MapTiler map in location dropdown */
 #bhb-filter .bali-map-wrap {
   flex: 1;
-  min-height: 260px;
+  height: 300px;
   border-radius: 12px;
   overflow: hidden;
   position: relative;
 }
 
-#bhb-filter .bali-map-wrap .bali-svg-wrap {
+#bhb-filter .loc-maptiler-map {
   width: 100%;
   height: 100%;
-}
-
-#bhb-filter .bali-map-wrap .bali-svg-map {
-  width: 100%;
-  height: 100%;
-}
-
-/* ── Location dot markers on SVG ── */
-#bhb-filter .loc-dot {
-  fill: #fff;
-  stroke: #9a8a78;
-  stroke-width: 1.5;
-  cursor: pointer;
-  transition: fill 0.15s, stroke 0.15s, r 0.15s;
-}
-
-#bhb-filter .loc-dot:hover {
-  fill: #e8ddd4;
-  stroke: #b0703b;
-  r: 6;
-}
-
-#bhb-filter .loc-dot.is-active {
-  fill: #b0703b;
-  stroke: #7a4e28;
-  r: 6;
-}
-
-#bhb-filter .loc-dot-label {
-  font-family: Inter, sans-serif;
-  font-size: 9px;
-  font-weight: 500;
-  fill: #5a4e46;
-}
-
-#bhb-filter .loc-dot.is-active ~ .loc-dot-label[data-location] {
-  font-weight: 700;
-  fill: #b0703b;
 }
 
 #bhb-filter .location-search {
@@ -671,42 +633,6 @@
   overflow: hidden;
 }
 
-/* ── Bali SVG map ── */
-#bhb-filter .bali-svg-wrap {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-#bhb-filter .bali-svg-map {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-#bhb-filter .bali-outline {
-  pointer-events: none;
-}
-
-#bhb-filter .bali-region {
-  transition: fill 0.2s ease;
-}
-
-#bhb-filter .bali-area-region {
-  cursor: pointer;
-}
-
-#bhb-filter .bali-area-region:hover {
-  fill: #c8b99a;
-  stroke: #a0876a;
-}
-
-#bhb-filter .bali-area-region.is-active {
-  fill: #b0703b;
-  stroke: #8a5530;
-}
 
 #bhb-filter .loc-map-footer {
   display: flex;
@@ -1262,8 +1188,7 @@
   }
 
   #bhb-filter .rent-filter_form.is-mobile-open .bali-map-wrap {
-    min-height: 200px;
-    height: 200px;
+    height: 220px;
   }
 
   /* ── Actions row ── */
@@ -1449,6 +1374,49 @@
    WEBFLOW OVERRIDES — must stay at the very bottom to beat Webflow's
    hardcoded stylesheet for .location-dropdown and .price-dropdown
    ========================================================================== */
+
+/* ==========================================================================
+   DESKTOP (≥ 991px) — side-by-side area + map layout
+   ========================================================================== */
+
+@media (min-width: 991px) {
+  #bhb-filter .location-dropdown {
+    width: 820px;
+  }
+
+  /* Hide tabs — both panels visible at once */
+  #bhb-filter .loc-tabs {
+    display: none !important;
+  }
+
+  /* Side-by-side body */
+  #bhb-filter .loc-body {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  /* Area panel: fixed width, scrollable */
+  #bhb-filter .loc-panel-area {
+    display: flex !important;
+    width: 260px;
+    flex-shrink: 0;
+    height: 360px;
+  }
+
+  /* Maps panel: fills remaining space */
+  #bhb-filter .loc-panel-maps {
+    display: flex !important;
+    flex: 1;
+  }
+
+  /* Map fills full height on desktop */
+  #bhb-filter .loc-panel-maps .bali-map-wrap {
+    height: 100%;
+    flex: 1;
+  }
+}
 
 #bhb-filter .location-dropdown {
   position: absolute !important;
