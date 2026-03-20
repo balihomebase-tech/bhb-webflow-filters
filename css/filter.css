@@ -1052,6 +1052,11 @@
   display: none;
 }
 
+/* ── Mobile form close button (hidden on desktop) ── */
+#bhb-filter .mobile-form-close {
+  display: none;
+}
+
 /* ── Mobile collapsed card (hidden on desktop) ── */
 #bhb-filter .bhb-mobile-collapsed {
   display: none;
@@ -1166,6 +1171,7 @@
   /* ── Bottom sheet when open ── */
   #bhb-filter .rent-filter_form.is-mobile-open {
     position: fixed;
+    /* close button is absolute inside */
     inset: auto 0 0;
     width: 100%;
     max-width: 100%;
@@ -1180,6 +1186,28 @@
     gap: 16px;
     z-index: 1000;
     animation: bhbSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+
+  #bhb-filter .rent-filter_form.is-mobile-open .mobile-form-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: #f4f4f5;
+    color: #3f3f46;
+    cursor: pointer;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  #bhb-filter .rent-filter_form.is-mobile-open .mobile-form-close:hover {
+    background: #e4e4e7;
   }
 
   #bhb-filter .rent-filter_form.is-mobile-open .bhb-mobile-collapsed {

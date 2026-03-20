@@ -1990,7 +1990,10 @@
       ])
     ]);
 
+    var mobileCloseBtn = mk('button', { type: 'button', class: 'close-btn mobile-form-close', html: CLOSE_SVG });
+
     var filterForm = mk('div', { class: 'rent-filter_form' }, [
+      mobileCloseBtn,
       mobileCollapsed,
       mk('div', { class: 'rent-filter_top' }, [
         bedsField, availField, kwField
