@@ -127,7 +127,10 @@
   var locDropOpen = false,
     map = null,
     mapReady = false,
-    markers = [];
+    markers = [],
+    locMap = null,
+    locMapReady = false,
+    locMapMarkers = [];
   var areas = [],
     draftLocs = [],
     labelByNorm = {};
@@ -401,36 +404,13 @@
     setCurrency("IDR");
   }
   function closeMobilePanel() {
-    if (window.innerWidth < 768) {
-      var panel = document.querySelector(FILTER_PANEL);
-      if (panel) panel.style.display = "none";
-    }
     closeAll();
     if (locDropOpen) openLocDrop(false);
-  }
-  function injectDropdownCloseBtns() {
-    var drops = document.querySelectorAll(".filter-dropdown,.price-dropdown");
-    for (var i = 0; i < drops.length; i++) {
-      if (drops[i].querySelector(".drop-close-btn")) continue;
-      var btn = document.createElement("button");
-      btn.className = "drop-close-btn";
-      btn.innerHTML =
-        '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1L11 11M11 1L1 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
-      btn.setAttribute("aria-label", "Close");
-      drops[i].insertBefore(btn, drops[i].firstChild);
-      (function (drop) {
-        btn.addEventListener("click", function (e) {
-          e.stopPropagation();
-          drop.style.display = "none";
-          drop.classList.remove("is-open");
-          var field = drop.closest(".filter-field");
-          if (field) {
-            var trig = field.querySelector(".filter-trigger,.price-trigger");
-            if (trig) trig.classList.remove("is-active");
-          }
-        });
-      })(drops[i]);
-    }
+    var form = document.querySelector('.rent-filter_form');
+    if (form) form.classList.remove('is-mobile-open');
+    var overlay = document.getElementById('bhbOverlay');
+    if (overlay) overlay.style.display = '';
+    document.body.style.overflow = '';
   }
   function bindEvents() {
     initSingle(el.ownershipField, function (val) {
@@ -476,15 +456,29 @@
         applyFilters();
         closeAll();
         if (locDropOpen) openLocDrop(false);
-        if (window.innerWidth < 768) {
-          var panel = document.querySelector(FILTER_PANEL);
-          if (panel) panel.style.display = "none";
-        }
       });
     var closeBtns = document.querySelectorAll(".close-btn");
     for (var i = 0; i < closeBtns.length; i++) {
       closeBtns[i].addEventListener("click", function (e) {
         e.stopPropagation();
+        closeMobilePanel();
+      });
+    }
+    // mobile collapsed search trigger → open bottom sheet
+    var mobileSearchTrigger = document.querySelector(".bhb-mobile-search-trigger");
+    if (mobileSearchTrigger) {
+      mobileSearchTrigger.addEventListener("click", function () {
+        var form = document.querySelector(".rent-filter_form");
+        var overlay = document.getElementById("bhbOverlay");
+        if (form) form.classList.add("is-mobile-open");
+        if (overlay) overlay.style.display = "block";
+        document.body.style.overflow = "hidden";
+      });
+    }
+    // overlay click → close panel
+    var overlay = document.getElementById("bhbOverlay");
+    if (overlay) {
+      overlay.addEventListener("click", function () {
         closeMobilePanel();
       });
     }
@@ -508,11 +502,12 @@
         e.stopPropagation();
         closeAll(el.locDropdown);
         openLocDrop();
-        if (locDropOpen && !map) loadMapSDK(initMap);
-        else if (locDropOpen && map)
-          setTimeout(function () {
-            map.resize();
-          }, 80);
+        if (locDropOpen) {
+          if (!map) loadMapSDK(initMap);
+          else setTimeout(function () { map.resize(); }, 250);
+          if (!locMap) loadMapSDK(initLocMap);
+          else setTimeout(function () { locMap.resize(); }, 250);
+        }
       });
     }
     if (el.locDropdown)
@@ -541,6 +536,11 @@
     window.addEventListener("bhb:currency-changed", function (e) {
       var c = e.detail && e.detail.currency ? e.detail.currency : "IDR";
       setCurrency(c);
+    });
+    window.addEventListener("bhb:rates-ready", function () {
+      updatePriceRangeForOwnership();
+      updateSliderForCurrency(state.currency);
+      updateChips(state.currency);
     });
   }
   function getLeaseYears(card) {
@@ -1137,19 +1137,41 @@
   }
   function mountLocUI() {
     if (!el.locDropdown) return;
-    var panel = el.locDropdown.querySelector(".location-panel");
-    if (!panel) return;
     locUI = {
-      searchInput: panel.querySelector(".location-search-input"),
-      treeScroll: panel.querySelector(".tree-scroll"),
-      pillScroll: panel.querySelector(".pill-scroll"),
-      selectedInfo: panel.querySelector("#locSelectedInfo"),
-      btnClear: panel.querySelector(".loc-btn-clear-inline"),
-      btnApply: panel.querySelector(".loc-btn-apply-inline"),
+      searchInput:  el.locDropdown.querySelector(".location-search-input"),
+      treeScroll:   el.locDropdown.querySelector(".tree-scroll"),
+      pillScroll:   el.locDropdown.querySelector(".pill-scroll"),
+      selectedInfo: el.locDropdown.querySelector("#locSelectedInfo"),
+      btnClear:     el.locDropdown.querySelector(".loc-btn-clear-inline"),
+      btnApply:     el.locDropdown.querySelector(".loc-btn-apply-inline"),
     };
     if (!locUI.searchInput || !locUI.treeScroll || !locUI.pillScroll) return;
 
-    // Attach listeners to existing elements
+    // ── Tree parents: expand/collapse ──
+    var treeParents = locUI.treeScroll.querySelectorAll('.tree-parent');
+    for (var i = 0; i < treeParents.length; i++) {
+      var parent = treeParents[i];
+      var cw = parent.parentNode.querySelector('.children');
+      if (cw) {
+        parent.addEventListener('click', (function(c) {
+          return function() { c.classList.toggle('open'); };
+        })(cw));
+      }
+    }
+
+    // ── Tree children: individual location toggle ──
+    var children = locUI.treeScroll.querySelectorAll('.child');
+    for (var i = 0; i < children.length; i++) {
+      var child = children[i];
+      var loc = child.dataset.location;
+      if (loc) {
+        child.addEventListener('click', (function(l) {
+          return function(e) { e.stopPropagation(); toggleLoc(l); };
+        })(loc));
+      }
+    }
+
+    // ── Pills: area toggle ──
     var pills = locUI.pillScroll.querySelectorAll('.pill');
     for (var i = 0; i < pills.length; i++) {
       var pill = pills[i];
@@ -1161,44 +1183,109 @@
       }
     }
 
-    var treeParents = locUI.treeScroll.querySelectorAll('.tree-parent');
-    for (var i = 0; i < treeParents.length; i++) {
-      var parent = treeParents[i];
-      var children = parent.parentNode.querySelector('.children');
-      if (children) {
-        parent.addEventListener('click', (function(cw) {
-          return function() { cw.classList.toggle('open'); };
-        })(children));
+    // ── Tab switching ──
+    var tabAreaBtn = el.locDropdown.querySelector('.loc-tab-area');
+    var tabMapsBtn = el.locDropdown.querySelector('.loc-tab-maps');
+    var panelArea  = el.locDropdown.querySelector('.loc-panel-area');
+    var panelMaps  = el.locDropdown.querySelector('.loc-panel-maps');
+    function switchLocTab(toMaps) {
+      if (toMaps) {
+        if (tabAreaBtn) tabAreaBtn.classList.remove('is-active');
+        if (tabMapsBtn) tabMapsBtn.classList.add('is-active');
+        if (panelArea)  panelArea.classList.remove('is-active');
+        if (panelMaps)  panelMaps.classList.add('is-active');
+        setTimeout(function() { if (locMap) locMap.resize(); }, 50);
+      } else {
+        if (tabMapsBtn) tabMapsBtn.classList.remove('is-active');
+        if (tabAreaBtn) tabAreaBtn.classList.add('is-active');
+        if (panelMaps)  panelMaps.classList.remove('is-active');
+        if (panelArea)  panelArea.classList.add('is-active');
       }
     }
-
-    var children = locUI.treeScroll.querySelectorAll('.child');
-    for (var i = 0; i < children.length; i++) {
-      var child = children[i];
-      var loc = child.dataset.location;
-      if (loc) {
-        child.addEventListener('click', (function(l) {
-          return function(e) {
-            e.stopPropagation();
-            toggleLoc(l);
-          };
-        })(loc));
-      }
-    }
+    if (tabAreaBtn) tabAreaBtn.addEventListener('click', function() { switchLocTab(false); });
+    if (tabMapsBtn) tabMapsBtn.addEventListener('click', function() { switchLocTab(true); });
 
     locUI.searchInput.addEventListener("input", renderLocLists);
-    if (locUI.btnClear)
+    if (locUI.btnClear) {
       locUI.btnClear.addEventListener("click", function () {
         draftLocs = [];
         renderLocLists();
         syncMapWith(draftLocs);
+        syncLocMapMarkers(draftLocs);
         updateDraftInfo();
       });
-    if (locUI.btnApply)
+    }
+    if (locUI.btnApply) {
       locUI.btnApply.addEventListener("click", function () {
         commitDraft();
         openLocDrop(false);
       });
+    }
+  }
+
+  function buildLocDOM() {
+    if (!el.locDropdown) return;
+    var treeScroll = el.locDropdown.querySelector(".tree-scroll");
+    var pillScroll = el.locDropdown.querySelector(".pill-scroll");
+    if (!treeScroll || !pillScroll) return;
+
+    treeScroll.innerHTML = "";
+    pillScroll.innerHTML = "";
+
+    for (var a = 0; a < areas.length; a++) {
+      var area = areas[a];
+
+      var pill = document.createElement("div");
+      pill.className = "pill";
+      pill.dataset.areaId = area.id;
+      pill.textContent = area.label;
+      pillScroll.appendChild(pill);
+
+      var treeItem = document.createElement("div");
+      treeItem.className = "tree-item";
+      treeItem.dataset.areaId = area.id;
+
+      var treeParent = document.createElement("div");
+      treeParent.className = "tree-parent";
+      var chevron = document.createElement("div");
+      chevron.className = "tree-chevron";
+      var parentName = document.createElement("div");
+      parentName.className = "parent-name";
+      parentName.textContent = area.label;
+      treeParent.appendChild(chevron);
+      treeParent.appendChild(parentName);
+
+      var childrenWrap = document.createElement("div");
+      childrenWrap.className = "children";
+      var childrenInner = document.createElement("div");
+      childrenInner.className = "children-inner";
+      var branch = document.createElement("div");
+      branch.className = "branch";
+      var childList = document.createElement("div");
+      childList.className = "child-list";
+
+      for (var k = 0; k < area.children.length; k++) {
+        var loc = area.children[k];
+        var label = labelByNorm[loc] || (loc.charAt(0).toUpperCase() + loc.slice(1));
+        var childEl = document.createElement("div");
+        childEl.className = "child";
+        childEl.dataset.location = loc;
+        var miniPin = document.createElement("div");
+        miniPin.className = "mini-pin";
+        var span = document.createElement("span");
+        span.textContent = label;
+        childEl.appendChild(miniPin);
+        childEl.appendChild(span);
+        childList.appendChild(childEl);
+      }
+
+      childrenInner.appendChild(branch);
+      childrenInner.appendChild(childList);
+      childrenWrap.appendChild(childrenInner);
+      treeItem.appendChild(treeParent);
+      treeItem.appendChild(childrenWrap);
+      treeScroll.appendChild(treeItem);
+    }
   }
   function renderLocLists() {
     // Update location filter UI based on search and selection
@@ -1263,6 +1350,7 @@
     else draftLocs.push(loc);
     renderLocLists();
     syncMapWith(draftLocs);
+    syncLocMapMarkers(draftLocs);
   }
   function toggleArea(areaId) {
     var area = null;
@@ -1288,6 +1376,7 @@
     }
     renderLocLists();
     syncMapWith(draftLocs);
+    syncLocMapMarkers(draftLocs);
   }
   function updateDraftInfo() {
     if (!locUI.selectedInfo) return;
@@ -1321,13 +1410,14 @@
       if (locUI.searchInput) locUI.searchInput.value = "";
       renderLocLists();
       syncMapWith(draftLocs);
+      syncLocMapMarkers(draftLocs);
     }
     el.locDropdown.style.display = locDropOpen ? "block" : "none";
     el.locDropdown.classList.toggle("is-open", locDropOpen);
-    if (locDropOpen && map)
-      setTimeout(function () {
-        map.resize();
-      }, 80);
+    if (locDropOpen) {
+      if (map) setTimeout(function () { map.resize(); }, 80);
+      if (locMap) setTimeout(function () { locMap.resize(); }, 80);
+    }
     if (!locDropOpen) syncMapWith(state.locations);
   }
   function loadMapSDK(cb) {
@@ -1369,6 +1459,54 @@
       }, 80);
     });
   }
+  function initLocMap() {
+    if (locMap) return;
+    var mapEl = document.getElementById('locMapEl');
+    if (!mapEl || !window.maptilersdk) return;
+    maptilersdk.config.apiKey = MAPTILER_KEY;
+    locMap = new maptilersdk.Map({
+      container: 'locMapEl',
+      style: MAP_STYLE,
+      center: [115.1889, -8.4095],
+      zoom: 9.3,
+      attributionControl: false,
+    });
+    locMap.on('load', function () {
+      locMapReady = true;
+      syncLocMapMarkers(draftLocs);
+      setTimeout(function () { locMap.resize(); }, 80);
+    });
+  }
+
+  function syncLocMapMarkers(locations) {
+    if (!locMap || !locMapReady) return;
+    for (var i = 0; i < locMapMarkers.length; i++) locMapMarkers[i].remove();
+    locMapMarkers = [];
+    var pts = [], seen = {};
+    for (var i = 0; i < locations.length; i++) {
+      var p = LOC_COORDS[locations[i]];
+      if (!p) continue;
+      var key = p[0] + ',' + p[1];
+      if (!seen[key]) { seen[key] = true; pts.push({ p: p, loc: locations[i] }); }
+    }
+    if (!pts.length) {
+      locMap.flyTo({ center: [115.1889, -8.4095], zoom: 9.3, duration: 450 });
+      return;
+    }
+    for (var i = 0; i < pts.length; i++) {
+      var label = (labelByNorm[pts[i].loc] || pts[i].loc).replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+      locMapMarkers.push(
+        new maptilersdk.Marker({ element: makePin(label), anchor: 'bottom' })
+          .setLngLat(pts[i].p)
+          .addTo(locMap)
+      );
+    }
+    if (pts.length === 1) { locMap.flyTo({ center: pts[0].p, zoom: 12.2, duration: 450 }); return; }
+    var bounds = new maptilersdk.LngLatBounds();
+    for (var i = 0; i < pts.length; i++) bounds.extend(pts[i].p);
+    locMap.fitBounds(bounds, { padding: 60, maxZoom: 13, duration: 450 });
+  }
+
   function clearMarkers() {
     for (var i = 0; i < markers.length; i++) markers[i].remove();
     markers = [];
