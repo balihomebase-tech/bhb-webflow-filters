@@ -34,6 +34,7 @@
   z-index: 1000;
   display: flex;
   flex-direction: column;
+  overflow: visible;
 }
 
 /* ── Row 1: top fields ── */
@@ -41,7 +42,7 @@
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  gap: 20px;
+  gap: 16px;
   padding: 10px 0;
   border-bottom: 1px solid rgba(214, 211, 209, 0.5);
 }
@@ -56,7 +57,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   padding: 10px 0;
 }
 
@@ -64,33 +65,36 @@
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  gap: 20px;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
 }
 
 /* ── Actions (buttons — stacked vertically) ── */
 #bhb-filter .rent-filter_actions {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 16px;
+  align-items: stretch;
+  gap: 10px;
   padding: 14px 0;
   flex-shrink: 0;
 }
 
-/* ── Filter field ── */
+/* ── Filter field — fluid flex sizing ── */
 #bhb-filter .filter-field {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 0;
 }
 
-/* Per-field widths */
-#bhb-filter .filter-field:has(.keyword-input)        { width: 384px; }
-#bhb-filter .filter-field:has(.location-trigger)    { width: 288px; }
-#bhb-filter .filter-field:has(.price-trigger-wrapper){ width: 384px; }
-#bhb-filter .filter-field:has(.filter-option[data-value="IDR"]) { width: 208px; }
+/* Relative widths via flex — keyword & price get more space */
+#bhb-filter .filter-field:has(.keyword-input)         { flex: 2; }
+#bhb-filter .filter-field:has(.location-trigger)      { flex: 1.5; }
+#bhb-filter .filter-field:has(.price-trigger-wrapper) { flex: 2; }
+#bhb-filter .filter-field:has(.filter-option[data-value="IDR"]) { flex: 1; }
 
 #bhb-filter .filter-label {
   font-size: 12px;
@@ -968,7 +972,8 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 32px;
+  padding: 10px 20px;
+  white-space: nowrap;
   border-radius: 9999px;
   background: rgba(255, 255, 255, 0.6);
   outline: 1px solid rgba(120, 113, 108, 0.5);
@@ -994,7 +999,8 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 32px;
+  padding: 10px 20px;
+  white-space: nowrap;
   border-radius: 9999px;
   background: #404040;
   box-shadow: 0px 8px 24px -4px rgba(0, 0, 0, 0.15);
@@ -1193,19 +1199,16 @@
   }
 
   /* Each field = full-width list row */
-  #bhb-filter .rent-filter_form.is-mobile-open .filter-field {
-    width: 100% !important;
-    padding: 12px 0;
-    border-bottom: 1px solid #f0ece8;
-    gap: 4px;
-  }
-
-  /* Reset per-field fixed widths on mobile */
+  #bhb-filter .rent-filter_form.is-mobile-open .filter-field,
   #bhb-filter .rent-filter_form.is-mobile-open .filter-field:has(.keyword-input),
   #bhb-filter .rent-filter_form.is-mobile-open .filter-field:has(.location-trigger),
   #bhb-filter .rent-filter_form.is-mobile-open .filter-field:has(.price-trigger-wrapper),
   #bhb-filter .rent-filter_form.is-mobile-open .filter-field:has(.filter-option[data-value="IDR"]) {
+    flex: none !important;
     width: 100% !important;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0ece8;
+    gap: 4px;
   }
 
   #bhb-filter .rent-filter_form.is-mobile-open .filter-label {
