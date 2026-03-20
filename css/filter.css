@@ -1527,3 +1527,30 @@
 #bhb-filter .price-dropdown.is-open {
   display: block !important;
 }
+
+/* Beat Webflow global <a> color overrides */
+#bhb-filter .filter-button-1 {
+  display: inline-flex !important;
+  color: #404040 !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+  text-decoration: none !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+}
+
+#bhb-filter .filter-button-2 {
+  display: inline-flex !important;
+  color: #fff !important;
+  background: #404040 !important;
+  text-decoration: none !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+}
+
+#bhb-filter .filter-button-1:hover {
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+#bhb-filter .filter-button-2:hover {
+  background: #2e2e2e !important;
+}
