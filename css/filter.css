@@ -161,6 +161,7 @@
   font-size: 16px;
   font-weight: 400;
   color: #a8a29e;
+  background-color: transparent;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
