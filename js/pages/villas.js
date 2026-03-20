@@ -185,6 +185,36 @@
       return window.debugCurrency.convertAmount(amount, from, to);
     return amount;
   }
+  function savedCurrency() {
+    try {
+      return normCurrency(localStorage.getItem("selectedCurrency") || "IDR");
+    } catch (e) {
+      return "IDR";
+    }
+  }
+  function collectState() {
+    if (el.ownershipField) {
+      var a = el.ownershipField.querySelector(".filter-option.is-active");
+      state.ownership = a ? a.dataset.value : "Any";
+    }
+    if (el.bedsField) {
+      var actives = el.bedsField.querySelectorAll(".filter-option.is-active");
+      state.bedrooms = [];
+      for (var i = 0; i < actives.length; i++) {
+        if (actives[i].dataset.value !== "Any")
+          state.bedrooms.push(actives[i].dataset.value);
+      }
+    }
+    if (el.leaseField) {
+      var l = el.leaseField.querySelector(".filter-option.is-active");
+      state.lease = l ? l.dataset.value : "Any";
+    }
+    if (el.currField) {
+      var c = el.currField.querySelector(".filter-option.is-active");
+      if (c) state.currency = normCurrency(c.dataset.value);
+    }
+    if (el.keywordInput) state.keyword = el.keywordInput.value.trim();
+  }
   function closeAll(except) {
     var drops = document.querySelectorAll(
       ".filter-dropdown,.price-dropdown,.location-dropdown",
@@ -453,6 +483,7 @@
     if (el.btnSearch)
       el.btnSearch.addEventListener("click", function (e) {
         e.preventDefault();
+        collectState();
         applyFilters();
         closeAll();
         if (locDropOpen) openLocDrop(false);
@@ -534,7 +565,7 @@
       }
     });
     window.addEventListener("bhb:currency-changed", function (e) {
-      var c = e.detail && e.detail.currency ? e.detail.currency : "IDR";
+      var c = e.detail && e.detail.currency ? e.detail.currency : savedCurrency();
       setCurrency(c);
     });
     window.addEventListener("bhb:rates-ready", function () {
@@ -1609,11 +1640,10 @@
   function buildUI() {
     var root = document.getElementById('bhb-filter');
     if (!root) return;
-    // Remove only existing filter UI (not the grid which may also live inside root)
-    ['.rent-filter_form', '#bhbOverlay', '.villas-filter_form-block'].forEach(function(sel) {
-      var el2 = root.querySelector(sel);
-      if (el2) el2.parentNode.removeChild(el2);
-    });
+    // Save grid if it lives inside root, then wipe old Webflow HTML
+    var _savedGrid = root.querySelector('#' + CFG.GRID_ID);
+    root.innerHTML = '';
+    if (_savedGrid) root.appendChild(_savedGrid);
 
     var CLOSE_SVG   = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
     var CHEVRON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
@@ -1887,7 +1917,7 @@
     loadMapSDK(function () { initMap(); initLocMap(); });
     updateLocText();
     bindEvents();
-    setCurrency("IDR");
+    setCurrency(savedCurrency());
     filtered = allCards.slice();
     showNext();
     updateUI();
