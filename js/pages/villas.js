@@ -7,7 +7,6 @@
   var MAP_STYLE = "019c8e23-ebd1-7221-bd5f-20ae2dca2ab6";
   var PIN_URL =
     "https://cdn.prod.website-files.com/67344ae68adf4fc1f539002d/69a009335d3c16a421dd917a_Icon.svg";
-  var FILTER_PANEL = ".villas-filter_form-block";
   var AREA_RULES = [
     {
       id: "uluwatu-area",
@@ -687,7 +686,7 @@
       btt.style.color = "#3a2e28";
     });
     btt.addEventListener("click", function () {
-      var panel = document.querySelector(FILTER_PANEL) || document.body;
+      var panel = document.querySelector('.rent-filter_form') || document.body;
       panel.scrollIntoView({ behavior: "smooth", block: "start" });
     });
     if (el.btnLoadMore && el.btnLoadMore.parentNode) {
@@ -1643,7 +1642,6 @@
     // Save grid if it lives inside root, then wipe old Webflow HTML
     var _savedGrid = root.querySelector('#' + CFG.GRID_ID);
     root.innerHTML = '';
-    if (_savedGrid) root.appendChild(_savedGrid);
 
     var CLOSE_SVG   = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
     var CHEVRON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
@@ -1898,6 +1896,7 @@
     var overlay = mk('div', { id: 'bhbOverlay', class: 'bhb-overlay' });
     root.appendChild(overlay);
     root.appendChild(filterForm);
+    if (_savedGrid) root.appendChild(_savedGrid);
   }
 
   function init() {
