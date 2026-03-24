@@ -224,7 +224,8 @@
       })(),
       locTrigger:    document.querySelector('.location-trigger'),
       locTrigText:   document.querySelector('.location-trigger_text'),
-      locDropdown:   document.querySelector('.location-dropdown'),
+      locDropdown:       document.querySelector('.location-dropdown'),
+      locDropdownParent: document.querySelector('.location-dropdown') ? document.querySelector('.location-dropdown').parentNode : null,
       priceTrigger:  document.querySelector('.price-trigger'),
       priceTrigText: document.querySelector('.price-trigger_text'),
       priceDropdown: document.querySelector('.price-dropdown'),
@@ -1279,15 +1280,17 @@
     if (locDropOpen) {
       if (map) setTimeout(function () { map.resize(); }, 80);
       if (window.innerWidth < 768) {
+        document.body.appendChild(el.locDropdown);
         el.locDropdown.classList.add('is-mobile-open');
         document.body.style.overflow = 'hidden';
-        setTimeout(function() { if (locMap) locMap.resize(); }, 100);
+        setTimeout(function() { if (locMap) locMap.resize(); }, 150);
       }
     } else {
       el.locDropdown.classList.remove('is-mobile-open');
-      if (!document.querySelector('.rent-filter_form.is-mobile-open')) {
-        document.body.style.overflow = '';
+      if (el.locDropdownParent && el.locDropdown.parentNode !== el.locDropdownParent) {
+        el.locDropdownParent.appendChild(el.locDropdown);
       }
+      document.body.style.overflow = '';
     }
     if (!locDropOpen) syncMapWith(state.locations);
   }

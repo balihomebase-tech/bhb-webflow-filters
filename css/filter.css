@@ -1588,34 +1588,51 @@
 .location-dropdown.is-mobile-open {
   position: fixed;
   inset: 0;
-  z-index: 999;
-  display: flex;
+  z-index: 9999;
+  display: flex !important;
   flex-direction: column;
   overflow: hidden;
+  background: #fff;
 }
-.location-dropdown.is-mobile-open .loc-panel-maps {
+.location-dropdown.is-mobile-open .loc-tabs {
+  flex-shrink: 0;
+}
+.location-dropdown.is-mobile-open .loc-body {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.location-dropdown.is-mobile-open .loc-panel-area.is-active,
+.location-dropdown.is-mobile-open .loc-panel-maps.is-active {
   display: flex;
   flex-direction: column;
   flex: 1;
   overflow: hidden;
+}
+.location-dropdown.is-mobile-open .loc-panel-maps {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.location-dropdown.is-mobile-open .loc-pill-col {
+  flex-shrink: 0;
+  overflow-x: auto;
+  padding: 8px 12px;
+  z-index: 10;
 }
 .location-dropdown.is-mobile-open .bali-map-wrap {
   flex: 1;
   position: relative;
   overflow: hidden;
+  min-height: 0;
 }
 .location-dropdown.is-mobile-open #locMapEl {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-}
-.location-dropdown.is-mobile-open .loc-pill-col {
-  position: relative;
-  z-index: 10;
-  flex-shrink: 0;
-  overflow-x: auto;
-  padding: 8px 12px;
+  width: 100% !important;
+  height: 100% !important;
 }
 .location-dropdown.is-mobile-open .loc-map-footer {
   flex-shrink: 0;
