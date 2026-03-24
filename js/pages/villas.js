@@ -1916,9 +1916,6 @@
     updateLocText();
     bindEvents();
     setCurrency(savedCurrency());
-    filtered = allCards.slice();
-    showNext();
-    updateUI();
   }
   if (document.readyState === "loading")
     document.addEventListener("DOMContentLoaded", init);
