@@ -1524,6 +1524,16 @@
     if (locDropOpen) {
       if (map) setTimeout(function () { map.resize(); }, 80);
       if (locMap) setTimeout(function () { locMap.resize(); }, 80);
+      if (window.innerWidth < 768) {
+        el.locDropdown.classList.add('is-mobile-open');
+        document.body.style.overflow = 'hidden';
+        setTimeout(function() { if (locMap) locMap.resize(); }, 100);
+      }
+    } else {
+      el.locDropdown.classList.remove('is-mobile-open');
+      if (!document.querySelector('.rent-filter_form.is-mobile-open')) {
+        document.body.style.overflow = '';
+      }
     }
     if (!locDropOpen) syncMapWith(state.locations);
   }
