@@ -237,7 +237,7 @@
     }
   }
   function toggleDrop(dd) {
-    var isOpen = dd.style.display === "block";
+    var isOpen = window.getComputedStyle(dd).display !== "none";
     closeAll();
     if (!isOpen) {
       dd.style.display = "block";
@@ -1909,7 +1909,6 @@
     buildAreas();
     buildLocDOM();
     mountLocUI();
-    computeBaseBounds();
     initPricePanel();
     updatePriceRangeForOwnership();
     hydrateCoordsFromCMS();
