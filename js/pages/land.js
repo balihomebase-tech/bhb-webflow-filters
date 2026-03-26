@@ -95,7 +95,6 @@
     labelByNorm = {};
   var state = {
     ownership: "Any",
-    bedrooms: [],
     lease: "Any",
     locations: [],
     currency: "IDR",
@@ -155,14 +154,6 @@
     if (el.ownershipField) {
       var a = el.ownershipField.querySelector(".filter-option.is-active");
       state.ownership = a ? a.dataset.value : "Any";
-    }
-    if (el.bedsField) {
-      var actives = el.bedsField.querySelectorAll(".filter-option.is-active");
-      state.bedrooms = [];
-      for (var i = 0; i < actives.length; i++) {
-        if (actives[i].dataset.value !== "Any")
-          state.bedrooms.push(actives[i].dataset.value);
-      }
     }
     if (el.leaseField) {
       var l = el.leaseField.querySelector(".filter-option.is-active");
@@ -251,9 +242,6 @@
       if (vals.indexOf("leasehold") > -1 || vals.indexOf("freehold") > -1) {
         el.ownershipField = field;
         el.ownershipTrigText = field.querySelector(".filter-trigger_text");
-      } else if (vals.indexOf("1") > -1 && vals.indexOf("2") > -1) {
-        el.bedsField = field;
-        el.bedsTrigText = field.querySelector(".filter-trigger_text");
       } else if (
         vals.indexOf("10 \u2013 20 years") > -1 ||
         vals.indexOf("30+ years") > -1
@@ -300,59 +288,6 @@
       e.stopPropagation();
     });
   }
-  function initMulti(field, onPick) {
-    if (!field) return;
-    var trigger = field.querySelector(".filter-trigger");
-    var dd = field.querySelector(".filter-dropdown");
-    var trigText = field.querySelector(".filter-trigger_text");
-    var opts = field.querySelectorAll(".filter-option");
-    if (!trigger || !dd) return;
-    trigger.addEventListener("click", function (e) {
-      e.stopPropagation();
-      toggleDrop(dd);
-    });
-    for (var i = 0; i < opts.length; i++) {
-      (function (opt) {
-        opt.addEventListener("click", function (e) {
-          e.stopPropagation();
-          var val = opt.dataset.value;
-          var anyOpt = field.querySelector('.filter-option[data-value="Any"]');
-          if (val === "Any") {
-            for (var k = 0; k < opts.length; k++)
-              opts[k].classList.remove("is-active");
-            opt.classList.add("is-active");
-          } else {
-            if (anyOpt) anyOpt.classList.remove("is-active");
-            opt.classList.toggle("is-active");
-            var hasActive = false;
-            for (var k = 0; k < opts.length; k++) {
-              if (opts[k].classList.contains("is-active")) {
-                hasActive = true;
-                break;
-              }
-            }
-            if (!hasActive && anyOpt) anyOpt.classList.add("is-active");
-          }
-          var selected = [];
-          for (var k = 0; k < opts.length; k++) {
-            if (
-              opts[k].classList.contains("is-active") &&
-              opts[k].dataset.value !== "Any"
-            )
-              selected.push(opts[k].dataset.value);
-          }
-          if (trigText)
-            trigText.textContent = selected.length
-              ? selected.join(", ")
-              : "Any";
-          if (onPick) onPick(selected);
-        });
-      })(opts[i]);
-    }
-    dd.addEventListener("click", function (e) {
-      e.stopPropagation();
-    });
-  }
   function clearAll(e) {
     if (e) e.preventDefault();
     function resetToAny(field, trigText, label) {
@@ -365,7 +300,6 @@
       if (trigText) trigText.textContent = label || "Any";
     }
     resetToAny(el.ownershipField, el.ownershipTrigText, "Any");
-    resetToAny(el.bedsField, el.bedsTrigText, "Any");
     resetToAny(el.leaseField, el.leaseTrigText, "Any");
     if (el.currField) {
       var opts = el.currField.querySelectorAll(".filter-option");
@@ -381,7 +315,6 @@
     slider.minRatio = 0;
     slider.maxRatio = 1;
     state.ownership = "Any";
-    state.bedrooms = [];
     state.lease = "Any";
     state.keyword = "";
     state.currency = "IDR";
@@ -406,10 +339,6 @@
     initSingle(el.ownershipField, function (val) {
       state.ownership = val;
       refreshPriceSystem();
-    });
-    initMulti(el.bedsField, function (selected) {
-      state.bedrooms = selected;
-      applyFilters();
     });
     initSingle(el.leaseField, function (val) {
       state.lease = val;
@@ -545,7 +474,6 @@
       code: (inner.dataset.code || "").toLowerCase(),
       locRaw: inner.dataset.location || "",
       loc: norm(inner.dataset.location || ""),
-      rooms: parseInt(inner.dataset.rooms || "0", 10),
       price: parseFloat(inner.dataset.price || "0"),
       currency: (inner.dataset.currency || "").toUpperCase(),
       ownership: (inner.dataset.available || "").toLowerCase(),
@@ -581,21 +509,6 @@
       d.ownership !== state.ownership.toLowerCase()
     )
       return false;
-    if (state.bedrooms.length > 0) {
-      var match = false;
-      for (var i = 0; i < state.bedrooms.length; i++) {
-        var b = state.bedrooms[i];
-        if (b === "6+" && d.rooms >= 6) {
-          match = true;
-          break;
-        }
-        if (b !== "6+" && d.rooms === parseInt(b, 10)) {
-          match = true;
-          break;
-        }
-      }
-      if (!match) return false;
-    }
     if (state.locations.length > 0 && state.locations.indexOf(d.loc) === -1)
       return false;
     if (!passesPrice(d, card)) return false;
@@ -1614,21 +1527,6 @@
       ])
     ]);
 
-    // ── Bedrooms ──
-    var bedsField = makeField([
-      makeLabel('Bedrooms'),
-      makeTrigger('Any'),
-      makeDropdown([
-        makeOption('Any', 'Any', true),
-        makeOption('1',   '1 Br',  false),
-        makeOption('2',   '2 Br',  false),
-        makeOption('3',   '3 Br',  false),
-        makeOption('4',   '4 Br',  false),
-        makeOption('5',   '5 Br',  false),
-        makeOption('6+',  '6+ Br', false)
-      ])
-    ]);
-
     // ── Lease Duration ──
     var leaseField = makeField([
       makeLabel('Lease Duration'),
@@ -1791,7 +1689,7 @@
       mobileCloseBtn,
       mobileCollapsed,
       mk('div', { class: 'rent-filter_top' }, [
-        ownershipField, bedsField, leaseField, kwField
+        ownershipField, leaseField, kwField
       ]),
       mk('div', { class: 'rent-filter_bottom' }, [
         mk('div', { class: 'rent-filter_bottom-fields' }, [
