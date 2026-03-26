@@ -1819,7 +1819,44 @@
     if (_savedGrid) root.appendChild(_savedGrid);
   }
 
+  function injectMobileLocStyles() {
+    if (document.querySelector('style[data-bhb-mobile-loc]')) return;
+    var css = [
+      '.location-dropdown.is-mobile-open .loc-tabs{display:flex;gap:0;padding:12px 16px;margin-bottom:0;border-bottom:1px solid #f0ebe6;}',
+      '.location-dropdown.is-mobile-open .loc-tab{flex:1;height:44px;border-radius:0;border:1px solid #e0d9d3;background:#fff;color:#3a2e28;font-size:14px;font-weight:500;}',
+      '.location-dropdown.is-mobile-open .loc-tab-area{border-radius:12px 0 0 12px;border-right:none;}',
+      '.location-dropdown.is-mobile-open .loc-tab-maps{border-radius:0 12px 12px 0;}',
+      '.location-dropdown.is-mobile-open .loc-tab.is-active{background:#3a2e28!important;border-color:#3a2e28!important;color:#fff!important;}',
+      '.location-dropdown.is-mobile-open .loc-tab:hover:not(.is-active){background:#f5f0ea;}',
+      '.location-dropdown.is-mobile-open .loc-panel-area.is-active{padding:12px 16px;}',
+      '.location-dropdown.is-mobile-open .loc-mobile-area-pills{padding:0;gap:8px;}',
+      '.location-dropdown.is-mobile-open .mobile-area-pill{background:#fff;border:1px solid #e0d9d3;border-radius:12px;padding:14px;font-size:14px;font-weight:500;color:#3a2e28;text-align:left;width:100%;cursor:pointer;display:block;box-sizing:border-box;}',
+      '.location-dropdown.is-mobile-open .mobile-area-pill.is-active{background:#3a2e28;border-color:#3a2e28;color:#fff;}',
+      '.location-dropdown.is-mobile-open .bali-map-wrap{height:180px!important;flex:none!important;border-radius:12px;overflow:hidden;margin-top:12px;}',
+      '.location-dropdown.is-mobile-open .loc-panel-maps.is-active{padding:12px 16px;}',
+      '.location-dropdown.is-mobile-open .location-search{padding:0 0 8px 0;border-bottom:none;}',
+      '.location-dropdown.is-mobile-open .location-search img{display:none;}',
+      '.location-dropdown.is-mobile-open .location-search-input{width:100%;height:40px;border:1px solid #e0d9d3;border-radius:12px;padding:0 12px;font-size:14px;outline:none;background:#fff;box-sizing:border-box;}',
+      '.location-dropdown.is-mobile-open .loc-mobile-loc-list{padding:0;}',
+      '.location-dropdown.is-mobile-open .mobile-loc-item{min-height:44px;padding:0;font-size:14px;color:#9a8880;border-bottom:1px solid #f0ebe6;border-radius:0;background:transparent;}',
+      '.location-dropdown.is-mobile-open .mobile-loc-item.is-active{color:#3a2e28;font-weight:500;background:transparent;}',
+      '.location-dropdown.is-mobile-open .mobile-loc-item .mini-pin{opacity:0.35;}',
+      '.location-dropdown.is-mobile-open .mobile-loc-item.is-active .mini-pin{opacity:1;}',
+      '.location-dropdown.is-mobile-open .loc-map-footer{display:flex;flex-direction:column;gap:6px;padding:12px 16px;}',
+      '.location-dropdown.is-mobile-open .loc-selected-info{font-size:12px;color:#9a8880;text-align:center;}',
+      '.location-dropdown.is-mobile-open .loc-actions{display:flex;gap:8px;}',
+      '.location-dropdown.is-mobile-open .loc-btn-clear-inline,.location-dropdown.is-mobile-open .loc-btn-apply-inline{flex:1;height:44px;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:14px;font-weight:500;text-decoration:none;cursor:pointer;box-sizing:border-box;padding:0;}',
+      '.location-dropdown.is-mobile-open .loc-btn-clear-inline{border:1px solid #e0d9d3;background:#fff;color:#3a2e28;}',
+      '.location-dropdown.is-mobile-open .loc-btn-apply-inline{background:#3a2e28;border:1px solid #3a2e28;color:#fff;}'
+    ].join('');
+    var s = document.createElement('style');
+    s.setAttribute('data-bhb-mobile-loc', '1');
+    s.textContent = css;
+    document.head.appendChild(s);
+  }
+
   function init() {
+    injectMobileLocStyles();
     buildUI();
     cacheEls();
     if (!el.grid) { console.error('[BHB land] grid #' + CFG.GRID_ID + ' not found'); return; }
