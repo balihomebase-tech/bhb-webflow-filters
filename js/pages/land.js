@@ -739,11 +739,10 @@
       var curr = currencies[c];
       var tier1 = convertAmount(tier1Max, 'IDR', curr);
       var tier2 = convertAmount(tier2Max, 'IDR', curr);
-      var unit = priceUnitSuffix();
       dynamicChips[curr] = [
-        { label: '< ' + short(tier1) + unit, min: 0, max: tier1 },
-        { label: short(tier1) + ' \u2013 ' + short(tier2) + unit, min: tier1, max: tier2 },
-        { label: '> ' + short(tier2) + unit, min: tier2, max: null }
+        { label: '< ' + short(tier1), min: 0, max: tier1 },
+        { label: short(tier1) + ' \u2013 ' + short(tier2), min: tier1, max: tier2 },
+        { label: '> ' + short(tier2), min: tier2, max: null }
       ];
     }
   }
