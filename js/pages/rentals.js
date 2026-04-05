@@ -2126,7 +2126,7 @@
       '#bhb-filter .location-dropdown .mobile-area-pill{width:100%;background:#fff;border:1px solid #e0d9d3;border-radius:12px;padding:14px 16px;font-size:14px;font-weight:500;color:#3a2e28;text-align:left;cursor:pointer;display:block;box-sizing:border-box;}',
       '#bhb-filter .location-dropdown .mobile-area-pill.is-active{background:#3a2e28;border-color:#3a2e28;color:#fff;}',
       /* Map */
-      '#bhb-filter .location-dropdown .bali-map-wrap{height:180px!important;flex:none!important;border-radius:12px;overflow:hidden;margin-top:12px;position:relative;}',
+      '#bhb-filter .location-dropdown .bali-map-wrap{height:400px!important;flex:none!important;border-radius:12px;overflow:hidden;margin-top:12px;position:relative;}',
       '#bhb-filter .location-dropdown #locMapEl{position:absolute;inset:0;width:100%!important;height:100%!important;}',
       /* Location panel: search + list */
       '#bhb-filter .location-dropdown .location-search{padding:0 0 8px 0;border-bottom:none;display:flex;}',
