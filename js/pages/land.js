@@ -734,15 +734,19 @@
   }
   function updatePriceRangeForOwnership() {
     allCards = getCurrentCards();
-    var fullRange = getFullRange(allCards);
-    var freeholdRange = getFreeholdRange(allCards);
-    slider.base.min = fullRange.min;
-    slider.base.max = fullRange.max;
+    var ownershipFilter =
+      state.ownership === "Any" ? null : state.ownership.toLowerCase();
+    var range = calculatePriceRange(allCards, ownershipFilter);
+    if (!range.min || !range.max) {
+      range = calculatePriceRange(allCards, null);
+    }
+    slider.base.min = range.min;
+    slider.base.max = range.max;
     slider.minRatio = 0;
     slider.maxRatio = 1;
     var unitLabelEl = document.getElementById("pwUnitLabel");
     if (unitLabelEl) unitLabelEl.textContent = priceUnitSuffix();
-    generateDynamicChips(freeholdRange.min, freeholdRange.max);
+    generateDynamicChips(range.min, range.max);
     updateSliderForCurrency(state.currency);
   }
   function generateDynamicChips(minPrice, maxPrice) {
