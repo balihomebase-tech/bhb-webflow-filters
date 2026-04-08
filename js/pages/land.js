@@ -706,9 +706,13 @@
     if (isFinite(priceAre) && priceAre > 0) return priceAre;
     return 0;
   }
-  function calculatePriceRange(cards) {
+  function calculatePriceRange(cards, ownershipFilter) {
     var min = Infinity, max = 0;
     for (var i = 0; i < cards.length; i++) {
+      if (ownershipFilter) {
+        var d = getData(cards[i]);
+        if (d.ownership !== ownershipFilter) continue;
+      }
       var price = getPricePerAre(cards[i]);
       if (!price || price <= 0) continue;
       // Land prices are always in IDR — no conversion needed
@@ -720,16 +724,25 @@
       max: max === 0 ? 35000000 : max
     };
   }
+  function getFullRange(cards) {
+    return calculatePriceRange(cards, null);
+  }
+  function getFreeholdRange(cards) {
+    var freehold = calculatePriceRange(cards, "freehold");
+    if (freehold.min > 0 && freehold.max > 0) return freehold;
+    return getFullRange(cards);
+  }
   function updatePriceRangeForOwnership() {
     allCards = getCurrentCards();
-    var range = calculatePriceRange(allCards);
-    slider.base.min = range.min;
-    slider.base.max = range.max;
+    var fullRange = getFullRange(allCards);
+    var freeholdRange = getFreeholdRange(allCards);
+    slider.base.min = fullRange.min;
+    slider.base.max = fullRange.max;
     slider.minRatio = 0;
     slider.maxRatio = 1;
     var unitLabelEl = document.getElementById("pwUnitLabel");
     if (unitLabelEl) unitLabelEl.textContent = priceUnitSuffix();
-    generateDynamicChips(range.min, range.max);
+    generateDynamicChips(freeholdRange.min, freeholdRange.max);
     updateSliderForCurrency(state.currency);
   }
   function generateDynamicChips(minPrice, maxPrice) {
@@ -739,10 +752,11 @@
     var currencies = ['IDR', 'USD', 'EUR'];
     for (var c = 0; c < currencies.length; c++) {
       var curr = currencies[c];
+      var floor = convertAmount(minPrice, 'IDR', curr);
       var tier1 = convertAmount(tier1Max, 'IDR', curr);
       var tier2 = convertAmount(tier2Max, 'IDR', curr);
       dynamicChips[curr] = [
-        { label: '< ' + short(tier1), min: 0, max: tier1 },
+        { label: '< ' + short(tier1), min: floor, max: tier1 },
         { label: short(tier1) + ' \u2013 ' + short(tier2), min: tier1, max: tier2 },
         { label: '> ' + short(tier2), min: tier2, max: null }
       ];
