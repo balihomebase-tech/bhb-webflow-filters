@@ -719,8 +719,7 @@
     };
   }
   function updatePriceRangeForOwnership() {
-    var matchingCards = getCardsByOwnership(allCards, state.ownership);
-    var range = calculatePriceRange(matchingCards);
+    var range = calculatePriceRange(allCards);
     slider.base.min = range.min;
     slider.base.max = range.max;
     slider.minRatio = 0;
