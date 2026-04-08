@@ -144,6 +144,12 @@
     else if (suffix === "b" || suffix === "billion") mult = 1e9;
     return base * mult;
   }
+  function normalizePerAreIdr(n) {
+    if (!isFinite(n) || n <= 0) return 0;
+    // Land per-are IDR values should be in million-scale; normalize legacy thousand-scale values.
+    if (n < 1e6) return n * 1e3;
+    return n;
+  }
   function short(n) {
     var a = Math.abs(n);
     if (a >= 1e9) return (n / 1e9).toFixed(1).replace(".0", "") + "B";
@@ -723,13 +729,13 @@
   function getPricePerAre(card) {
     var inner = card.querySelector('.listings_card-wrapper') || card;
     var priceAre = toNumber(inner.dataset.priceAre || inner.dataset.pricePerAre || 0);
-    if (isFinite(priceAre) && priceAre > 0) return priceAre;
+    if (isFinite(priceAre) && priceAre > 0) return normalizePerAreIdr(priceAre);
 
     // Backward compatibility: some templates temporarily map per-are into data-price-total.
     var priceTotal = toNumber(inner.dataset.priceTotal || inner.dataset.price || 0);
     var sizeAres = toNumber(inner.dataset.size || 0);
-    if (priceTotal > 0 && sizeAres > 0) return priceTotal / sizeAres;
-    if (priceTotal > 0) return priceTotal;
+    if (priceTotal > 0 && sizeAres > 0) return normalizePerAreIdr(priceTotal / sizeAres);
+    if (priceTotal > 0) return normalizePerAreIdr(priceTotal);
 
     return 0;
   }
