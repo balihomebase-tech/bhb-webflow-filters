@@ -108,6 +108,13 @@
       .toUpperCase();
     return c === "USD" || c === "EUR" || c === "IDR" ? c : "IDR";
   }
+  function toNumber(v) {
+    if (v === null || v === undefined) return 0;
+    if (typeof v === "number") return isFinite(v) ? v : 0;
+    var s = String(v).replace(/[^0-9.-]/g, "");
+    var n = parseFloat(s);
+    return isFinite(n) ? n : 0;
+  }
   function short(n) {
     var a = Math.abs(n);
     if (a >= 1e9) return (n / 1e9).toFixed(1).replace(".0", "") + "B";
@@ -686,8 +693,15 @@
   }
   function getPricePerAre(card) {
     var inner = card.querySelector('.listings_card-wrapper') || card;
-    var priceAre = parseFloat(inner.dataset.priceAre || inner.dataset.pricePerAre || '0');
+    var priceAre = toNumber(inner.dataset.priceAre || inner.dataset.pricePerAre || 0);
     if (isFinite(priceAre) && priceAre > 0) return priceAre;
+
+    // Backward compatibility: some templates temporarily map per-are into data-price-total.
+    var priceTotal = toNumber(inner.dataset.priceTotal || inner.dataset.price || 0);
+    var sizeAres = toNumber(inner.dataset.size || 0);
+    if (priceTotal > 0 && sizeAres > 0) return priceTotal / sizeAres;
+    if (priceTotal > 0) return priceTotal;
+
     return 0;
   }
   function calculatePriceRange(cards, ownershipFilter) {
