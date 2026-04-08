@@ -702,7 +702,7 @@
   }
   function getPricePerAre(card) {
     var inner = card.querySelector('.listings_card-wrapper') || card;
-    var priceAre = parseFloat(inner.dataset.priceAre || '0');
+    var priceAre = parseFloat(inner.dataset.priceAre || inner.dataset.pricePerAre || '0');
     if (isFinite(priceAre) && priceAre > 0) return priceAre;
     return 0;
   }
