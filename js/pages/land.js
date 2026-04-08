@@ -697,9 +697,11 @@
   }
   function getPricePerAre(card) {
     var inner = card.querySelector('.listings_card-wrapper') || card;
-    var priceAre = parseFloat(inner.dataset.priceAre || '0');
+    // Try data-price-per-are first, then data-price-are
+    var priceAre = parseFloat(inner.dataset.pricePerAre || inner.dataset.priceAre || '0');
     if (isFinite(priceAre) && priceAre > 0) return priceAre;
-    var priceTotal = parseFloat(inner.dataset.priceTotal || '0');
+    // Fallback: calculate from total price / land size
+    var priceTotal = parseFloat(inner.dataset.price || inner.dataset.priceTotal || '0');
     var size       = parseFloat(inner.dataset.size || '0');
     if (isFinite(priceTotal) && priceTotal > 0 && size > 0) return priceTotal / size;
     return 0;
