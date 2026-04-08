@@ -524,6 +524,7 @@
     return true;
   }
   function applyFilters() {
+    allCards = getCurrentCards();
     filtered = allCards.filter(passes);
     visible = 0;
     showNext();
@@ -695,6 +696,10 @@
       return d.ownership === ownershipLower;
     });
   }
+  function getCurrentCards() {
+    if (!el.grid) return [];
+    return Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
+  }
   function getPricePerAre(card) {
     var inner = card.querySelector('.listings_card-wrapper') || card;
     var priceAre = parseFloat(inner.dataset.priceAre || '0');
@@ -716,6 +721,7 @@
     };
   }
   function updatePriceRangeForOwnership() {
+    allCards = getCurrentCards();
     var range = calculatePriceRange(allCards);
     slider.base.min = range.min;
     slider.base.max = range.max;
