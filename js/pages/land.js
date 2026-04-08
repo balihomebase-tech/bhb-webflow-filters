@@ -62,23 +62,7 @@
     canggu: [115.1365, -8.65062],
     pererenan: [115.12346, -8.64904],
   };
-  var CHIP_PRESETS = {
-    IDR: [
-      { label: "< Rp8jt/are", min: 0, max: 8000000 },
-      { label: "Rp8jt \u2013 Rp15jt/are", min: 8000000, max: 15000000 },
-      { label: "> Rp15jt/are", min: 15000000, max: null },
-    ],
-    USD: [
-      { label: "< $500/are", min: 0, max: 500 },
-      { label: "$500 \u2013 $950/are", min: 500, max: 950 },
-      { label: "> $950/are", min: 950, max: null },
-    ],
-    EUR: [
-      { label: "< \u20ac450/are", min: 0, max: 450 },
-      { label: "\u20ac450 \u2013 \u20ac900/are", min: 450, max: 900 },
-      { label: "> \u20ac900/are", min: 900, max: null },
-    ],
-  };
+  var CHIP_PRESETS = { IDR: [], USD: [], EUR: [] };
   var dynamicChips = { IDR: [], USD: [], EUR: [] };
   var allCards = [],
     filtered = [],
@@ -736,17 +720,24 @@
     allCards = getCurrentCards();
     var ownershipFilter =
       state.ownership === "Any" ? null : state.ownership.toLowerCase();
-    var range = calculatePriceRange(allCards, ownershipFilter);
-    if (!range.min || !range.max) {
-      range = calculatePriceRange(allCards, null);
+    var sliderRange = calculatePriceRange(allCards, ownershipFilter);
+    if (!sliderRange.min || !sliderRange.max) {
+      sliderRange = calculatePriceRange(allCards, null);
     }
-    slider.base.min = range.min;
-    slider.base.max = range.max;
+    var chipsRange = null;
+    if (state.ownership === "Any") {
+      chipsRange = calculatePriceRange(allCards, "freehold");
+      if (!chipsRange.min || !chipsRange.max) chipsRange = sliderRange;
+    } else {
+      chipsRange = sliderRange;
+    }
+    slider.base.min = sliderRange.min;
+    slider.base.max = sliderRange.max;
     slider.minRatio = 0;
     slider.maxRatio = 1;
     var unitLabelEl = document.getElementById("pwUnitLabel");
     if (unitLabelEl) unitLabelEl.textContent = priceUnitSuffix();
-    generateDynamicChips(range.min, range.max);
+    generateDynamicChips(chipsRange.min, chipsRange.max);
     updateSliderForCurrency(state.currency);
   }
   function generateDynamicChips(minPrice, maxPrice) {
@@ -768,11 +759,17 @@
   }
   function updateChips(currency) {
     var c = normCurrency(currency);
-    var presets = dynamicChips[c] && dynamicChips[c].length > 0 ? dynamicChips[c] : CHIP_PRESETS[c] || CHIP_PRESETS["IDR"];
+    var presets = dynamicChips[c] && dynamicChips[c].length > 0 ? dynamicChips[c] : [];
     var chips = document.querySelectorAll(".pw-chip");
     for (var i = 0; i < chips.length; i++) {
       var p = presets[i];
-      if (!p) continue;
+      if (!p) {
+        chips[i].dataset.min = "";
+        chips[i].dataset.max = "";
+        chips[i].textContent = "";
+        chips[i].style.display = "none";
+        continue;
+      }
       chips[i].dataset.min = String(p.min);
       chips[i].dataset.max = String(p.max !== null ? p.max : slider.active.max);
       chips[i].textContent = p.label;
@@ -1714,9 +1711,9 @@
         mk('div', { class: 'pp-section' }, [
           mk('div', { class: 'pp-section-title', text: 'QUICK\u00a0SELECTION' }),
           mk('div', { class: 'pw-quick' }, [
-            mk('div', { class: 'pw-chip', 'data-chip': '0', text: '< Rp8jt/are' }),
-            mk('div', { class: 'pw-chip', 'data-chip': '1', text: 'Rp8jt \u2013 Rp15jt/are' }),
-            mk('div', { class: 'pw-chip', 'data-chip': '2', text: '> Rp15jt/are' })
+            mk('div', { class: 'pw-chip', 'data-chip': '0', text: '' }),
+            mk('div', { class: 'pw-chip', 'data-chip': '1', text: '' }),
+            mk('div', { class: 'pw-chip', 'data-chip': '2', text: '' })
           ])
         ]),
         mk('div', { class: 'pp-section' }, [
