@@ -108,12 +108,41 @@
       .toUpperCase();
     return c === "USD" || c === "EUR" || c === "IDR" ? c : "IDR";
   }
+  function parseLooseNumberToken(token) {
+    var t = String(token || "").trim();
+    if (!t) return 0;
+    var hasDot = t.indexOf(".") > -1;
+    var hasComma = t.indexOf(",") > -1;
+    if (hasDot && hasComma) {
+      t = t.replace(/,/g, "");
+    } else if (hasComma && !hasDot) {
+      var partsComma = t.split(",");
+      var lastComma = partsComma[partsComma.length - 1] || "";
+      if (partsComma.length > 1 && lastComma.length === 3) t = partsComma.join("");
+      else t = t.replace(/,/g, ".");
+    } else if (hasDot && !hasComma) {
+      var partsDot = t.split(".");
+      var lastDot = partsDot[partsDot.length - 1] || "";
+      if (partsDot.length > 1 && lastDot.length === 3) t = partsDot.join("");
+    }
+    var n = parseFloat(t);
+    return isFinite(n) ? n : 0;
+  }
   function toNumber(v) {
     if (v === null || v === undefined) return 0;
     if (typeof v === "number") return isFinite(v) ? v : 0;
-    var s = String(v).replace(/[^0-9.-]/g, "");
-    var n = parseFloat(s);
-    return isFinite(n) ? n : 0;
+    var raw = String(v).trim();
+    if (!raw) return 0;
+    var low = raw.toLowerCase();
+    var m = low.match(/(-?\d[\d.,]*)\s*(k|m|b|jt|rb|thousand|million|billion)?/);
+    if (!m) return 0;
+    var base = parseLooseNumberToken(m[1]);
+    var suffix = m[2] || "";
+    var mult = 1;
+    if (suffix === "k" || suffix === "rb" || suffix === "thousand") mult = 1e3;
+    else if (suffix === "m" || suffix === "jt" || suffix === "million") mult = 1e6;
+    else if (suffix === "b" || suffix === "billion") mult = 1e9;
+    return base * mult;
   }
   function short(n) {
     var a = Math.abs(n);
@@ -1574,6 +1603,24 @@
     if (m) return [parseFloat(m[2]), parseFloat(m[1])];
     return null;
   }
+  function normalizeCloudflareFooterLinks() {
+    var anchors = document.querySelectorAll('a[href*="pages.dev"]');
+    for (var i = 0; i < anchors.length; i++) {
+      var href = anchors[i].getAttribute("href");
+      if (!href) continue;
+      var u = null;
+      try {
+        u = new URL(href, window.location.href);
+      } catch (e) {
+        continue;
+      }
+      if (!/(^|\.)bhb-webflow-filters\.pages\.dev$/i.test(u.hostname)) continue;
+      anchors[i].setAttribute(
+        "href",
+        window.location.origin + u.pathname + u.search + u.hash,
+      );
+    }
+  }
   function buildUI() {
     var root = document.getElementById('bhb-filter');
     if (!root) return;
@@ -1883,6 +1930,7 @@
   }
 
   function init() {
+    normalizeCloudflareFooterLinks();
     injectMobileLocStyles();
     buildUI();
     cacheEls();
