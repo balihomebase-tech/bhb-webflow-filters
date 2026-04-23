@@ -2105,7 +2105,7 @@
     var css = [
       '@media (max-width:991px){',
       /* Override bottom-sheet: inline position */
-      '#bhb-filter .location-dropdown{position:relative!important;bottom:auto!important;top:auto!important;left:auto!important;right:auto!important;width:100%!important;max-height:none!important;height:auto!important;z-index:2!important;overflow:visible!important;animation:none!important;box-shadow:none!important;border-radius:12px;padding:0;margin-top:6px;border:1px solid ;}',
+      '#bhb-filter .location-dropdown{position:relative!important;bottom:auto!important;top:auto!important;left:auto!important;right:auto!important;width:100%!important;max-height:none!important;height:auto!important;z-index:2!important;overflow:visible!important;animation:none!important;box-shadow:none!important;border-radius:12px;padding:0;margin-top:6px;border: none;important;}',
       /* Inside bottom-sheet form: remove standalone border/margin */
       '#bhb-filter .rent-filter_form.is-mobile-open .location-dropdown{border:none!important;margin-top:0!important;}',
       '#bhb-filter .location-dropdown.is-open{animation:none!important;}',
