@@ -9,34 +9,24 @@
     "https://cdn.prod.website-files.com/67344ae68adf4fc1f539002d/69a009335d3c16a421dd917a_Icon.svg";
   var AREA_RULES = [
     {
-      id: "uluwatu-area",
-      label: "Uluwatu area",
-      keys: ["uluwatu", "ungasan", "pecatu"],
-    },
-    {
       id: "canggu-area",
-      label: "Canggu area",
-      keys: ["canggu", "batu bolong", "dalung"],
-    },
-    {
-      id: "pererenan-area",
-      label: "Pererenan area",
-      keys: ["pererenan", "tumbak bayuh", "buduk", "cemagi", "seseh"],
-    },
-    {
-      id: "tabanan-area",
-      label: "Tabanan area",
+      label: "Around Canggu",
       keys: [
-        "kedungu",
-        "nyanyi",
-        "tanah lot",
-        "cepaka",
-        "buwit",
-        "kaba kaba",
-        "kaba-kaba",
-      ],
+        "canggu", "pererenan", "seseh", "cemagi", "buduk", "dalung",
+        "tumbak bayuh", "cepaka", "kaba kaba", "kaba-kaba", "buwit",
+        "batu bolong", "kedungu", "nyanyi", "tanah lot", "munggu"
+      ]
     },
-    { id: "ubud-area", label: "Ubud area", keys: ["ubud"] },
+    {
+      id: "uluwatu-area",
+      label: "Around Uluwatu",
+      keys: ["uluwatu", "ungasan", "pecatu", "bingin", "uluwatu center"]
+    },
+    {
+      id: "ubud-area",
+      label: "Around Ubud",
+      keys: ["ubud", "ubud center"]
+    }
   ];
   var LOC_COORDS = {
     cepaka: [115.14526, -8.59917],
@@ -487,6 +477,7 @@
         applyFilters();
         closeAll();
         if (locDropOpen) openLocDrop(false);
+        closeMobilePanel();
       });
     var closeBtns = document.querySelectorAll(".close-btn");
     for (var i = 0; i < closeBtns.length; i++) {
@@ -1343,6 +1334,8 @@
     }
     var panelAreaEl = el.locDropdown.querySelector('.loc-panel-area');
     if (panelAreaEl) {
+      var existingPills = panelAreaEl.querySelector('.loc-mobile-area-pills');
+      if (existingPills) existingPills.remove();
       var mobileAreaPills = document.createElement('div');
       mobileAreaPills.className = 'loc-mobile-area-pills';
       for (var a2 = 0; a2 < areas.length; a2++) {
@@ -1357,6 +1350,8 @@
     }
     var panelMapsEl = el.locDropdown.querySelector('.loc-panel-maps');
     if (panelMapsEl) {
+      var existingLocList = panelMapsEl.querySelector('.loc-mobile-loc-list');
+      if (existingLocList) existingLocList.remove();
       var mobileLocList = document.createElement('div');
       mobileLocList.className = 'loc-mobile-loc-list';
       for (var a3 = 0; a3 < areas.length; a3++) {
@@ -1820,7 +1815,7 @@
     // ── Keyword ──
     var kwInput = mk('input', { class: 'keyword-input', type: 'search', placeholder: 'Search\u2026', maxlength: '256' });
     var kwField = makeField([
-      makeLabel('Keyword / Listing Code'),
+      makeLabel('Listing Code'),
       mk('div', { class: 'filter-trigger' }, [kwInput])
     ]);
 
@@ -1985,7 +1980,7 @@
   function injectMobileLocStyles() {
     if (document.querySelector('style[data-bhb-mobile-loc]')) return;
     var css = [
-      '@media (max-width:991px){',
+      '@media (max-width:1024px){',
       /* Override bottom-sheet: inline position */
       '#bhb-filter .location-dropdown{position:relative!important;bottom:auto!important;top:auto!important;left:auto!important;right:auto!important;width:100%!important;max-height:none!important;height:auto!important;z-index:2!important;overflow:visible!important;animation:none!important;box-shadow:none!important;border-radius:12px;padding:0;margin-top:6px;border:1px solid #e0d9d3;}',
       /* Inside bottom-sheet form: remove standalone border/margin */

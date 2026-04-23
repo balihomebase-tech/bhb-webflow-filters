@@ -14,10 +14,25 @@
 
   // ─── area groupings for location filter ───────────────────────────────────
   var AREA_RULES = [
-    { id: 'uluwatu-area', label: 'Uluwatu area', keys: ['uluwatu', 'ungasan', 'pecatu'] },
-    { id: 'canggu-area',  label: 'Canggu area',  keys: ['canggu', 'batu bolong', 'dalung', 'pererenan', 'tumbak bayuh', 'buduk', 'cemagi', 'seseh'] },
-    { id: 'tabanan-area', label: 'Tabanan area', keys: ['kedungu', 'nyanyi', 'tanah lot', 'cepaka', 'buwit', 'kaba kaba', 'kaba-kaba'] },
-    { id: 'ubud-area',    label: 'Ubud area',    keys: ['ubud'] }
+    {
+      id: 'canggu-area',
+      label: 'Around Canggu',
+      keys: [
+        'canggu', 'pererenan', 'seseh', 'cemagi', 'buduk', 'dalung',
+        'tumbak bayuh', 'cepaka', 'kaba kaba', 'kaba-kaba', 'buwit',
+        'batu bolong', 'kedungu', 'nyanyi', 'tanah lot', 'munggu'
+      ]
+    },
+    {
+      id: 'uluwatu-area',
+      label: 'Around Uluwatu',
+      keys: ['uluwatu', 'ungasan', 'pecatu', 'bingin', 'uluwatu center']
+    },
+    {
+      id: 'ubud-area',
+      label: 'Around Ubud',
+      keys: ['ubud', 'ubud center']
+    }
   ];
 
   // ─── map pin coordinates per location ─────────────────────────────────────
@@ -1311,7 +1326,30 @@
         mpill.dataset.areaId = areas[a2].id;
         mpill.textContent = areas[a2].label;
         mobileAreaPills.appendChild(mpill);
+
+        var subList = document.createElement('div');
+        subList.className = 'mobile-sub-list';
+        subList.dataset.areaId = areas[a2].id;
+        subList.style.cssText = 'display:none;flex-direction:column;gap:4px;padding:4px 0 8px 0;';
+
+        for (var k3 = 0; k3 < areas[a2].children.length; k3++) {
+          var subLoc = areas[a2].children[k3];
+          var subLabel = labelByNorm[subLoc] || (subLoc.charAt(0).toUpperCase() + subLoc.slice(1));
+          var subItem = document.createElement('div');
+          subItem.className = 'mobile-loc-item';
+          subItem.dataset.location = subLoc;
+          var subPin = document.createElement('div');
+          subPin.className = 'mini-pin';
+          var subSpan = document.createElement('span');
+          subSpan.textContent = subLabel;
+          subItem.appendChild(subPin);
+          subItem.appendChild(subSpan);
+          subList.appendChild(subItem);
+        }
+        mobileAreaPills.appendChild(subList);
       }
+      var existingPills = panelAreaEl.querySelector('.loc-mobile-area-pills');
+      if (existingPills) existingPills.remove();
       panelAreaEl.appendChild(mobileAreaPills);
     }
     var panelMapsEl = el.locDropdown.querySelector('.loc-panel-maps');
@@ -1334,6 +1372,8 @@
           mobileLocList.appendChild(mlocItem);
         }
       }
+      var existingLocList = panelMapsEl.querySelector('.loc-mobile-loc-list');
+      if (existingLocList) existingLocList.remove();
       panelMapsEl.appendChild(mobileLocList);
     }
   }
@@ -1393,9 +1433,25 @@
       var mpBtn = mobilePillBtns[i];
       var mpId = mpBtn.dataset.areaId;
       if (mpId) {
-        mpBtn.addEventListener('click', (function(aId) {
-          return function() { toggleArea(aId); };
-        })(mpId));
+        mpBtn.addEventListener('click', (function(aId, btn) {
+          return function() {
+            // close all other open area dropdowns
+            var allPills = el.locDropdown.querySelectorAll('.mobile-area-pill');
+            for (var p = 0; p < allPills.length; p++) {
+              if (allPills[p] !== btn) {
+                allPills[p].classList.remove('is-expanded');
+                var otherId = allPills[p].dataset.areaId;
+                var otherList = el.locDropdown.querySelector('.mobile-sub-list[data-area-id="' + otherId + '"]');
+                if (otherList) otherList.style.display = 'none';
+              }
+            }
+            // toggle this one
+            var isOpen = btn.classList.contains('is-expanded');
+            btn.classList.toggle('is-expanded', !isOpen);
+            var subList = el.locDropdown.querySelector('.mobile-sub-list[data-area-id="' + aId + '"]');
+            if (subList) subList.style.display = isOpen ? 'none' : 'flex';
+          };
+        })(mpId, mpBtn));
       }
     }
     var mobileLocItems = el.locDropdown.querySelectorAll('.mobile-loc-item');
@@ -1916,7 +1972,7 @@
       maxlength: '256'
     });
     var kwField = makeField([
-      makeLabel('Keyword / Listing Code'),
+      makeLabel('Listing Code'),
       mk('div', { class: 'filter-trigger' }, [kwInput])
     ]);
 
@@ -2103,7 +2159,7 @@
   function injectMobileLocStyles() {
     if (document.querySelector('style[data-bhb-mobile-loc]')) return;
     var css = [
-      '@media (max-width:991px){',
+      '@media (max-width:1024px){',
       /* Override bottom-sheet: inline position */
       '#bhb-filter .location-dropdown{position:relative!important;bottom:auto!important;top:auto!important;left:auto!important;right:auto!important;width:100%!important;max-height:none!important;height:auto!important;z-index:2!important;overflow:visible!important;animation:none!important;box-shadow:none!important;border-radius:12px;padding:0;margin-top:6px;border: none;important;}',
       /* Inside bottom-sheet form: remove standalone border/margin */

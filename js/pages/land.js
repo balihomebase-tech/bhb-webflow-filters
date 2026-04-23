@@ -10,36 +10,23 @@
   var AREA_RULES = [
     {
       id: "canggu-area",
-      label: "Canggu area",
+      label: "Around Canggu",
       keys: [
-        "canggu",
-        "pererenan",
-        "seseh",
-        "cemagi",
-        "buduk",
-        "kaba kaba",
-        "kaba-kaba",
-        "cepaka",
-        "tumbak bayuh",
-        "buwit",
-        "dalung",
-      ],
+        "canggu", "pererenan", "seseh", "cemagi", "buduk", "dalung",
+        "tumbak bayuh", "cepaka", "kaba kaba", "kaba-kaba", "buwit",
+        "kedungu", "nyanyi", "pandak gede", "nyambu", "tanah lot"
+      ]
     },
     {
       id: "uluwatu-area",
-      label: "Uluwatu area",
-      keys: ["bingin", "uluwatu", "uluwatu center", "ungasan"],
+      label: "Around Uluwatu",
+      keys: ["uluwatu", "ungasan", "pecatu", "bingin", "uluwatu center"]
     },
     {
       id: "ubud-area",
-      label: "Ubud area",
-      keys: ["ubud", "ubud center"],
-    },
-    {
-      id: "tabanan-area",
-      label: "Tabanan area",
-      keys: ["kedungu", "nyanyi", "pandak gede", "nyambu", "tanah lot"],
-    },
+      label: "Around Ubud",
+      keys: ["ubud", "ubud center"]
+    }
   ];
   var LOC_COORDS = {
     cepaka: [115.14526, -8.59917],
@@ -402,6 +389,7 @@
         applyFilters();
         closeAll();
         if (locDropOpen) openLocDrop(false);
+        closeMobilePanel();
       });
     var closeBtns = document.querySelectorAll(".close-btn");
     for (var i = 0; i < closeBtns.length; i++) {
@@ -1241,6 +1229,8 @@
     }
     var panelAreaEl = el.locDropdown.querySelector('.loc-panel-area');
     if (panelAreaEl) {
+      var existingPills = panelAreaEl.querySelector('.loc-mobile-area-pills');
+      if (existingPills) existingPills.remove();
       var mobileAreaPills = document.createElement('div');
       mobileAreaPills.className = 'loc-mobile-area-pills';
       for (var a2 = 0; a2 < areas.length; a2++) {
@@ -1255,6 +1245,8 @@
     }
     var panelMapsEl = el.locDropdown.querySelector('.loc-panel-maps');
     if (panelMapsEl) {
+      var existingLocList = panelMapsEl.querySelector('.loc-mobile-loc-list');
+      if (existingLocList) existingLocList.remove();
       var mobileLocList = document.createElement('div');
       mobileLocList.className = 'loc-mobile-loc-list';
       for (var a3 = 0; a3 < areas.length; a3++) {
@@ -1712,7 +1704,7 @@
     // ── Keyword ──
     var kwInput = mk('input', { class: 'keyword-input', type: 'search', placeholder: 'Search\u2026', maxlength: '256' });
     var kwField = makeField([
-      makeLabel('Keyword / Listing Code'),
+      makeLabel('Listing Code'),
       mk('div', { class: 'filter-trigger' }, [kwInput])
     ]);
 
@@ -1880,7 +1872,7 @@
   function injectMobileLocStyles() {
     if (document.querySelector('style[data-bhb-mobile-loc]')) return;
     var css = [
-      '@media (max-width:991px){',
+      '@media (max-width:1024px){',
       /* Override bottom-sheet: inline position */
       '#bhb-filter .location-dropdown{position:relative!important;bottom:auto!important;top:auto!important;left:auto!important;right:auto!important;width:100%!important;max-height:none!important;height:auto!important;z-index:2!important;overflow:visible!important;animation:none!important;box-shadow:none!important;border-radius:12px;padding:0;margin-top:6px;border:1px solid #e0d9d3;}',
       /* Inside bottom-sheet form: remove standalone border/margin */
