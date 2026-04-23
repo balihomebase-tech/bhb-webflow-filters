@@ -1221,18 +1221,7 @@
   }
 
   // detect locations not assigned to any area
-  var other = cmsLocs.filter(function (loc) {
-    return !used[loc];
-  });
-
-  // only create "Other area" if needed
-  if (other.length) {
-    areas.push({
-      id: "other-area",
-      label: "Other area",
-      children: other
-    });
-  }
+  // unmatched locations are silently ignored
 
   // keep only valid selected locations (filter out locations no longer in CMS)
   state.locations = state.locations.filter(function (loc) {

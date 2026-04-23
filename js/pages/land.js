@@ -1065,11 +1065,7 @@
       if (children.length)
         areas.push({ id: rule.id, label: rule.label, children: children });
     }
-    var other = cmsLocs.filter(function (loc) {
-      return !used[loc];
-    });
-    if (other.length)
-      areas.push({ id: "other-area", label: "Other area", children: other });
+    // unmatched locations are silently ignored
     state.locations = state.locations.filter(function (loc) {
       return locSet[loc];
     });
@@ -1120,14 +1116,28 @@
       var mpBtn = mobilePillBtns[i];
       var mpId = mpBtn.dataset.areaId;
       if (mpId) {
-        mpBtn.addEventListener('click', (function(aId) {
-          return function() { toggleArea(aId); };
-        })(mpId));
+        mpBtn.addEventListener('click', (function(aId, btn) {
+          return function() {
+            var allPills = el.locDropdown.querySelectorAll('.mobile-area-pill');
+            for (var p = 0; p < allPills.length; p++) {
+              if (allPills[p] !== btn) {
+                allPills[p].classList.remove('is-expanded');
+                var otherId = allPills[p].dataset.areaId;
+                var otherList = el.locDropdown.querySelector('.mobile-sub-list[data-area-id="' + otherId + '"]');
+                if (otherList) otherList.style.display = 'none';
+              }
+            }
+            var isOpen = btn.classList.contains('is-expanded');
+            btn.classList.toggle('is-expanded', !isOpen);
+            var subList = el.locDropdown.querySelector('.mobile-sub-list[data-area-id="' + aId + '"]');
+            if (subList) subList.style.display = isOpen ? 'none' : 'flex';
+          };
+        })(mpId, mpBtn));
       }
     }
-    var mobileLocItems = el.locDropdown.querySelectorAll('.mobile-loc-item');
-    for (var i = 0; i < mobileLocItems.length; i++) {
-      var mItem = mobileLocItems[i];
+    var mobileSubItems = el.locDropdown.querySelectorAll('.mobile-sub-list .mobile-loc-item');
+    for (var i = 0; i < mobileSubItems.length; i++) {
+      var mItem = mobileSubItems[i];
       var mLoc = mItem.dataset.location;
       if (mLoc) {
         mItem.addEventListener('click', (function(l) {
@@ -1240,6 +1250,26 @@
         mpill.dataset.areaId = areas[a2].id;
         mpill.textContent = areas[a2].label;
         mobileAreaPills.appendChild(mpill);
+
+        var subList = document.createElement('div');
+        subList.className = 'mobile-sub-list';
+        subList.dataset.areaId = areas[a2].id;
+        subList.style.cssText = 'display:none;flex-direction:column;gap:4px;padding:4px 0 8px 0;';
+        for (var k3 = 0; k3 < areas[a2].children.length; k3++) {
+          var subLoc = areas[a2].children[k3];
+          var subLabel = labelByNorm[subLoc] || (subLoc.charAt(0).toUpperCase() + subLoc.slice(1));
+          var subItem = document.createElement('div');
+          subItem.className = 'mobile-loc-item';
+          subItem.dataset.location = subLoc;
+          var subPin = document.createElement('div');
+          subPin.className = 'mini-pin';
+          var subSpan = document.createElement('span');
+          subSpan.textContent = subLabel;
+          subItem.appendChild(subPin);
+          subItem.appendChild(subSpan);
+          subList.appendChild(subItem);
+        }
+        mobileAreaPills.appendChild(subList);
       }
       panelAreaEl.appendChild(mobileAreaPills);
     }
