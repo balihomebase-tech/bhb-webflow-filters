@@ -9,7 +9,6 @@ var PIN_URL =
 
 var AREA_RULES = [
   {
-<<<<<<< HEAD
     id: 'canggu-area',
     label: 'Canggu area',
     keys: [
@@ -31,52 +30,6 @@ var AREA_RULES = [
     id: 'tabanan-area',
     label: 'Tabanan area',
     keys: ['kedungu', 'nyanyi', 'tanah lot', 'pandak gede', 'nyambu']
-=======
-    id: "canggu-area",
-    label: "Canggu area",
-    keys: [
-      "canggu",
-      "pererenan",
-      "seseh",
-      "cemagi",
-      "buduk",
-      "kaba kaba",
-      "kaba-kaba",
-      "cepaka",
-      "tumbak bayuh",
-      "buwit",
-      "dalung"
-    ]
-  },
-  {
-    id: "uluwatu-area",
-    label: "Uluwatu area",
-    keys: [
-      "bingin",
-      "uluwatu",
-      "uluwatu center",
-      "ungasan"
-    ]
-  },
-  {
-    id: "ubud-area",
-    label: "Ubud area",
-    keys: [
-      "ubud",
-      "ubud center"
-    ]
-  },
-  {
-    id: "tabanan-area",
-    label: "Tabanan area",
-    keys: [
-      "kedungu",
-      "nyanyi",
-      "pandak gede",
-      "nyambu",
-      "tanah lot"
-    ]
->>>>>>> 11294a45a0ad9f38f1e214bd22eecf135c53b0b3
   }
 ];
 
