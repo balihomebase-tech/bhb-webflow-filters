@@ -505,7 +505,17 @@
       price: parseFloat(inner.dataset.price || "0"),
       currency: (inner.dataset.currency || "").toUpperCase(),
       ownership: (inner.dataset.available || "").toLowerCase(),
-      zoning: (inner.dataset.zone || "").toLowerCase(),
+      zoning: (function() {
+        var zel = card.querySelector('.listings_key-feature-block.hide .paragraph-ultrasmall');
+        if (!zel) return '';
+        var txt = zel.textContent.toLowerCase();
+        if (txt.indexOf('residental') > -1 || txt.indexOf('residential') > -1) return 'residential';
+        if (txt.indexOf('tourism') > -1) return 'tourism facilities';
+        if (txt.indexOf('mixed') > -1) return 'mixed use area';
+        if (txt.indexOf('commercial') > -1) return 'commercial area';
+        if (txt.indexOf('agricultur') > -1) return 'agricultures';
+        return '';
+      })(),
     };
   }
   function priceUnitSuffix() {
