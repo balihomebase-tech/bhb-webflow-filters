@@ -543,8 +543,7 @@
       currency: (inner.dataset.currency || "").toUpperCase(),
       ownership: (inner.dataset.available || "").toLowerCase(),
       zoning: (function() {
-        var blocks = card.querySelectorAll('.listings_key-feature-block.hide .paragraph-ultrasmall');
-        if (!blocks.length) blocks = card.querySelectorAll('.listings_key-feature-block .paragraph-ultrasmall');
+        var blocks = card.querySelectorAll('.listings_key-feature-block .paragraph-ultrasmall');
         for (var i = 0; i < blocks.length; i++) {
           var txt = blocks[i].textContent.toLowerCase().trim();
           if (!txt) continue;
@@ -553,7 +552,7 @@
           if (txt.indexOf('mixed') > -1) return 'mixed use area';
           if (txt.indexOf('commercial') > -1) return 'commercial area';
           if (txt.indexOf('agricultur') > -1) return 'agricultures';
-          var m = txt.match(/[-–—]\s*(.+)$/);
+          var m = txt.match(/^[a-z]+ [-–—] (.+)$/);
           if (m) return m[1].trim();
         }
         return '';
