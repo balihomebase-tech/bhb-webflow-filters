@@ -509,7 +509,7 @@
         var blocks = card.querySelectorAll('.listings_key-feature-block.hide .paragraph-ultrasmall');
         for (var i = 0; i < blocks.length; i++) {
           var txt = blocks[i].textContent.toLowerCase();
-          if (txt.indexOf('residental') > -1 || txt.indexOf('residential') > -1) return 'residential';
+          if (txt.indexOf('residential') > -1 || txt.indexOf('residental') > -1) return 'residential';
           if (txt.indexOf('tourism') > -1) return 'tourism facilities';
           if (txt.indexOf('mixed') > -1) return 'mixed use area';
           if (txt.indexOf('commercial') > -1) return 'commercial area';
