@@ -67,6 +67,7 @@
   var state = {
     ownership: "Any",
     lease: "Any",
+    zoning: "Any",
     locations: [],
     currency: "IDR",
     priceMin: null,
@@ -172,6 +173,10 @@
       var l = el.leaseField.querySelector(".filter-option.is-active");
       state.lease = l ? l.dataset.value : "Any";
     }
+    if (el.zoningField) {
+      var z = el.zoningField.querySelector(".filter-option.is-active");
+      state.zoning = z ? z.dataset.value : "Any";
+    }
     if (el.currField) {
       var c = el.currField.querySelector(".filter-option.is-active");
       if (c) state.currency = normCurrency(c.dataset.value);
@@ -261,6 +266,9 @@
       ) {
         el.leaseField = field;
         el.leaseTrigText = field.querySelector(".filter-trigger_text");
+      } else if (vals.indexOf("residential") > -1) {
+        el.zoningField = field;
+        el.zoningTrigText = field.querySelector(".filter-trigger_text");
       } else if (vals.indexOf("idr") > -1 || vals.indexOf("usd") > -1) {
         el.currField = field;
         el.currTrigText = field.querySelector(".filter-trigger_text");
@@ -314,6 +322,8 @@
     }
     resetToAny(el.ownershipField, el.ownershipTrigText, "Any");
     resetToAny(el.leaseField, el.leaseTrigText, "Any");
+    resetToAny(el.zoningField, el.zoningTrigText, "Any");
+    state.zoning = "Any";
     if (el.currField) {
       var opts = el.currField.querySelectorAll(".filter-option");
       for (var i = 0; i < opts.length; i++)
@@ -355,6 +365,10 @@
     });
     initSingle(el.leaseField, function (val) {
       state.lease = val;
+      applyFilters();
+    });
+    initSingle(el.zoningField, function (val) {
+      state.zoning = val;
       applyFilters();
     });
     initSingle(el.currField, function (val) {
@@ -491,6 +505,7 @@
       price: parseFloat(inner.dataset.price || "0"),
       currency: (inner.dataset.currency || "").toUpperCase(),
       ownership: (inner.dataset.available || "").toLowerCase(),
+      zoning: (inner.dataset.zone || "").toLowerCase(),
     };
   }
   function priceUnitSuffix() {
@@ -527,6 +542,7 @@
       d.ownership !== state.ownership.toLowerCase()
     )
       return false;
+    if (state.zoning !== "Any" && d.zoning !== state.zoning.toLowerCase()) return false;
     if (state.locations.length > 0 && state.locations.indexOf(d.loc) === -1)
       return false;
     if (!passesPrice(d, card)) return false;
@@ -1733,6 +1749,18 @@
 
     // ── Keyword ──
     var kwInput = mk('input', { class: 'keyword-input', type: 'search', placeholder: 'Search\u2026', maxlength: '256' });
+    // ── Zoning ──
+    var zoningField = makeField([
+      makeLabel('Zoning'),
+      makeTrigger('Any'),
+      makeDropdown([
+        makeOption('Any',          'Any',          true,  false),
+        makeOption('residential',  'Residential',  false, false),
+        makeOption('agricultural', 'Agricultural', false, false),
+        makeOption('villa zone',   'Villa Zone',   false, false)
+      ])
+    ]);
+
     var kwField = makeField([
       makeLabel('Listing Code'),
       mk('div', { class: 'filter-trigger' }, [kwInput])
@@ -1883,7 +1911,7 @@
       mobileCloseBtn,
       mobileCollapsed,
       mk('div', { class: 'rent-filter_top' }, [
-        ownershipField, leaseField, kwField
+        ownershipField, leaseField, zoningField, kwField
       ]),
       mk('div', { class: 'rent-filter_bottom' }, [
         mk('div', { class: 'rent-filter_bottom-fields' }, [
