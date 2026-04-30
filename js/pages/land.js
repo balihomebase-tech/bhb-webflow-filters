@@ -307,13 +307,15 @@
       ) {
         el.leaseField = field;
         el.leaseTrigText = field.querySelector(".filter-trigger_text");
-      } else if (vals.indexOf("residential") > -1 || vals.indexOf("tourism facilities") > -1) {
-        el.zoningField = field;
-        el.zoningTrigText = field.querySelector(".filter-trigger_text");
       } else if (vals.indexOf("idr") > -1 || vals.indexOf("usd") > -1) {
         el.currField = field;
         el.currTrigText = field.querySelector(".filter-trigger_text");
       }
+    }
+    var zf = document.querySelector('.filter-field[data-bhb-field="zoning"]');
+    if (zf) {
+      el.zoningField = zf;
+      el.zoningTrigText = zf.querySelector(".filter-trigger_text");
     }
   }
   function initSingle(field, onPick) {
@@ -1799,7 +1801,7 @@
     // ── Keyword ──
     var kwInput = mk('input', { class: 'keyword-input', type: 'search', placeholder: 'Search\u2026', maxlength: '256' });
     // ── Zoning ──
-    var zoningField = makeField([
+    var zoningField = mk('div', { class: 'filter-field', 'data-bhb-field': 'zoning' }, [
       makeLabel('Zoning'),
       makeTrigger('Any'),
       makeDropdown([
