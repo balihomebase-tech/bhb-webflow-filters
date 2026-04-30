@@ -367,7 +367,9 @@
       state.lease = val;
       applyFilters();
     });
+    console.log('[BHB zoning] el.zoningField:', el.zoningField);
     initSingle(el.zoningField, function (val) {
+      console.log('[BHB zoning] picked:', val);
       state.zoning = val;
       applyFilters();
     });
@@ -507,8 +509,10 @@
       ownership: (inner.dataset.available || "").toLowerCase(),
       zoning: (function() {
         var blocks = card.querySelectorAll('.listings_key-feature-block.hide .paragraph-ultrasmall');
+        console.log('[BHB zoning] card blocks found:', blocks.length, card);
         for (var i = 0; i < blocks.length; i++) {
           var txt = blocks[i].textContent.toLowerCase();
+          console.log('[BHB zoning] block text:', txt);
           if (txt.indexOf('residential') > -1 || txt.indexOf('residental') > -1) return 'residential';
           if (txt.indexOf('tourism') > -1) return 'tourism facilities';
           if (txt.indexOf('mixed') > -1) return 'mixed use area';
