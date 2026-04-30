@@ -183,6 +183,43 @@
     }
     if (el.keywordInput) state.keyword = el.keywordInput.value.trim();
   }
+  function populateZoningFilter() {
+    if (!el.zoningField) return;
+    var seen = {};
+    var vals = [];
+    for (var i = 0; i < allCards.length; i++) {
+      var z = getData(allCards[i]).zoning;
+      if (z && !seen[z]) {
+        seen[z] = true;
+        vals.push(z);
+      }
+    }
+    if (!vals.length) {
+      el.zoningField.style.display = 'none';
+      return;
+    }
+    var labelMap = {
+      'residential':        'Residential',
+      'tourism facilities': 'Tourism Facilities',
+      'mixed use area':     'Mixed Use Area',
+      'commercial area':    'Commercial Area',
+      'agricultures':       'Agricultures'
+    };
+    var optionsContainer = el.zoningField.querySelector('.filter-options');
+    if (!optionsContainer) return;
+    var existing = optionsContainer.querySelectorAll('.filter-option:not([data-value="Any"])');
+    for (var j = 0; j < existing.length; j++) existing[j].parentNode.removeChild(existing[j]);
+    for (var k = 0; k < vals.length; k++) {
+      var opt = document.createElement('div');
+      opt.className = 'filter-option';
+      opt.setAttribute('data-value', vals[k]);
+      var lbl = document.createElement('div');
+      lbl.className = 'text-size-small filter-option_label';
+      lbl.textContent = labelMap[vals[k]] || vals[k];
+      opt.appendChild(lbl);
+      optionsContainer.appendChild(opt);
+    }
+  }
   function closeAll(except) {
     var drops = document.querySelectorAll(
       ".filter-dropdown,.price-dropdown,.location-dropdown",
@@ -367,9 +404,7 @@
       state.lease = val;
       applyFilters();
     });
-    console.log('[BHB zoning] el.zoningField:', el.zoningField);
     initSingle(el.zoningField, function (val) {
-      console.log('[BHB zoning] picked:', val);
       state.zoning = val;
       applyFilters();
     });
@@ -509,10 +544,8 @@
       ownership: (inner.dataset.available || "").toLowerCase(),
       zoning: (function() {
         var blocks = card.querySelectorAll('.listings_key-feature-block.hide .paragraph-ultrasmall');
-        console.log('[BHB zoning] card blocks found:', blocks.length, card);
         for (var i = 0; i < blocks.length; i++) {
           var txt = blocks[i].textContent.toLowerCase();
-          console.log('[BHB zoning] block text:', txt);
           if (txt.indexOf('residential') > -1 || txt.indexOf('residental') > -1) return 'residential';
           if (txt.indexOf('tourism') > -1) return 'tourism facilities';
           if (txt.indexOf('mixed') > -1) return 'mixed use area';
@@ -2014,6 +2047,7 @@
     buildAreas();
     buildLocDOM();
     mountLocUI();
+    populateZoningFilter();
     initPricePanel();
     updatePriceRangeForOwnership();
     hydrateCoordsFromCMS();
