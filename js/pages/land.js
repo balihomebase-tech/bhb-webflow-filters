@@ -266,7 +266,7 @@
       ) {
         el.leaseField = field;
         el.leaseTrigText = field.querySelector(".filter-trigger_text");
-      } else if (vals.indexOf("residential") > -1) {
+      } else if (vals.indexOf("residential") > -1 || vals.indexOf("tourism facilities") > -1) {
         el.zoningField = field;
         el.zoningTrigText = field.querySelector(".filter-trigger_text");
       } else if (vals.indexOf("idr") > -1 || vals.indexOf("usd") > -1) {
@@ -1754,10 +1754,12 @@
       makeLabel('Zoning'),
       makeTrigger('Any'),
       makeDropdown([
-        makeOption('Any',          'Any',          true,  false),
-        makeOption('residential',  'Residential',  false, false),
-        makeOption('agricultural', 'Agricultural', false, false),
-        makeOption('villa zone',   'Villa Zone',   false, false)
+        makeOption('Any',               'Any',               true,  false),
+        makeOption('residential',       'Residential',       false, false),
+        makeOption('tourism facilities','Tourism Facilities', false, false),
+        makeOption('mixed use area',    'Mixed Use Area',    false, false),
+        makeOption('commercial area',   'Commercial Area',   false, false),
+        makeOption('agricultures',      'Agricultures',      false, false)
       ])
     ]);
 
