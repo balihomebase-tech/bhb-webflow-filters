@@ -219,6 +219,10 @@
       opt.appendChild(lbl);
       optionsContainer.appendChild(opt);
     }
+    initSingle(el.zoningField, function(val) {
+      state.zoning = val;
+      applyFilters();
+    });
   }
   function closeAll(except) {
     var drops = document.querySelectorAll(
@@ -543,18 +547,12 @@
       currency: (inner.dataset.currency || "").toUpperCase(),
       ownership: (inner.dataset.available || "").toLowerCase(),
       zoning: (function() {
-        var blocks = card.querySelectorAll('.listings_key-feature-block .paragraph-ultrasmall');
-        for (var i = 0; i < blocks.length; i++) {
-          var txt = blocks[i].textContent.toLowerCase().trim();
-          if (!txt) continue;
-          if (txt.indexOf('residential') > -1 || txt.indexOf('residental') > -1) return 'residential';
-          if (txt.indexOf('tourism') > -1) return 'tourism facilities';
-          if (txt.indexOf('mixed') > -1) return 'mixed use area';
-          if (txt.indexOf('commercial') > -1) return 'commercial area';
-          if (txt.indexOf('agricultur') > -1) return 'agricultures';
-          var m = txt.match(/^[a-z]+ [-–—] (.+)$/);
-          if (m) return m[1].trim();
-        }
+        var z = (inner.dataset.zone || '').toLowerCase();
+        if (z.indexOf('yellow') > -1) return 'residential';
+        if (z.indexOf('pink')   > -1) return 'tourism facilities';
+        if (z.indexOf('orange') > -1) return 'mixed use area';
+        if (z.indexOf('red')    > -1) return 'commercial area';
+        if (z.indexOf('brown')  > -1) return 'agricultures';
         return '';
       })(),
     };
@@ -1805,12 +1803,7 @@
       makeLabel('Zoning'),
       makeTrigger('Any'),
       makeDropdown([
-        makeOption('Any',               'Any',               true,  false),
-        makeOption('residential',       'Residential',       false, false),
-        makeOption('tourism facilities','Tourism Facilities', false, false),
-        makeOption('mixed use area',    'Mixed Use Area',    false, false),
-        makeOption('commercial area',   'Commercial Area',   false, false),
-        makeOption('agricultures',      'Agricultures',      false, false)
+        makeOption('Any', 'Any', true, false)
       ])
     ]);
 
