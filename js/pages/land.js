@@ -219,10 +219,24 @@
       opt.appendChild(lbl);
       optionsContainer.appendChild(opt);
     }
-    initSingle(el.zoningField, function(val) {
-      state.zoning = val;
-      applyFilters();
-    });
+    var dd = el.zoningField.querySelector('.filter-dropdown');
+    var trigText = el.zoningField.querySelector('.filter-trigger_text');
+    var allOpts = el.zoningField.querySelectorAll('.filter-option');
+    for (var i = 0; i < allOpts.length; i++) {
+      (function(opt) {
+        opt.addEventListener('click', function(e) {
+          e.stopPropagation();
+          for (var k = 0; k < allOpts.length; k++)
+            allOpts[k].classList.remove('is-active');
+          opt.classList.add('is-active');
+          if (trigText) trigText.textContent = opt.dataset.value === 'Any'
+            ? 'Any' : opt.querySelector('.filter-option_label').textContent;
+          if (dd) { dd.style.display = 'none'; dd.classList.remove('is-open'); }
+          state.zoning = opt.dataset.value;
+          applyFilters();
+        });
+      })(allOpts[i]);
+    }
   }
   function closeAll(except) {
     var drops = document.querySelectorAll(
