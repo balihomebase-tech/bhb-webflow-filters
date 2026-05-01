@@ -127,6 +127,7 @@
     ownership: "Any",
     bedrooms: [],
     lease: "Any",
+    zoning: "Any",
     locations: [],
     currency: "IDR",
     priceMin: null,
@@ -198,11 +199,70 @@
       var l = el.leaseField.querySelector(".filter-option.is-active");
       state.lease = l ? l.dataset.value : "Any";
     }
+    if (el.zoningField) {
+      var z = el.zoningField.querySelector(".filter-option.is-active");
+      state.zoning = z ? z.dataset.value : "Any";
+    }
     if (el.currField) {
       var c = el.currField.querySelector(".filter-option.is-active");
       if (c) state.currency = normCurrency(c.dataset.value);
     }
     if (el.keywordInput) state.keyword = el.keywordInput.value.trim();
+  }
+  function populateZoningFilter() {
+    if (!el.zoningField) return;
+    var seen = {};
+    var vals = [];
+    for (var i = 0; i < allCards.length; i++) {
+      var z = getData(allCards[i]).zoning;
+      if (z && !seen[z]) {
+        seen[z] = true;
+        vals.push(z);
+      }
+    }
+    if (!vals.length) {
+      el.zoningField.style.display = 'none';
+      return;
+    }
+    var labelMap = {
+      'residential':        'Residential',
+      'tourism facilities': 'Tourism Facilities',
+      'mixed use area':     'Mixed Use Area',
+      'commercial area':    'Commercial Area',
+      'agricultures':       'Agricultures'
+    };
+    var optionsContainer = el.zoningField.querySelector('.filter-options');
+    if (!optionsContainer) return;
+    var existing = optionsContainer.querySelectorAll('.filter-option:not([data-value="Any"])');
+    for (var j = 0; j < existing.length; j++) existing[j].parentNode.removeChild(existing[j]);
+    for (var k = 0; k < vals.length; k++) {
+      var opt = document.createElement('div');
+      opt.className = 'filter-option';
+      opt.setAttribute('data-value', vals[k]);
+      var lbl = document.createElement('div');
+      lbl.className = 'text-size-small filter-option_label';
+      lbl.textContent = labelMap[vals[k]] || vals[k].replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+      opt.appendChild(lbl);
+      optionsContainer.appendChild(opt);
+    }
+    var dd = el.zoningField.querySelector('.filter-dropdown');
+    var trigText = el.zoningField.querySelector('.filter-trigger_text');
+    var allOpts = el.zoningField.querySelectorAll('.filter-option');
+    for (var i = 0; i < allOpts.length; i++) {
+      (function(opt) {
+        opt.addEventListener('click', function(e) {
+          e.stopPropagation();
+          for (var k = 0; k < allOpts.length; k++)
+            allOpts[k].classList.remove('is-active');
+          opt.classList.add('is-active');
+          if (trigText) trigText.textContent = opt.dataset.value === 'Any'
+            ? 'Any' : opt.querySelector('.filter-option_label').textContent;
+          if (dd) { dd.style.display = 'none'; dd.classList.remove('is-open'); }
+          state.zoning = opt.dataset.value;
+          applyFilters();
+        });
+      })(allOpts[i]);
+    }
   }
   function closeAll(except) {
     var drops = document.querySelectorAll(
@@ -294,6 +354,11 @@
         el.currField = field;
         el.currTrigText = field.querySelector(".filter-trigger_text");
       }
+    }
+    var zf = document.querySelector('.filter-field[data-bhb-field="zoning"]');
+    if (zf) {
+      el.zoningField = zf;
+      el.zoningTrigText = zf.querySelector(".filter-trigger_text");
     }
   }
   function initSingle(field, onPick) {
@@ -397,6 +462,8 @@
     resetToAny(el.ownershipField, el.ownershipTrigText, "Any");
     resetToAny(el.bedsField, el.bedsTrigText, "Any");
     resetToAny(el.leaseField, el.leaseTrigText, "Any");
+    resetToAny(el.zoningField, el.zoningTrigText, "Any");
+    state.zoning = "Any";
     if (el.currField) {
       var opts = el.currField.querySelectorAll(".filter-option");
       for (var i = 0; i < opts.length; i++)
@@ -443,6 +510,10 @@
     });
     initSingle(el.leaseField, function (val) {
       state.lease = val;
+      applyFilters();
+    });
+    initSingle(el.zoningField, function (val) {
+      state.zoning = val;
       applyFilters();
     });
     initSingle(el.currField, function (val) {
@@ -582,6 +653,15 @@
       price: parseFloat(inner.dataset.price || "0"),
       currency: (inner.dataset.currency || "").toUpperCase(),
       ownership: (inner.dataset.available || "").toLowerCase(),
+      zoning: (function() {
+        var z = (inner.dataset.zone || '').toLowerCase();
+        if (z.indexOf('yellow') > -1) return 'residential';
+        if (z.indexOf('pink')   > -1) return 'tourism facilities';
+        if (z.indexOf('orange') > -1) return 'mixed use area';
+        if (z.indexOf('red')    > -1) return 'commercial area';
+        if (z.indexOf('brown')  > -1) return 'agricultures';
+        return '';
+      })(),
     };
   }
   function passesPrice(d, card) {
@@ -614,6 +694,7 @@
       d.ownership !== state.ownership.toLowerCase()
     )
       return false;
+    if (state.zoning !== "Any" && d.zoning !== state.zoning.toLowerCase()) return false;
     if (state.bedrooms.length > 0) {
       var match = false;
       for (var i = 0; i < state.bedrooms.length; i++) {
@@ -1852,6 +1933,15 @@
       mk('div', { class: 'filter-trigger' }, [kwInput])
     ]);
 
+    // ── Zoning ──
+    var zoningField = mk('div', { class: 'filter-field', 'data-bhb-field': 'zoning' }, [
+      makeLabel('Zoning'),
+      makeTrigger('Any'),
+      makeDropdown([
+        makeOption('Any', 'Any', true, false)
+      ])
+    ]);
+
     // ── Location ──
     var locSearchInput    = mk('input', { class: 'location-search-input', type: 'text', placeholder: 'Search locations\u2026' });
     var treeScrollEl      = mk('div', { class: 'tree-scroll' });
@@ -1994,7 +2084,7 @@
       mobileCloseBtn,
       mobileCollapsed,
       mk('div', { class: 'rent-filter_top' }, [
-        ownershipField, bedsField, leaseField, kwField
+        ownershipField, bedsField, leaseField, zoningField, kwField
       ]),
       mk('div', { class: 'rent-filter_bottom' }, [
         mk('div', { class: 'rent-filter_bottom-fields' }, [
@@ -2079,6 +2169,7 @@
     buildAreas();
     buildLocDOM();
     mountLocUI();
+    populateZoningFilter();
     initPricePanel();
     updatePriceRangeForOwnership();
     hydrateCoordsFromCMS();
