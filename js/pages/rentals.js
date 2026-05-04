@@ -2062,7 +2062,7 @@
         ]),
         mk('div', { class: 'pp-section pp-section--slider' }, [
           mk('div', { class: 'pw-range-head' }, [
-            mk('div', { class: 'pw-range-label', text: 'PRICE RANGE' }),
+            mk('div', { class: 'pw-range-label', text: 'PRICE RANGE PER MONTH' }),
             pwRangeTextEl
           ]),
           pwSliderEl,
