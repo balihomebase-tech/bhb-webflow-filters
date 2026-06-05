@@ -746,29 +746,42 @@
 
   // ─── currency ─────────────────────────────────────────────────────────────
 
-  function setCurrency(currency) {
-    var c = normCurrency(currency || "IDR");
-    state.currency = c;
-    if (el.currField) {
-      var opts = el.currField.querySelectorAll(".filter-option");
-      for (var i = 0; i < opts.length; i++) {
-        opts[i].classList.toggle("is-active", opts[i].dataset.value === c);
-      }
-      if (el.currTrigText) el.currTrigText.textContent = c;
+// AFTER — preserves pagination state on currency change
+function setCurrency(currency) {
+  var c = normCurrency(currency || "IDR");
+  state.currency = c;
+  if (el.currField) {
+    var opts = el.currField.querySelectorAll(".filter-option");
+    for (var i = 0; i < opts.length; i++) {
+      opts[i].classList.toggle("is-active", opts[i].dataset.value === c);
     }
-    if (
-      window.debugCurrency &&
-      typeof window.debugCurrency.setCurrency === "function"
-    ) {
-      window.debugCurrency.setCurrency(c);
-    }
-    updateSliderForCurrency(c);
-    updateChips(c);
-    setTimeout(function () {
-      applyFilters();
-    }, 80);
+    if (el.currTrigText) el.currTrigText.textContent = c;
   }
-
+  if (
+    window.debugCurrency &&
+    typeof window.debugCurrency.setCurrency === "function"
+  ) {
+    window.debugCurrency.setCurrency(c);
+  }
+  updateSliderForCurrency(c);
+  updateChips(c);
+  setTimeout(function () {
+    // save current pagination before re-filtering
+    var savedVisible = visible;
+    filtered = allCards.filter(passes);
+    var restoreTo = Math.min(
+      savedVisible > 0 ? savedVisible : CFG.STEP,
+      filtered.length
+    );
+    for (var i = 0; i < allCards.length; i++)
+      allCards[i].style.display = "none";
+    for (var i = 0; i < restoreTo; i++)
+      filtered[i].style.display = "block";
+    visible = restoreTo;
+    updateLoadMore();
+    updateUI();
+  }, 80);
+}
   // ─── slider bounds ────────────────────────────────────────────────────────
   // Dynamically generated chips (calculated from CMS data, not presets)
   // Chips are created by dividing the price range into three equal tiers
