@@ -783,12 +783,23 @@
     }
   }
   function refreshPriceSystem() {
+    var savedVisible = visible;
     updatePriceRangeForOwnership();
     updateSliderForCurrency(state.currency);
     updateChips(state.currency);
-    applyFilters();
+    filtered = allCards.filter(passes);
+    var restoreTo = Math.min(
+      savedVisible > 0 ? savedVisible : CFG.STEP,
+      filtered.length
+    );
+    for (var i = 0; i < allCards.length; i++)
+      allCards[i].style.display = "none";
+    for (var i = 0; i < restoreTo; i++)
+      filtered[i].style.display = "block";
+    visible = restoreTo;
+    updateLoadMore();
+    updateUI();
   }
-
   function setCurrency(currency) {
     var c = normCurrency(currency || "IDR");
     state.currency = c;
