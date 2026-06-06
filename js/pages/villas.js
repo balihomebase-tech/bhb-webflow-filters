@@ -2030,7 +2030,7 @@
       return d;
     });
 
-    areas = [];
+   areas = [];
     buildAreas();
     buildLocDOM();
     mountLocUI();
@@ -2038,12 +2038,22 @@
     initPricePanel();
     updatePriceRangeForOwnership();
     hydrateCoordsFromCMS();
-    loadMapSDK(function () { initMap(); initLocMap(); });
     updateLocText();
     bindEvents();
     setCurrency(savedCurrency());
-  }
 
+    // Lazy load map utama hanya saat #bhbMap terlihat di layar
+    var bhbMapEl = document.getElementById('bhbMap');
+    if (bhbMapEl) {
+      var mapObserver = new IntersectionObserver(function(entries) {
+        if (entries[0].isIntersecting) {
+          mapObserver.disconnect();
+          loadMapSDK(initMap);
+        }
+      }, { rootMargin: '200px' });
+      mapObserver.observe(bhbMapEl);
+    }
+  }
   if (document.readyState === "loading")
     document.addEventListener("DOMContentLoaded", init);
   else init();
