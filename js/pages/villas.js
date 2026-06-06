@@ -66,53 +66,16 @@
       { label: "> \u20ac12k", min: 12000, max: null },
     ],
   };
-  // ─── PRICE FILTERING SYSTEM ──────────────────────────────────────────────────
-  //
-  // VILLAS: Dynamic price range from ownership-filtered listings
-  //
-  // The price filter has three components:
-  //   1. PRICE RANGE: Calculated min/max from filtered villa prices (ownership-aware)
-  //   2. QUICK SELECTION: Three chips dividing range into equal thirds
-  //   3. CUSTOM RANGE: User-adjustable slider bounds within price range
-  //
-  // Ownership-Based Range Calculation:
-  //   When ownership filter changes, price range RECALCULATES:
-  //
-  //   If ownership = "Any"      → range = min/max from ALL villas
-  //   If ownership = "Freehold" → range = min/max from freehold-only villas
-  //   If ownership = "Leasehold"→ range = min/max from leasehold-only villas
-  //
-  //   Workflow:
-  //   1. getCardsByOwnership() filters allCards by ownership type
-  //   2. calculatePriceRange() scans filtered cards, extracts prices
-  //   3. Converts all prices to IDR (base currency)
-  //   4. Sets slider.base = { min, max } in IDR
-  //   5. Calls generateDynamicChips() to create three tiers
-  //   6. updateSliderForCurrency() renders slider in current currency
-  //   7. applyFilters() re-applies all filter criteria
-  //
-  // Quick Selection Algorithm:
-  //   range = max - min
-  //   tier1 = min + (range / 3)           // chip 1 max
-  //   tier2 = min + (2 × range / 3)       // chip 2 max
-  //   Chips auto-generate from filtered dataset (ownership-dependent)
-  //
-  // Synchronization:
-  //   - refreshPriceSystem() coordinates all price updates
-  //   - Called when ownership filter changes
-  //   - No async delays (sync, immediate UI updates)
-  //   - Prevents filter flicker; slider/chips always in sync
-  //
-  // Currency Handling:
-  //   - All calculations done in IDR (base)
-  //   - Display values converted to user's selected currency (IDR/USD/EUR)
-  //   - Updates in real-time when currency changes
-  //
 
   var dynamicChips = { IDR: [], USD: [], EUR: [] };
+
+  // PERUBAHAN 1: Tambah cardCache dan visibleSet
   var allCards = [],
-    filtered = [],
-    visible = 0;
+      cardCache = [],
+      filtered = [],
+      visible = 0;
+  var visibleSet = [];
+
   var locDropOpen = false,
     map = null,
     mapReady = false,
@@ -142,6 +105,7 @@
   };
   var el = {},
     locUI = {};
+
   function norm(v) {
     return String(v || "")
       .toLowerCase()
@@ -214,7 +178,7 @@
     var seen = {};
     var vals = [];
     for (var i = 0; i < allCards.length; i++) {
-      var z = getData(allCards[i]).zoning;
+      var z = cardCache[i] ? cardCache[i].zoning : getData(allCards[i]).zoning;
       if (z && !seen[z]) {
         seen[z] = true;
         vals.push(z);
@@ -557,7 +521,6 @@
         closeMobilePanel();
       });
     }
-    // mobile collapsed search trigger → open bottom sheet
     var mobileSearchTrigger = document.querySelector(".bhb-mobile-search-trigger");
     if (mobileSearchTrigger) {
       mobileSearchTrigger.addEventListener("click", function () {
@@ -568,7 +531,6 @@
         document.body.style.overflow = "hidden";
       });
     }
-    // overlay click → close panel
     var overlay = document.getElementById("bhbOverlay");
     if (overlay) {
       overlay.addEventListener("click", function () {
@@ -664,79 +626,67 @@
       })(),
     };
   }
-  function passesPrice(d, card) {
-    var el2 = card.querySelector(".price");
-    var txt = el2 ? el2.textContent.trim() : "";
-    var dsp = txt ? parseInt(txt.replace(/[^\d]/g, ""), 10) : NaN;
-    var price = isFinite(dsp) ? dsp : d.price;
-    if (state.priceMin !== null && price < state.priceMin) return false;
-    if (state.priceMax !== null && price > state.priceMax) return false;
-    return true;
-  }
-  function passesLease(card) {
-    if (state.lease === "Any") return true;
-    var years = getLeaseYears(card);
-    if (years === null) return false;
-    var lbl = state.lease.toLowerCase();
-    if (lbl === "10 \u2013 20 years" || lbl === "10 - 20 years")
-      return years >= 10 && years <= 20;
-    if (lbl === "20 \u2013 25 years" || lbl === "20 - 25 years")
-      return years >= 20 && years <= 25;
-    if (lbl === "25 \u2013 30 years" || lbl === "25 - 30 years")
-      return years >= 25 && years <= 30;
-    if (lbl === "30+ years") return years > 30;
-    return true;
-  }
-  function passes(card) {
-    var d = getData(card);
-    if (
-      state.ownership !== "Any" &&
-      d.ownership !== state.ownership.toLowerCase()
-    )
+
+  // PERUBAHAN 2: Ganti passes, hapus passesPrice dan passesLease
+  function passes(card, idx) {
+    var d = cardCache[idx];
+    if (!d) return true;
+    if (state.ownership !== "Any" && d.ownership !== state.ownership.toLowerCase())
       return false;
-    if (state.zoning !== "Any" && d.zoning !== state.zoning.toLowerCase()) return false;
+    if (state.zoning !== "Any" && d.zoning !== state.zoning.toLowerCase())
+      return false;
     if (state.bedrooms.length > 0) {
       var match = false;
       for (var i = 0; i < state.bedrooms.length; i++) {
         var b = state.bedrooms[i];
-        if (b === "6+" && d.rooms >= 6) {
-          match = true;
-          break;
-        }
-        if (b !== "6+" && d.rooms === parseInt(b, 10)) {
-          match = true;
-          break;
-        }
+        if (b === "6+" && d.rooms >= 6) { match = true; break; }
+        if (b !== "6+" && d.rooms === parseInt(b, 10)) { match = true; break; }
       }
       if (!match) return false;
     }
     if (state.locations.length > 0 && state.locations.indexOf(d.loc) === -1)
       return false;
-    if (!passesPrice(d, card)) return false;
-    if (!passesLease(card)) return false;
+    var price = isFinite(d.displayPrice) ? d.displayPrice : d.price;
+    if (state.priceMin !== null && price < state.priceMin) return false;
+    if (state.priceMax !== null && price > state.priceMax) return false;
+    if (state.lease !== "Any") {
+      var years = d.leaseYears;
+      if (years === null) return false;
+      var lbl = state.lease.toLowerCase();
+      if (lbl === "10 \u2013 20 years" && !(years >= 10 && years <= 20)) return false;
+      if (lbl === "20 \u2013 25 years" && !(years >= 20 && years <= 25)) return false;
+      if (lbl === "25 \u2013 30 years" && !(years >= 25 && years <= 30)) return false;
+      if (lbl === "30+ years" && !(years > 30)) return false;
+    }
     if (state.keyword) {
       var kw = state.keyword.toLowerCase();
       if (d.name.indexOf(kw) === -1 && d.code.indexOf(kw) === -1) return false;
     }
     return true;
   }
+
+  // PERUBAHAN 3: applyFilters dan showNext yang efisien
   function applyFilters() {
-    filtered = allCards.filter(passes);
+    filtered = allCards.filter(function(card, idx) {
+      return passes(card, idx);
+    });
     visible = 0;
     showNext();
     updateUI();
   }
   function showNext() {
     var next = Math.min(visible + CFG.STEP, filtered.length);
-    for (var i = 0; i < allCards.length; i++) {
-      allCards[i].style.display = "none";
-    }
+    for (var i = 0; i < visibleSet.length; i++)
+      visibleSet[i].style.display = "none";
+    visibleSet = [];
     for (var i = 0; i < next; i++) {
       filtered[i].style.display = "block";
+      visibleSet.push(filtered[i]);
     }
     visible = next;
     updateLoadMore();
   }
+
   function updateUI() {
     if (el.resultsCount) el.resultsCount.textContent = filtered.length;
     if (el.emptyState)
@@ -787,15 +737,20 @@
     updatePriceRangeForOwnership();
     updateSliderForCurrency(state.currency);
     updateChips(state.currency);
-    filtered = allCards.filter(passes);
+    filtered = allCards.filter(function(card, idx) {
+      return passes(card, idx);
+    });
     var restoreTo = Math.min(
       savedVisible > 0 ? savedVisible : CFG.STEP,
       filtered.length
     );
-    for (var i = 0; i < allCards.length; i++)
-      allCards[i].style.display = "none";
-    for (var i = 0; i < restoreTo; i++)
+    for (var i = 0; i < visibleSet.length; i++)
+      visibleSet[i].style.display = "none";
+    visibleSet = [];
+    for (var i = 0; i < restoreTo; i++) {
       filtered[i].style.display = "block";
+      visibleSet.push(filtered[i]);
+    }
     visible = restoreTo;
     updateLoadMore();
     updateUI();
@@ -894,23 +849,19 @@
     }
   }
   function getCardsByOwnership(cards, ownership) {
-    if (ownership === "Any") {
-      return cards;
-    }
+    if (ownership === "Any") return cards;
     var ownershipLower = ownership.toLowerCase();
-    return cards.filter(function (card) {
-      var d = getData(card);
+    return cards.filter(function (card, idx) {
+      var d = cardCache[idx] || getData(card);
       return d.ownership === ownershipLower;
     });
   }
-
   function calculatePriceRange(cards) {
     var min = Infinity;
     var max = 0;
     for (var i = 0; i < cards.length; i++) {
-      var d = getData(cards[i]);
+      var d = cardCache[allCards.indexOf(cards[i])] || getData(cards[i]);
       if (!d.price || d.price <= 0) continue;
-      // Convert price to IDR (base currency)
       var priceIDR = convertAmount(d.price, d.currency || "IDR", "IDR");
       if (priceIDR < min) min = priceIDR;
       if (priceIDR > max) max = priceIDR;
@@ -920,35 +871,25 @@
       max: max === 0 ? 1000000 : max,
     };
   }
-
   function updatePriceRangeForOwnership() {
     var matchingCards = getCardsByOwnership(allCards, state.ownership);
     var range = calculatePriceRange(matchingCards);
-
-    // Update slider base to IDR values
     slider.base.min = range.min;
     slider.base.max = range.max;
     slider.minRatio = 0;
     slider.maxRatio = 1;
-
-    // Regenerate chips for this ownership filter
     generateDynamicChips(range.min, range.max);
-
-    // Re-render slider UI for current currency
     updateSliderForCurrency(state.currency);
   }
-
   function generateDynamicChips(minPrice, maxPrice) {
     var range = maxPrice - minPrice;
     var tier1Max = minPrice + range / 3;
     var tier2Max = minPrice + (2 * range) / 3;
-
     var currencies = ['IDR', 'USD', 'EUR'];
     for (var c = 0; c < currencies.length; c++) {
       var curr = currencies[c];
       var tier1 = convertAmount(tier1Max, 'IDR', curr);
       var tier2 = convertAmount(tier2Max, 'IDR', curr);
-
       dynamicChips[curr] = [
         { label: '< ' + short(tier1), min: 0, max: tier1 },
         { label: short(tier1) + ' \u2013 ' + short(tier2), min: tier1, max: tier2 },
@@ -956,7 +897,6 @@
       ];
     }
   }
-
   function updateChips(currency) {
     var c = normCurrency(currency);
     var presets = dynamicChips[c] && dynamicChips[c].length > 0 ? dynamicChips[c] : CHIP_PRESETS[c] || CHIP_PRESETS["IDR"];
@@ -1202,31 +1142,9 @@
     fullRender();
   }
   function buildAreas() {
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // LOCATION FILTER: Fully CMS-driven
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // This function scans all CMS cards and builds location groups dynamically.
-    // Only locations that exist in CMS data are displayed in the filter.
-    //
-    // Workflow:
-    //   1. Scan all cards for data-location attributes
-    //   2. Normalize location names (lowercase, trim, normalize spacing)
-    //   3. Keep mapping of normalized → original labels
-    //   4. Match normalized locations to predefined AREA_RULES (exact match)
-    //   5. Group locations into areas
-    //   6. Create "Other area" for unmatched locations
-    //   7. Filter state.locations to keep only CMS locations
-    //
-    // Result:
-    //   - Locations automatically update when CMS changes
-    //   - Only shows locations that exist in villa listings
-    //   - No hardcoded location lists
-    //   - Map coordinates still work via LOC_COORDS lookup
-    //
-    
     var locSet = {};
     for (var i = 0; i < allCards.length; i++) {
-      var d = getData(allCards[i]);
+      var d = cardCache[i] || getData(allCards[i]);
       if (!d.loc) continue;
       locSet[d.loc] = true;
       if (!labelByNorm[d.loc]) labelByNorm[d.loc] = d.locRaw;
@@ -1244,10 +1162,6 @@
       if (children.length)
         areas.push({ id: rule.id, label: rule.label, children: children });
     }
-    var other = cmsLocs.filter(function (loc) {
-      return !used[loc];
-    });
-    // unmatched locations are silently ignored
     state.locations = state.locations.filter(function (loc) {
       return locSet[loc];
     });
@@ -1263,8 +1177,6 @@
       btnApply:     el.locDropdown.querySelector(".loc-btn-apply-inline"),
     };
     if (!locUI.searchInput || !locUI.treeScroll || !locUI.pillScroll) return;
-
-    // ── Tree parents: expand/collapse ──
     var treeParents = locUI.treeScroll.querySelectorAll('.tree-parent');
     for (var i = 0; i < treeParents.length; i++) {
       var parent = treeParents[i];
@@ -1275,8 +1187,6 @@
         })(cw));
       }
     }
-
-    // ── Tree children: individual location toggle ──
     var children = locUI.treeScroll.querySelectorAll('.child');
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
@@ -1287,8 +1197,6 @@
         })(loc));
       }
     }
-
-    // ── Pills: area toggle ──
     var pills = locUI.pillScroll.querySelectorAll('.pill');
     for (var i = 0; i < pills.length; i++) {
       var pill = pills[i];
@@ -1333,8 +1241,6 @@
         })(mLoc));
       }
     }
-
-    // ── Tab switching ──
     var tabAreaBtn = el.locDropdown.querySelector('.loc-tab-area');
     var tabMapsBtn = el.locDropdown.querySelector('.loc-tab-maps');
     var panelArea  = el.locDropdown.querySelector('.loc-panel-area');
@@ -1355,7 +1261,6 @@
     }
     if (tabAreaBtn) tabAreaBtn.addEventListener('click', function() { switchLocTab(false); });
     if (tabMapsBtn) tabMapsBtn.addEventListener('click', function() { switchLocTab(true); });
-
     locUI.searchInput.addEventListener("input", renderLocLists);
     if (locUI.btnClear) {
       locUI.btnClear.addEventListener("click", function () {
@@ -1373,29 +1278,23 @@
       });
     }
   }
-
   function buildLocDOM() {
     if (!el.locDropdown) return;
     var treeScroll = el.locDropdown.querySelector(".tree-scroll");
     var pillScroll = el.locDropdown.querySelector(".pill-scroll");
     if (!treeScroll || !pillScroll) return;
-
     treeScroll.innerHTML = "";
     pillScroll.innerHTML = "";
-
     for (var a = 0; a < areas.length; a++) {
       var area = areas[a];
-
       var pill = document.createElement("div");
       pill.className = "pill";
       pill.dataset.areaId = area.id;
       pill.textContent = area.label;
       pillScroll.appendChild(pill);
-
       var treeItem = document.createElement("div");
       treeItem.className = "tree-item";
       treeItem.dataset.areaId = area.id;
-
       var treeParent = document.createElement("div");
       treeParent.className = "tree-parent";
       var chevron = document.createElement("div");
@@ -1405,7 +1304,6 @@
       parentName.textContent = area.label;
       treeParent.appendChild(chevron);
       treeParent.appendChild(parentName);
-
       var childrenWrap = document.createElement("div");
       childrenWrap.className = "children";
       var childrenInner = document.createElement("div");
@@ -1414,7 +1312,6 @@
       branch.className = "branch";
       var childList = document.createElement("div");
       childList.className = "child-list";
-
       for (var k = 0; k < area.children.length; k++) {
         var loc = area.children[k];
         var label = labelByNorm[loc] || (loc.charAt(0).toUpperCase() + loc.slice(1));
@@ -1429,7 +1326,6 @@
         childEl.appendChild(span);
         childList.appendChild(childEl);
       }
-
       childrenInner.appendChild(branch);
       childrenInner.appendChild(childList);
       childrenWrap.appendChild(childrenInner);
@@ -1450,7 +1346,6 @@
         mpill.dataset.areaId = areas[a2].id;
         mpill.textContent = areas[a2].label;
         mobileAreaPills.appendChild(mpill);
-
         var subList = document.createElement('div');
         subList.className = 'mobile-sub-list';
         subList.dataset.areaId = areas[a2].id;
@@ -1499,9 +1394,6 @@
     }
   }
   function renderLocLists() {
-    // Update location filter UI based on search and selection
-    // Assumes UI elements are already in DOM from Webflow
-    //
     if (!locUI.treeScroll || !locUI.pillScroll) return;
     var q = norm(locUI.searchInput ? locUI.searchInput.value : "");
     var openAreas = {};
@@ -1521,26 +1413,23 @@
       var areaActive = area.children.some(function (c) {
         return draftLocs.indexOf(c) > -1;
       });
-      // Update pill
       var pill = locUI.pillScroll.querySelector('.pill[data-area-id="' + area.id + '"]');
       if (pill) {
         pill.classList.toggle('is-active', areaActive);
         pill.style.display = visKids.length || areaHit ? '' : 'none';
       }
-      // Update tree item
       var treeItem = locUI.treeScroll.querySelector('.tree-item[data-area-id="' + area.id + '"]');
       if (treeItem) {
         var parent = treeItem.querySelector('.tree-parent');
         if (parent) {
           parent.classList.toggle('is-active', areaActive);
         }
-        var children = treeItem.querySelector('.children');
-        if (children) {
+        var childrenEl = treeItem.querySelector('.children');
+        if (childrenEl) {
           var isOpen = openAreas[area.label] || areaActive;
-          children.classList.toggle('open', isOpen);
+          childrenEl.classList.toggle('open', isOpen);
         }
         treeItem.style.display = visKids.length || areaHit ? '' : 'none';
-        // Update children
         var childElements = treeItem.querySelectorAll('.child');
         for (var k = 0; k < childElements.length; k++) {
           var childEl = childElements[k];
@@ -1710,7 +1599,6 @@
       setTimeout(function () { locMap.resize(); }, 80);
     });
   }
-
   function syncLocMapMarkers(locations) {
     if (!locMap || !locMapReady) return;
     for (var i = 0; i < locMapMarkers.length; i++) locMapMarkers[i].remove();
@@ -1739,7 +1627,6 @@
     for (var i = 0; i < pts.length; i++) bounds.extend(pts[i].p);
     locMap.fitBounds(bounds, { padding: 60, maxZoom: 13, duration: 450 });
   }
-
   function clearMarkers() {
     for (var i = 0; i < markers.length; i++) markers[i].remove();
     markers = [];
@@ -1842,14 +1729,11 @@
   function buildUI() {
     var root = document.getElementById('bhb-filter');
     if (!root) return;
-    // Save grid if it lives inside root, then wipe old Webflow HTML
     var _savedGrid = root.querySelector('#' + CFG.GRID_ID);
     root.innerHTML = '';
-
     var CLOSE_SVG   = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
     var CHEVRON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
     var SEARCH_SVG  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
-
     function mk(tag, attrs, children) {
       var e = document.createElement(tag);
       if (attrs) {
@@ -1868,9 +1752,7 @@
       }
       return e;
     }
-
     function makeLabel(text) { return mk('div', { class: 'filter-label', text: text }); }
-
     function makeTrigger(text) {
       return mk('div', { class: 'filter-trigger' }, [
         mk('div', { class: 'filter-trigger_value' }, [
@@ -1879,7 +1761,6 @@
         mk('div', { class: 'trigger-chevron', html: CHEVRON_SVG })
       ]);
     }
-
     function makeOption(value, label, checked, withCheckbox) {
       var children = [];
       if (withCheckbox !== false) children.push(mk('div', { class: 'filter-checkbox' }));
@@ -1889,16 +1770,12 @@
         'data-value': value
       }, children);
     }
-
     function makeField(children) { return mk('div', { class: 'filter-field' }, children); }
-
     function makeDropdown(children) {
       return mk('div', { class: 'filter-dropdown' }, [
         mk('div', { class: 'filter-options' }, children)
       ]);
     }
-
-    // ── Ownership ──
     var ownershipField = makeField([
       makeLabel('Ownership'),
       makeTrigger('Any'),
@@ -1908,8 +1785,6 @@
         makeOption('Leasehold', 'Leasehold', false, false)
       ])
     ]);
-
-    // ── Bedrooms ──
     var bedsField = makeField([
       makeLabel('Bedrooms'),
       makeTrigger('Any'),
@@ -1923,8 +1798,6 @@
         makeOption('6+',  '6+ Br', false)
       ])
     ]);
-
-    // ── Lease Duration ──
     var leaseField = makeField([
       makeLabel('Lease Duration'),
       makeTrigger('Any'),
@@ -1936,15 +1809,11 @@
         makeOption('30+ years',          '30+ years',          false, false)
       ])
     ]);
-
-    // ── Keyword ──
     var kwInput = mk('input', { class: 'keyword-input', type: 'search', placeholder: 'Search\u2026', maxlength: '256' });
     var kwField = makeField([
       makeLabel('Listing Code'),
       mk('div', { class: 'filter-trigger' }, [kwInput])
     ]);
-
-    // ── Zoning ──
     var zoningField = mk('div', { class: 'filter-field', 'data-bhb-field': 'zoning' }, [
       makeLabel('Zoning'),
       makeTrigger('Any'),
@@ -1952,8 +1821,6 @@
         makeOption('Any', 'Any', true, false)
       ])
     ]);
-
-    // ── Location ──
     var locSearchInput    = mk('input', { class: 'location-search-input', type: 'text', placeholder: 'Search locations\u2026' });
     var treeScrollEl      = mk('div', { class: 'tree-scroll' });
     var pillScrollEl      = mk('div', { class: 'pill-scroll' });
@@ -1964,7 +1831,6 @@
     var locCloseBtn       = mk('div', { class: 'close-btn', html: CLOSE_SVG });
     var locTabArea        = mk('button', { class: 'loc-tab loc-tab-area is-active', type: 'button', text: 'Area' });
     var locTabMaps        = mk('button', { class: 'loc-tab loc-tab-maps', type: 'button', text: 'Maps' });
-
     var locDropdown = mk('div', { class: 'location-dropdown' }, [
       locCloseBtn,
       mk('div', { class: 'loc-tabs' }, [locTabArea, locTabMaps]),
@@ -1989,17 +1855,13 @@
         mk('div', { class: 'loc-actions' }, [locBtnClear, locBtnApply])
       ])
     ]);
-
     var locTrigger = mk('div', { class: 'location-trigger' }, [
       mk('div', { class: 'filter-trigger_value' }, [
         mk('div', { class: 'location-trigger_text', text: 'All Location' })
       ]),
       mk('div', { class: 'trigger-chevron', html: CHEVRON_SVG })
     ]);
-
     var locField = makeField([makeLabel('Location'), locTrigger, locDropdown]);
-
-    // ── Price ──
     var pwFillEl      = mk('div',   { id: 'pwFill',      class: 'pw-fill' });
     var pwTrackEl     = mk('div',   {                     class: 'pw-track' });
     var pwSliderEl    = mk('div',   {                     class: 'pw-slider' }, [pwTrackEl, pwFillEl]);
@@ -2009,7 +1871,6 @@
     var pwScaleMaxEl  = mk('span',  { id: 'pwScaleMax',   class: 'pw-scale-max', text: 'Rp0' });
     var pwRangeTextEl = mk('div',   { id: 'pwRangeText',  class: 'pw-range-value', text: '0' });
     var priceCloseBtn = mk('div',   { class: 'close-btn', html: CLOSE_SVG });
-
     var priceDropdown = mk('div', { class: 'price-dropdown' }, [
       mk('div', { class: 'price-panel' }, [
         mk('div', { class: 'pp-section' }, [
@@ -2044,13 +1905,11 @@
       ]),
       priceCloseBtn
     ]);
-
     var priceTrigText = mk('div', { class: 'price-trigger_text', text: 'Price Range' });
     var priceTrigger  = mk('div', { class: 'price-trigger' }, [
       mk('div', { class: 'filter-trigger_value' }, [priceTrigText]),
       mk('div', { class: 'trigger-chevron', html: CHEVRON_SVG })
     ]);
-
     var priceField = makeField([
       makeLabel('Price Range'),
       mk('div', { class: 'price-trigger-wrapper' }, [
@@ -2059,8 +1918,6 @@
       ]),
       priceDropdown
     ]);
-
-    // ── Currency ──
     var currField = makeField([
       makeLabel('Currency'),
       makeTrigger('IDR'),
@@ -2070,8 +1927,6 @@
         makeOption('EUR', 'EUR', false, true)
       ])
     ]);
-
-    // ── Action buttons ──
     var btnClear  = mk('button', { type: 'button', class: 'filter-button-1' }, [
       mk('span', { class: 'btn-icon', html: CLOSE_SVG }),
       mk('span', { text: 'Clear' })
@@ -2080,17 +1935,13 @@
       mk('span', { class: 'btn-icon', html: SEARCH_SVG }),
       mk('span', { text: 'Search Properties' })
     ]);
-
-    // ── Mobile collapsed card ──
     var mobileCollapsed = mk('div', { class: 'bhb-mobile-collapsed' }, [
       mk('div', { class: 'bhb-mobile-title', text: 'Search Villas' }),
       mk('div', { class: 'bhb-mobile-search-trigger' }, [
         mk('span', { class: 'bhb-mobile-search-placeholder', text: 'Search\u2026' })
       ])
     ]);
-
     var mobileCloseBtn = mk('button', { type: 'button', class: 'close-btn mobile-form-close', html: CLOSE_SVG });
-
     var filterForm = mk('div', { class: 'rent-filter_form' }, [
       mobileCloseBtn,
       mobileCollapsed,
@@ -2104,42 +1955,33 @@
         mk('div', { class: 'rent-filter_actions' }, [btnClear, btnSearch])
       ])
     ]);
-
     var overlay = mk('div', { id: 'bhbOverlay', class: 'bhb-overlay' });
     root.appendChild(overlay);
     root.appendChild(filterForm);
     if (_savedGrid) root.appendChild(_savedGrid);
   }
-
   function injectMobileLocStyles() {
     if (document.querySelector('style[data-bhb-mobile-loc]')) return;
     var css = [
       '@media (max-width:1024px){',
-      /* Override bottom-sheet: inline position */
       '#bhb-filter .location-dropdown{position:relative!important;bottom:auto!important;top:auto!important;left:auto!important;right:auto!important;width:100%!important;max-height:none!important;height:auto!important;z-index:2!important;overflow:visible!important;animation:none!important;box-shadow:none!important;border-radius:12px;padding:0;margin-top:6px;border:1px solid #e0d9d3;}',
-      /* Inside bottom-sheet form: remove standalone border/margin */
       '#bhb-filter .rent-filter_form.is-mobile-open .location-dropdown{border:none!important;margin-top:0!important;}',
       '#bhb-filter .location-dropdown.is-open{animation:none!important;}',
       '#bhb-filter .location-dropdown .close-btn{display:none!important;}',
       '#bhb-filter .price-dropdown .close-btn{display:none!important;}',
       '#bhb-filter .location-dropdown .loc-body{overflow:visible;height:auto;}',
       '#bhb-filter .location-dropdown .loc-panel-area.is-active,#bhb-filter .location-dropdown .loc-panel-maps.is-active{display:flex;flex-direction:column;height:auto;max-height:none!important;overflow:visible;padding:12px 16px;}',
-      /* Hide desktop-only elements */
       '#bhb-filter .location-dropdown .tree-scroll{display:none!important;}',
       '#bhb-filter .location-dropdown .loc-pill-col{display:none!important;}',
-      /* Tab bar */
       '#bhb-filter .location-dropdown .loc-tabs{margin:12px 16px;padding:3px;background:#262626;border-radius:50px;border:none;gap:2px;display:flex;flex-shrink:0;}',
       '#bhb-filter .location-dropdown .loc-tab{flex:1;height:42px;border:none;border-radius:50px;background:transparent;color:rgba(255,255,255,0.55);font-size:14px;font-weight:500;cursor:pointer;transition:none;}',
       '#bhb-filter .location-dropdown .loc-tab.is-active{background:#1c1917!important;color:#fff!important;border-color:transparent!important;}',
       '#bhb-filter .location-dropdown .loc-tab:hover:not(.is-active){background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.85);}',
-      /* Area panel: pills */
       '#bhb-filter .location-dropdown .loc-mobile-area-pills{display:flex;flex-direction:column;gap:8px;padding:0;}',
       '#bhb-filter .location-dropdown .mobile-area-pill{width:100%;background:#fff;border:1px solid #e0d9d3;border-radius:12px;padding:14px 16px;font-size:14px;font-weight:500;color:#3a2e28;text-align:left;cursor:pointer;display:block;box-sizing:border-box;}',
       '#bhb-filter .location-dropdown .mobile-area-pill.is-active{background:#3a2e28;border-color:#3a2e28;color:#fff;}',
-      /* Map */
       '#bhb-filter .location-dropdown .bali-map-wrap{height:400px!important;flex:none!important;border-radius:12px;overflow:hidden;margin-top:12px;position:relative;}',
       '#bhb-filter .location-dropdown #locMapEl{position:absolute;inset:0;width:100%!important;height:100%!important;}',
-      /* Location panel: search + list */
       '#bhb-filter .location-dropdown .location-search{padding:0 0 8px 0;border-bottom:none;display:flex;}',
       '#bhb-filter .location-dropdown .location-search img{display:none;}',
       '#bhb-filter .location-dropdown .location-search-input{width:100%;height:40px;border:1px solid #e0d9d3;border-radius:12px;padding:0 12px;font-size:14px;outline:none;background:#fff;box-sizing:border-box;}',
@@ -2148,7 +1990,6 @@
       '#bhb-filter .location-dropdown .mobile-loc-item.is-active{color:#3a2e28;font-weight:500;}',
       '#bhb-filter .location-dropdown .mobile-loc-item .mini-pin{opacity:0.35;width:16px;height:16px;background-size:14px 14px;}',
       '#bhb-filter .location-dropdown .mobile-loc-item.is-active .mini-pin{opacity:1;}',
-      /* Footer: info left, buttons right */
       '#bhb-filter .location-dropdown .loc-map-footer{display:flex!important;flex-direction:row!important;align-items:center;padding:12px 16px;gap:12px;border-top:1px solid #f0ebe6;}',
       '#bhb-filter .location-dropdown .loc-selected-info{flex:1;font-size:13px;color:#9a8880;text-align:left;}',
       '#bhb-filter .location-dropdown .loc-actions{display:flex;gap:8px;flex-shrink:0;}',
@@ -2156,7 +1997,6 @@
       '#bhb-filter .location-dropdown .loc-btn-clear-inline{border:1px solid #e0d9d3;background:#fff;color:#3a2e28;}',
       '#bhb-filter .location-dropdown .loc-btn-apply-inline{background:#3a2e28;border:1px solid #3a2e28;color:#fff;}',
       '}',
-      /* Very small screens: stack footer vertically */
       '@media (max-width:479px){',
       '#bhb-filter .location-dropdown .loc-map-footer{flex-direction:column!important;align-items:stretch!important;padding:12px;}',
       '#bhb-filter .location-dropdown .loc-selected-info{flex:none!important;margin-bottom:4px;}',
@@ -2169,6 +2009,7 @@
     document.head.appendChild(s);
   }
 
+  // PERUBAHAN 4: Tambah cardCache di init()
   function init() {
     injectMobileLocStyles();
     buildUI();
@@ -2176,6 +2017,19 @@
     if (!el.grid) { console.error('[BHB villas] grid #' + CFG.GRID_ID + ' not found'); return; }
     allCards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
     if (!allCards.length) { console.error('[BHB villas] no cards (' + CFG.CARD_SEL + ') inside grid'); return; }
+
+    // Build cache sekali saat init
+    cardCache = allCards.map(function(card) {
+      var d = getData(card);
+      var priceEl = card.querySelector(".price");
+      var priceTxt = priceEl ? priceEl.textContent.trim() : "";
+      d.displayPrice = priceTxt
+        ? parseInt(priceTxt.replace(/[^\d]/g, ""), 10)
+        : d.price;
+      d.leaseYears = getLeaseYears(card);
+      return d;
+    });
+
     areas = [];
     buildAreas();
     buildLocDOM();
@@ -2189,6 +2043,7 @@
     bindEvents();
     setCurrency(savedCurrency());
   }
+
   if (document.readyState === "loading")
     document.addEventListener("DOMContentLoaded", init);
   else init();
