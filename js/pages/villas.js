@@ -666,14 +666,13 @@
   }
 
   // FIX 3: applyFilters and showNext — efficient rendering
- function applyFilters() {
-  // Hide all cards first so non-filtered cards don't stay visible
+  function applyFilters() {
     for (var i = 0; i < allCards.length; i++) {
-    allCards[i].style.display = "none";
-  }
+      allCards[i].style.display = "none";
+    }
     filtered = allCards.filter(function(card, idx) {
-    return passes(card, idx);
-  });
+      return passes(card, idx);
+    });
     visible = 0;
     visibleSet = [];
     showNext();
