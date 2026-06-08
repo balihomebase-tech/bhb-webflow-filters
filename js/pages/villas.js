@@ -2073,3 +2073,7 @@ function init() {
     if (!allCards.length) finishInit();
   }, 8000);
 }
+  if (document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
