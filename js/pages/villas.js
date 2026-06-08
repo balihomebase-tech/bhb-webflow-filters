@@ -2011,63 +2011,65 @@
   }
 
 function init() {
-  injectMobileLocStyles();
-  buildUI();
-  cacheEls();
-  if (!el.grid) { console.error('[BHB villas] grid #' + CFG.GRID_ID + ' not found'); return; }
-  
-  // Wait for all CMS items to finish loading before init
-  function waitForCards(attempts) {
-    var cards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
-    if (cards.length > 0 && attempts > 0) {
-      // Check again after 500ms to see if more cards loaded
-      setTimeout(function() {
-        var newCards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
-        if (newCards.length === cards.length) {
-          // Card count stable — safe to init
-          finishInit();
-        } else {
-          waitForCards(attempts - 1);
-        }
-      }, 500);
-    } else {
-      finishInit();
+    injectMobileLocStyles();
+    buildUI();
+    cacheEls();
+    if (!el.grid) { console.error('[BHB villas] grid #' + CFG.GRID_ID + ' not found'); return; }
+
+    function waitForCards(attempts) {
+      var cards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
+      if (cards.length > 0 && attempts > 0) {
+        setTimeout(function() {
+          var newCards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
+          if (newCards.length === cards.length) {
+            finishInit();
+          } else {
+            waitForCards(attempts - 1);
+          }
+        }, 500);
+      } else {
+        finishInit();
+      }
     }
+
+    function finishInit() {
+      allCards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
+      if (!allCards.length) { console.error('[BHB villas] no cards found'); return; }
+      cardCache = allCards.map(function(card) {
+        var d = getData(card);
+        var priceEl = card.querySelector(".price");
+        var priceTxt = priceEl ? priceEl.textContent.trim() : "";
+        d.displayPrice = priceTxt ? parseInt(priceTxt.replace(/[^\d]/g, ""), 10) : d.price;
+        d.leaseYears = getLeaseYears(card);
+        return d;
+      });
+      areas = [];
+      buildAreas();
+      buildLocDOM();
+      mountLocUI();
+      populateZoningFilter();
+      initPricePanel();
+      updatePriceRangeForOwnership();
+      hydrateCoordsFromCMS();
+      updateLocText();
+      bindEvents();
+      setCurrency(savedCurrency());
+      var bhbMapEl = document.getElementById('bhbMap');
+      if (bhbMapEl) {
+        var mapObserver = new IntersectionObserver(function(entries) {
+          if (entries[0].isIntersecting) {
+            mapObserver.disconnect();
+            loadMapSDK(initMap);
+          }
+        }, { rootMargin: '200px' });
+        mapObserver.observe(bhbMapEl);
+      }
+    }
+
+    waitForCards(10);
   }
 
-  function finishInit() {
-    allCards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
-    if (!allCards.length) { console.error('[BHB villas] no cards found'); return; }
-    cardCache = allCards.map(function(card) {
-      var d = getData(card);
-      var priceEl = card.querySelector(".price");
-      var priceTxt = priceEl ? priceEl.textContent.trim() : "";
-      d.displayPrice = priceTxt ? parseInt(priceTxt.replace(/[^\d]/g, ""), 10) : d.price;
-      d.leaseYears = getLeaseYears(card);
-      return d;
-    });
-    areas = [];
-    buildAreas();
-    buildLocDOM();
-    mountLocUI();
-    populateZoningFilter();
-    initPricePanel();
-    updatePriceRangeForOwnership();
-    hydrateCoordsFromCMS();
-    updateLocText();
-    bindEvents();
-    setCurrency(savedCurrency());
-    var bhbMapEl = document.getElementById('bhbMap');
-    if (bhbMapEl) {
-      var mapObserver = new IntersectionObserver(function(entries) {
-        if (entries[0].isIntersecting) {
-          mapObserver.disconnect();
-          loadMapSDK(initMap);
-        }
-      }, { rootMargin: '200px' });
-      mapObserver.observe(bhbMapEl);
-    }
-  }
-
-  waitForCards(10);
-}
+  if (document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
