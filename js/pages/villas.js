@@ -12,34 +12,21 @@
       id: "canggu-area",
       label: "Around Canggu",
       keys: [
-        "canggu",
-        "pererenan",
-        "seseh",
-        "cemagi",
-        "buduk",
-        "dalung",
-        "tumbak bayuh",
-        "cepaka",
-        "kaba kaba",
-        "kaba-kaba",
-        "buwit",
-        "batu bolong",
-        "kedungu",
-        "nyanyi",
-        "tanah lot",
-        "munggu",
-      ],
+        "canggu", "pererenan", "seseh", "cemagi", "buduk", "dalung",
+        "tumbak bayuh", "cepaka", "kaba kaba", "kaba-kaba", "buwit",
+        "batu bolong", "kedungu", "nyanyi", "tanah lot", "munggu"
+      ]
     },
     {
       id: "uluwatu-area",
       label: "Around Uluwatu",
-      keys: ["uluwatu", "ungasan", "pecatu", "bingin", "uluwatu center"],
+      keys: ["uluwatu", "ungasan", "pecatu", "bingin", "uluwatu center"]
     },
     {
       id: "ubud-area",
       label: "Around Ubud",
-      keys: ["ubud", "ubud center"],
-    },
+      keys: ["ubud", "ubud center"]
+    }
   ];
   var LOC_COORDS = {
     cepaka: [115.14526, -8.59917],
@@ -82,11 +69,10 @@
 
   var dynamicChips = { IDR: [], USD: [], EUR: [] };
 
-  // PERUBAHAN 1: Tambah cardCache dan visibleSet
   var allCards = [],
-    cardCache = [],
-    filtered = [],
-    visible = 0;
+      cardCache = [],
+      filtered = [],
+      visible = 0;
   var visibleSet = [];
 
   var locDropOpen = false,
@@ -198,56 +184,43 @@
       }
     }
     if (!vals.length) {
-      el.zoningField.style.display = "none";
+      el.zoningField.style.display = 'none';
       return;
     }
     var labelMap = {
-      residential: "Residential",
-      "tourism facilities": "Tourism Facilities",
-      "mixed use area": "Mixed Use Area",
-      "commercial area": "Commercial Area",
-      agricultures: "Agricultures",
+      'residential':        'Residential',
+      'tourism facilities': 'Tourism Facilities',
+      'mixed use area':     'Mixed Use Area',
+      'commercial area':    'Commercial Area',
+      'agricultures':       'Agricultures'
     };
-    var optionsContainer = el.zoningField.querySelector(".filter-options");
+    var optionsContainer = el.zoningField.querySelector('.filter-options');
     if (!optionsContainer) return;
-    var existing = optionsContainer.querySelectorAll(
-      '.filter-option:not([data-value="Any"])',
-    );
-    for (var j = 0; j < existing.length; j++)
-      existing[j].parentNode.removeChild(existing[j]);
+    var existing = optionsContainer.querySelectorAll('.filter-option:not([data-value="Any"])');
+    for (var j = 0; j < existing.length; j++) existing[j].parentNode.removeChild(existing[j]);
     for (var k = 0; k < vals.length; k++) {
-      var opt = document.createElement("div");
-      opt.className = "filter-option";
-      opt.setAttribute("data-value", vals[k]);
-      var lbl = document.createElement("div");
-      lbl.className = "text-size-small filter-option_label";
-      lbl.textContent =
-        labelMap[vals[k]] ||
-        vals[k].replace(/\b\w/g, function (c) {
-          return c.toUpperCase();
-        });
+      var opt = document.createElement('div');
+      opt.className = 'filter-option';
+      opt.setAttribute('data-value', vals[k]);
+      var lbl = document.createElement('div');
+      lbl.className = 'text-size-small filter-option_label';
+      lbl.textContent = labelMap[vals[k]] || vals[k].replace(/\b\w/g, function(c) { return c.toUpperCase(); });
       opt.appendChild(lbl);
       optionsContainer.appendChild(opt);
     }
-    var dd = el.zoningField.querySelector(".filter-dropdown");
-    var trigText = el.zoningField.querySelector(".filter-trigger_text");
-    var allOpts = el.zoningField.querySelectorAll(".filter-option");
+    var dd = el.zoningField.querySelector('.filter-dropdown');
+    var trigText = el.zoningField.querySelector('.filter-trigger_text');
+    var allOpts = el.zoningField.querySelectorAll('.filter-option');
     for (var i = 0; i < allOpts.length; i++) {
-      (function (opt) {
-        opt.addEventListener("click", function (e) {
+      (function(opt) {
+        opt.addEventListener('click', function(e) {
           e.stopPropagation();
           for (var k = 0; k < allOpts.length; k++)
-            allOpts[k].classList.remove("is-active");
-          opt.classList.add("is-active");
-          if (trigText)
-            trigText.textContent =
-              opt.dataset.value === "Any"
-                ? "Any"
-                : opt.querySelector(".filter-option_label").textContent;
-          if (dd) {
-            dd.style.display = "none";
-            dd.classList.remove("is-open");
-          }
+            allOpts[k].classList.remove('is-active');
+          opt.classList.add('is-active');
+          if (trigText) trigText.textContent = opt.dataset.value === 'Any'
+            ? 'Any' : opt.querySelector('.filter-option_label').textContent;
+          if (dd) { dd.style.display = 'none'; dd.classList.remove('is-open'); }
           state.zoning = opt.dataset.value;
           applyFilters();
         });
@@ -308,20 +281,14 @@
       locTrigger: document.querySelector(".location-trigger"),
       locTrigText: document.querySelector(".location-trigger_text"),
       locDropdown: document.querySelector(".location-dropdown"),
-      locDropdownParent: document.querySelector(".location-dropdown")
-        ? document.querySelector(".location-dropdown").parentNode
-        : null,
+      locDropdownParent: document.querySelector(".location-dropdown") ? document.querySelector(".location-dropdown").parentNode : null,
       priceTrigger: document.querySelector(".price-trigger"),
       priceTrigText: document.querySelector(".price-trigger_text"),
       priceDropdown: document.querySelector(".price-dropdown"),
       btnClear: document.querySelector(".filter-button-1"),
       btnSearch: document.querySelector(".filter-button-2"),
-      resultsCount:
-        document.getElementById("villas-results-count") ||
-        document.getElementById("rental-results-count"),
-      emptyState:
-        document.getElementById("villas-empty-state") ||
-        document.getElementById("rental-empty-state"),
+      resultsCount: document.getElementById("villas-results-count") || document.getElementById("rental-results-count"),
+      emptyState: document.getElementById("villas-empty-state") || document.getElementById("rental-empty-state"),
       btnLoadMore: document.getElementById("load-more"),
       btnBackTop: null,
       grid: document.getElementById(CFG.GRID_ID),
@@ -489,11 +456,11 @@
   function closeMobilePanel() {
     closeAll();
     if (locDropOpen) openLocDrop(false);
-    var form = document.querySelector(".rent-filter_form");
-    if (form) form.classList.remove("is-mobile-open");
-    var overlay = document.getElementById("bhbOverlay");
-    if (overlay) overlay.style.display = "";
-    document.body.style.overflow = "";
+    var form = document.querySelector('.rent-filter_form');
+    if (form) form.classList.remove('is-mobile-open');
+    var overlay = document.getElementById('bhbOverlay');
+    if (overlay) overlay.style.display = '';
+    document.body.style.overflow = '';
   }
   function bindEvents() {
     initSingle(el.ownershipField, function (val) {
@@ -553,9 +520,7 @@
         closeMobilePanel();
       });
     }
-    var mobileSearchTrigger = document.querySelector(
-      ".bhb-mobile-search-trigger",
-    );
+    var mobileSearchTrigger = document.querySelector(".bhb-mobile-search-trigger");
     if (mobileSearchTrigger) {
       mobileSearchTrigger.addEventListener("click", function () {
         var form = document.querySelector(".rent-filter_form");
@@ -593,15 +558,9 @@
         openLocDrop();
         if (locDropOpen) {
           if (!map) loadMapSDK(initMap);
-          else
-            setTimeout(function () {
-              map.resize();
-            }, 250);
+          else setTimeout(function () { map.resize(); }, 250);
           if (!locMap) loadMapSDK(initLocMap);
-          else
-            setTimeout(function () {
-              locMap.resize();
-            }, 250);
+          else setTimeout(function () { locMap.resize(); }, 250);
         }
       });
     }
@@ -629,8 +588,7 @@
       }
     });
     window.addEventListener("bhb:currency-changed", function (e) {
-      var c =
-        e.detail && e.detail.currency ? e.detail.currency : savedCurrency();
+      var c = e.detail && e.detail.currency ? e.detail.currency : savedCurrency();
       setCurrency(c);
     });
     window.addEventListener("bhb:rates-ready", function () {
@@ -656,26 +614,21 @@
       price: parseFloat(inner.dataset.price || "0"),
       currency: (inner.dataset.currency || "").toUpperCase(),
       ownership: (inner.dataset.available || "").toLowerCase(),
-      zoning: (function () {
-        var z = (inner.dataset.zone || "").toLowerCase();
-        if (z.indexOf("yellow") > -1) return "residential";
-        if (z.indexOf("pink") > -1) return "tourism facilities";
-        if (z.indexOf("orange") > -1) return "mixed use area";
-        if (z.indexOf("red") > -1) return "commercial area";
-        if (z.indexOf("brown") > -1) return "agricultures";
-        return "";
+      zoning: (function() {
+        var z = (inner.dataset.zone || '').toLowerCase();
+        if (z.indexOf('yellow') > -1) return 'residential';
+        if (z.indexOf('pink')   > -1) return 'tourism facilities';
+        if (z.indexOf('orange') > -1) return 'mixed use area';
+        if (z.indexOf('red')    > -1) return 'commercial area';
+        if (z.indexOf('brown')  > -1) return 'agricultures';
+        return '';
       })(),
     };
   }
-
-  // PERUBAHAN 2: Ganti passes, hapus passesPrice dan passesLease
   function passes(card, idx) {
     var d = cardCache[idx];
     if (!d) return true;
-    if (
-      state.ownership !== "Any" &&
-      d.ownership !== state.ownership.toLowerCase()
-    )
+    if (state.ownership !== "Any" && d.ownership !== state.ownership.toLowerCase())
       return false;
     if (state.zoning !== "Any" && d.zoning !== state.zoning.toLowerCase())
       return false;
@@ -683,14 +636,8 @@
       var match = false;
       for (var i = 0; i < state.bedrooms.length; i++) {
         var b = state.bedrooms[i];
-        if (b === "6+" && d.rooms >= 6) {
-          match = true;
-          break;
-        }
-        if (b !== "6+" && d.rooms === parseInt(b, 10)) {
-          match = true;
-          break;
-        }
+        if (b === "6+" && d.rooms >= 6) { match = true; break; }
+        if (b !== "6+" && d.rooms === parseInt(b, 10)) { match = true; break; }
       }
       if (!match) return false;
     }
@@ -703,12 +650,9 @@
       var years = d.leaseYears;
       if (years === null) return false;
       var lbl = state.lease.toLowerCase();
-      if (lbl === "10 \u2013 20 years" && !(years >= 10 && years <= 20))
-        return false;
-      if (lbl === "20 \u2013 25 years" && !(years >= 20 && years <= 25))
-        return false;
-      if (lbl === "25 \u2013 30 years" && !(years >= 25 && years <= 30))
-        return false;
+      if (lbl === "10 \u2013 20 years" && !(years >= 10 && years <= 20)) return false;
+      if (lbl === "20 \u2013 25 years" && !(years >= 20 && years <= 25)) return false;
+      if (lbl === "25 \u2013 30 years" && !(years >= 25 && years <= 30)) return false;
       if (lbl === "30+ years" && !(years > 30)) return false;
     }
     if (state.keyword) {
@@ -717,13 +661,11 @@
     }
     return true;
   }
-
-  // FIX 3: applyFilters and showNext — efficient rendering
   function applyFilters() {
     for (var i = 0; i < allCards.length; i++) {
       allCards[i].style.display = "none";
     }
-    filtered = allCards.filter(function (card, idx) {
+    filtered = allCards.filter(function(card, idx) {
       return passes(card, idx);
     });
     visible = 0;
@@ -740,7 +682,6 @@
     visible = next;
     updateLoadMore();
   }
-
   function updateUI() {
     if (el.resultsCount) el.resultsCount.textContent = filtered.length;
     if (el.emptyState)
@@ -763,7 +704,7 @@
       btt.style.color = "#3a2e28";
     });
     btt.addEventListener("click", function () {
-      var panel = document.querySelector(".rent-filter_form") || document.body;
+      var panel = document.querySelector('.rent-filter_form') || document.body;
       panel.scrollIntoView({ behavior: "smooth", block: "start" });
     });
     if (el.btnLoadMore && el.btnLoadMore.parentNode) {
@@ -791,12 +732,12 @@
     updatePriceRangeForOwnership();
     updateSliderForCurrency(state.currency);
     updateChips(state.currency);
-    filtered = allCards.filter(function (card, idx) {
+    filtered = allCards.filter(function(card, idx) {
       return passes(card, idx);
     });
     var restoreTo = Math.min(
       savedVisible > 0 ? savedVisible : CFG.STEP,
-      filtered.length,
+      filtered.length
     );
     for (var i = 0; i < visibleSet.length; i++)
       visibleSet[i].style.display = "none";
@@ -939,28 +880,21 @@
     var range = maxPrice - minPrice;
     var tier1Max = minPrice + range / 3;
     var tier2Max = minPrice + (2 * range) / 3;
-    var currencies = ["IDR", "USD", "EUR"];
+    var currencies = ['IDR', 'USD', 'EUR'];
     for (var c = 0; c < currencies.length; c++) {
       var curr = currencies[c];
-      var tier1 = convertAmount(tier1Max, "IDR", curr);
-      var tier2 = convertAmount(tier2Max, "IDR", curr);
+      var tier1 = convertAmount(tier1Max, 'IDR', curr);
+      var tier2 = convertAmount(tier2Max, 'IDR', curr);
       dynamicChips[curr] = [
-        { label: "< " + short(tier1), min: 0, max: tier1 },
-        {
-          label: short(tier1) + " \u2013 " + short(tier2),
-          min: tier1,
-          max: tier2,
-        },
-        { label: "> " + short(tier2), min: tier2, max: null },
+        { label: '< ' + short(tier1), min: 0, max: tier1 },
+        { label: short(tier1) + ' \u2013 ' + short(tier2), min: tier1, max: tier2 },
+        { label: '> ' + short(tier2), min: tier2, max: null }
       ];
     }
   }
   function updateChips(currency) {
     var c = normCurrency(currency);
-    var presets =
-      dynamicChips[c] && dynamicChips[c].length > 0
-        ? dynamicChips[c]
-        : CHIP_PRESETS[c] || CHIP_PRESETS["IDR"];
+    var presets = dynamicChips[c] && dynamicChips[c].length > 0 ? dynamicChips[c] : CHIP_PRESETS[c] || CHIP_PRESETS["IDR"];
     var chips = document.querySelectorAll(".pw-chip");
     for (var i = 0; i < chips.length; i++) {
       var p = presets[i];
@@ -1176,11 +1110,10 @@
             clamp(cMax, slider.active.min, slider.active.max),
           );
           fullRender();
-          var quickEl = ch.closest(".pw-quick");
-          var allChips = quickEl ? quickEl.querySelectorAll(".pw-chip") : chips;
-          for (var j = 0; j < allChips.length; j++)
-            allChips[j].classList.remove("is-active");
-          ch.classList.add("is-active");
+          var quickEl = ch.closest('.pw-quick');
+          var allChips = quickEl ? quickEl.querySelectorAll('.pw-chip') : chips;
+          for (var j = 0; j < allChips.length; j++) allChips[j].classList.remove('is-active');
+          ch.classList.add('is-active');
           applyFilters();
         });
       })(chips[i]);
@@ -1231,137 +1164,98 @@
   function mountLocUI() {
     if (!el.locDropdown) return;
     locUI = {
-      searchInput: el.locDropdown.querySelector(".location-search-input"),
-      treeScroll: el.locDropdown.querySelector(".tree-scroll"),
-      pillScroll: el.locDropdown.querySelector(".pill-scroll"),
+      searchInput:  el.locDropdown.querySelector(".location-search-input"),
+      treeScroll:   el.locDropdown.querySelector(".tree-scroll"),
+      pillScroll:   el.locDropdown.querySelector(".pill-scroll"),
       selectedInfo: el.locDropdown.querySelector("#locSelectedInfo"),
-      btnClear: el.locDropdown.querySelector(".loc-btn-clear-inline"),
-      btnApply: el.locDropdown.querySelector(".loc-btn-apply-inline"),
+      btnClear:     el.locDropdown.querySelector(".loc-btn-clear-inline"),
+      btnApply:     el.locDropdown.querySelector(".loc-btn-apply-inline"),
     };
     if (!locUI.searchInput || !locUI.treeScroll || !locUI.pillScroll) return;
-    var treeParents = locUI.treeScroll.querySelectorAll(".tree-parent");
+    var treeParents = locUI.treeScroll.querySelectorAll('.tree-parent');
     for (var i = 0; i < treeParents.length; i++) {
       var parent = treeParents[i];
-      var cw = parent.parentNode.querySelector(".children");
+      var cw = parent.parentNode.querySelector('.children');
       if (cw) {
-        parent.addEventListener(
-          "click",
-          (function (c) {
-            return function () {
-              c.classList.toggle("open");
-            };
-          })(cw),
-        );
+        parent.addEventListener('click', (function(c) {
+          return function() { c.classList.toggle('open'); };
+        })(cw));
       }
     }
-    var children = locUI.treeScroll.querySelectorAll(".child");
+    var children = locUI.treeScroll.querySelectorAll('.child');
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
       var loc = child.dataset.location;
       if (loc) {
-        child.addEventListener(
-          "click",
-          (function (l) {
-            return function (e) {
-              e.stopPropagation();
-              toggleLoc(l);
-            };
-          })(loc),
-        );
+        child.addEventListener('click', (function(l) {
+          return function(e) { e.stopPropagation(); toggleLoc(l); };
+        })(loc));
       }
     }
-    var pills = locUI.pillScroll.querySelectorAll(".pill");
+    var pills = locUI.pillScroll.querySelectorAll('.pill');
     for (var i = 0; i < pills.length; i++) {
       var pill = pills[i];
       var areaId = pill.dataset.areaId;
       if (areaId) {
-        pill.addEventListener(
-          "click",
-          (function (aId) {
-            return function () {
-              toggleArea(aId);
-            };
-          })(areaId),
-        );
+        pill.addEventListener('click', (function(aId) {
+          return function() { toggleArea(aId); };
+        })(areaId));
       }
     }
-    var mobilePillBtns = el.locDropdown.querySelectorAll(".mobile-area-pill");
+    var mobilePillBtns = el.locDropdown.querySelectorAll('.mobile-area-pill');
     for (var i = 0; i < mobilePillBtns.length; i++) {
       var mpBtn = mobilePillBtns[i];
       var mpId = mpBtn.dataset.areaId;
       if (mpId) {
-        mpBtn.addEventListener(
-          "click",
-          (function (aId, btn) {
-            return function () {
-              var allPills =
-                el.locDropdown.querySelectorAll(".mobile-area-pill");
-              for (var p = 0; p < allPills.length; p++) {
-                if (allPills[p] !== btn) {
-                  allPills[p].classList.remove("is-expanded");
-                  var otherId = allPills[p].dataset.areaId;
-                  var otherList = el.locDropdown.querySelector(
-                    '.mobile-sub-list[data-area-id="' + otherId + '"]',
-                  );
-                  if (otherList) otherList.style.display = "none";
-                }
+        mpBtn.addEventListener('click', (function(aId, btn) {
+          return function() {
+            var allPills = el.locDropdown.querySelectorAll('.mobile-area-pill');
+            for (var p = 0; p < allPills.length; p++) {
+              if (allPills[p] !== btn) {
+                allPills[p].classList.remove('is-expanded');
+                var otherId = allPills[p].dataset.areaId;
+                var otherList = el.locDropdown.querySelector('.mobile-sub-list[data-area-id="' + otherId + '"]');
+                if (otherList) otherList.style.display = 'none';
               }
-              var isOpen = btn.classList.contains("is-expanded");
-              btn.classList.toggle("is-expanded", !isOpen);
-              var subList = el.locDropdown.querySelector(
-                '.mobile-sub-list[data-area-id="' + aId + '"]',
-              );
-              if (subList) subList.style.display = isOpen ? "none" : "flex";
-            };
-          })(mpId, mpBtn),
-        );
+            }
+            var isOpen = btn.classList.contains('is-expanded');
+            btn.classList.toggle('is-expanded', !isOpen);
+            var subList = el.locDropdown.querySelector('.mobile-sub-list[data-area-id="' + aId + '"]');
+            if (subList) subList.style.display = isOpen ? 'none' : 'flex';
+          };
+        })(mpId, mpBtn));
       }
     }
-    var mobileSubItems = el.locDropdown.querySelectorAll(
-      ".mobile-sub-list .mobile-loc-item",
-    );
+    var mobileSubItems = el.locDropdown.querySelectorAll('.mobile-sub-list .mobile-loc-item');
     for (var i = 0; i < mobileSubItems.length; i++) {
       var mItem = mobileSubItems[i];
       var mLoc = mItem.dataset.location;
       if (mLoc) {
-        mItem.addEventListener(
-          "click",
-          (function (l) {
-            return function () {
-              toggleLoc(l);
-            };
-          })(mLoc),
-        );
+        mItem.addEventListener('click', (function(l) {
+          return function() { toggleLoc(l); };
+        })(mLoc));
       }
     }
-    var tabAreaBtn = el.locDropdown.querySelector(".loc-tab-area");
-    var tabMapsBtn = el.locDropdown.querySelector(".loc-tab-maps");
-    var panelArea = el.locDropdown.querySelector(".loc-panel-area");
-    var panelMaps = el.locDropdown.querySelector(".loc-panel-maps");
+    var tabAreaBtn = el.locDropdown.querySelector('.loc-tab-area');
+    var tabMapsBtn = el.locDropdown.querySelector('.loc-tab-maps');
+    var panelArea  = el.locDropdown.querySelector('.loc-panel-area');
+    var panelMaps  = el.locDropdown.querySelector('.loc-panel-maps');
     function switchLocTab(toMaps) {
       if (toMaps) {
-        if (tabAreaBtn) tabAreaBtn.classList.remove("is-active");
-        if (tabMapsBtn) tabMapsBtn.classList.add("is-active");
-        if (panelArea) panelArea.classList.remove("is-active");
-        if (panelMaps) panelMaps.classList.add("is-active");
-        setTimeout(function () {
-          if (locMap) locMap.resize();
-        }, 50);
+        if (tabAreaBtn) tabAreaBtn.classList.remove('is-active');
+        if (tabMapsBtn) tabMapsBtn.classList.add('is-active');
+        if (panelArea)  panelArea.classList.remove('is-active');
+        if (panelMaps)  panelMaps.classList.add('is-active');
+        setTimeout(function() { if (locMap) locMap.resize(); }, 50);
       } else {
-        if (tabMapsBtn) tabMapsBtn.classList.remove("is-active");
-        if (tabAreaBtn) tabAreaBtn.classList.add("is-active");
-        if (panelMaps) panelMaps.classList.remove("is-active");
-        if (panelArea) panelArea.classList.add("is-active");
+        if (tabMapsBtn) tabMapsBtn.classList.remove('is-active');
+        if (tabAreaBtn) tabAreaBtn.classList.add('is-active');
+        if (panelMaps)  panelMaps.classList.remove('is-active');
+        if (panelArea)  panelArea.classList.add('is-active');
       }
     }
-    if (tabAreaBtn)
-      tabAreaBtn.addEventListener("click", function () {
-        switchLocTab(false);
-      });
-    if (tabMapsBtn)
-      tabMapsBtn.addEventListener("click", function () {
-        switchLocTab(true);
-      });
+    if (tabAreaBtn) tabAreaBtn.addEventListener('click', function() { switchLocTab(false); });
+    if (tabMapsBtn) tabMapsBtn.addEventListener('click', function() { switchLocTab(true); });
     locUI.searchInput.addEventListener("input", renderLocLists);
     if (locUI.btnClear) {
       locUI.btnClear.addEventListener("click", function () {
@@ -1415,8 +1309,7 @@
       childList.className = "child-list";
       for (var k = 0; k < area.children.length; k++) {
         var loc = area.children[k];
-        var label =
-          labelByNorm[loc] || loc.charAt(0).toUpperCase() + loc.slice(1);
+        var label = labelByNorm[loc] || (loc.charAt(0).toUpperCase() + loc.slice(1));
         var childEl = document.createElement("div");
         childEl.className = "child";
         childEl.dataset.location = loc;
@@ -1435,35 +1328,32 @@
       treeItem.appendChild(childrenWrap);
       treeScroll.appendChild(treeItem);
     }
-    var panelAreaEl = el.locDropdown.querySelector(".loc-panel-area");
+    var panelAreaEl = el.locDropdown.querySelector('.loc-panel-area');
     if (panelAreaEl) {
-      var existingPills = panelAreaEl.querySelector(".loc-mobile-area-pills");
+      var existingPills = panelAreaEl.querySelector('.loc-mobile-area-pills');
       if (existingPills) existingPills.remove();
-      var mobileAreaPills = document.createElement("div");
-      mobileAreaPills.className = "loc-mobile-area-pills";
+      var mobileAreaPills = document.createElement('div');
+      mobileAreaPills.className = 'loc-mobile-area-pills';
       for (var a2 = 0; a2 < areas.length; a2++) {
-        var mpill = document.createElement("button");
-        mpill.className = "mobile-area-pill";
-        mpill.type = "button";
+        var mpill = document.createElement('button');
+        mpill.className = 'mobile-area-pill';
+        mpill.type = 'button';
         mpill.dataset.areaId = areas[a2].id;
         mpill.textContent = areas[a2].label;
         mobileAreaPills.appendChild(mpill);
-        var subList = document.createElement("div");
-        subList.className = "mobile-sub-list";
+        var subList = document.createElement('div');
+        subList.className = 'mobile-sub-list';
         subList.dataset.areaId = areas[a2].id;
-        subList.style.cssText =
-          "display:none;flex-direction:column;gap:4px;padding:4px 0 8px 0;";
+        subList.style.cssText = 'display:none;flex-direction:column;gap:4px;padding:4px 0 8px 0;';
         for (var k3 = 0; k3 < areas[a2].children.length; k3++) {
           var subLoc = areas[a2].children[k3];
-          var subLabel =
-            labelByNorm[subLoc] ||
-            subLoc.charAt(0).toUpperCase() + subLoc.slice(1);
-          var subItem = document.createElement("div");
-          subItem.className = "mobile-loc-item";
+          var subLabel = labelByNorm[subLoc] || (subLoc.charAt(0).toUpperCase() + subLoc.slice(1));
+          var subItem = document.createElement('div');
+          subItem.className = 'mobile-loc-item';
           subItem.dataset.location = subLoc;
-          var subPin = document.createElement("div");
-          subPin.className = "mini-pin";
-          var subSpan = document.createElement("span");
+          var subPin = document.createElement('div');
+          subPin.className = 'mini-pin';
+          var subSpan = document.createElement('span');
           subSpan.textContent = subLabel;
           subItem.appendChild(subPin);
           subItem.appendChild(subSpan);
@@ -1473,24 +1363,22 @@
       }
       panelAreaEl.appendChild(mobileAreaPills);
     }
-    var panelMapsEl = el.locDropdown.querySelector(".loc-panel-maps");
+    var panelMapsEl = el.locDropdown.querySelector('.loc-panel-maps');
     if (panelMapsEl) {
-      var existingLocList = panelMapsEl.querySelector(".loc-mobile-loc-list");
+      var existingLocList = panelMapsEl.querySelector('.loc-mobile-loc-list');
       if (existingLocList) existingLocList.remove();
-      var mobileLocList = document.createElement("div");
-      mobileLocList.className = "loc-mobile-loc-list";
+      var mobileLocList = document.createElement('div');
+      mobileLocList.className = 'loc-mobile-loc-list';
       for (var a3 = 0; a3 < areas.length; a3++) {
         for (var k2 = 0; k2 < areas[a3].children.length; k2++) {
           var locKey = areas[a3].children[k2];
-          var locLabel =
-            labelByNorm[locKey] ||
-            locKey.charAt(0).toUpperCase() + locKey.slice(1);
-          var mlocItem = document.createElement("div");
-          mlocItem.className = "mobile-loc-item";
+          var locLabel = labelByNorm[locKey] || (locKey.charAt(0).toUpperCase() + locKey.slice(1));
+          var mlocItem = document.createElement('div');
+          mlocItem.className = 'mobile-loc-item';
           mlocItem.dataset.location = locKey;
-          var mPin = document.createElement("div");
-          mPin.className = "mini-pin";
-          var mSpan = document.createElement("span");
+          var mPin = document.createElement('div');
+          mPin.className = 'mini-pin';
+          var mSpan = document.createElement('span');
           mSpan.textContent = locLabel;
           mlocItem.appendChild(mPin);
           mlocItem.appendChild(mSpan);
@@ -1520,68 +1408,55 @@
       var areaActive = area.children.some(function (c) {
         return draftLocs.indexOf(c) > -1;
       });
-      var pill = locUI.pillScroll.querySelector(
-        '.pill[data-area-id="' + area.id + '"]',
-      );
+      var pill = locUI.pillScroll.querySelector('.pill[data-area-id="' + area.id + '"]');
       if (pill) {
-        pill.classList.toggle("is-active", areaActive);
-        pill.style.display = visKids.length || areaHit ? "" : "none";
+        pill.classList.toggle('is-active', areaActive);
+        pill.style.display = visKids.length || areaHit ? '' : 'none';
       }
-      var treeItem = locUI.treeScroll.querySelector(
-        '.tree-item[data-area-id="' + area.id + '"]',
-      );
+      var treeItem = locUI.treeScroll.querySelector('.tree-item[data-area-id="' + area.id + '"]');
       if (treeItem) {
-        var parent = treeItem.querySelector(".tree-parent");
+        var parent = treeItem.querySelector('.tree-parent');
         if (parent) {
-          parent.classList.toggle("is-active", areaActive);
+          parent.classList.toggle('is-active', areaActive);
         }
-        var childrenEl = treeItem.querySelector(".children");
+        var childrenEl = treeItem.querySelector('.children');
         if (childrenEl) {
           var isOpen = openAreas[area.label] || areaActive;
-          childrenEl.classList.toggle("open", isOpen);
+          childrenEl.classList.toggle('open', isOpen);
         }
-        treeItem.style.display = visKids.length || areaHit ? "" : "none";
-        var childElements = treeItem.querySelectorAll(".child");
+        treeItem.style.display = visKids.length || areaHit ? '' : 'none';
+        var childElements = treeItem.querySelectorAll('.child');
         for (var k = 0; k < childElements.length; k++) {
           var childEl = childElements[k];
           var loc = childEl.dataset.location;
           if (loc) {
             var isActive = draftLocs.indexOf(loc) > -1;
-            childEl.classList.toggle("is-active", isActive);
-            childEl.style.display = visKids.indexOf(loc) > -1 ? "" : "none";
+            childEl.classList.toggle('is-active', isActive);
+            childEl.style.display = visKids.indexOf(loc) > -1 ? '' : 'none';
           }
         }
       }
     }
-    var mobilePillEls = el.locDropdown
-      ? el.locDropdown.querySelectorAll(".mobile-area-pill")
-      : [];
+    var mobilePillEls = el.locDropdown ? el.locDropdown.querySelectorAll('.mobile-area-pill') : [];
     for (var mp = 0; mp < mobilePillEls.length; mp++) {
       var mpEl = mobilePillEls[mp];
       var mpAreaId = mpEl.dataset.areaId;
       for (var ma = 0; ma < areas.length; ma++) {
         if (areas[ma].id === mpAreaId) {
-          var mpAreaActive = areas[ma].children.some(function (c) {
-            return draftLocs.indexOf(c) > -1;
-          });
-          mpEl.classList.toggle("is-active", mpAreaActive);
+          var mpAreaActive = areas[ma].children.some(function(c) { return draftLocs.indexOf(c) > -1; });
+          mpEl.classList.toggle('is-active', mpAreaActive);
           break;
         }
       }
     }
-    var mobileLocEls = el.locDropdown
-      ? el.locDropdown.querySelectorAll(".mobile-loc-item")
-      : [];
+    var mobileLocEls = el.locDropdown ? el.locDropdown.querySelectorAll('.mobile-loc-item') : [];
     for (var mi = 0; mi < mobileLocEls.length; mi++) {
       var miEl = mobileLocEls[mi];
       var miLoc = miEl.dataset.location;
       if (miLoc) {
-        miEl.classList.toggle("is-active", draftLocs.indexOf(miLoc) > -1);
+        miEl.classList.toggle('is-active', draftLocs.indexOf(miLoc) > -1);
         var miLabel = labelByNorm[miLoc] || miLoc;
-        miEl.style.display =
-          !q || norm(miLabel).indexOf(q) > -1 || norm(miLoc).indexOf(q) > -1
-            ? ""
-            : "none";
+        miEl.style.display = !q || norm(miLabel).indexOf(q) > -1 || norm(miLoc).indexOf(q) > -1 ? '' : 'none';
       }
     }
     updateDraftInfo();
@@ -1657,14 +1532,8 @@
     el.locDropdown.style.display = locDropOpen ? "block" : "none";
     el.locDropdown.classList.toggle("is-open", locDropOpen);
     if (locDropOpen) {
-      if (map)
-        setTimeout(function () {
-          map.resize();
-        }, 80);
-      if (locMap)
-        setTimeout(function () {
-          locMap.resize();
-        }, 80);
+      if (map) setTimeout(function () { map.resize(); }, 80);
+      if (locMap) setTimeout(function () { locMap.resize(); }, 80);
     }
     if (!locDropOpen) syncMapWith(state.locations);
   }
@@ -1709,60 +1578,46 @@
   }
   function initLocMap() {
     if (locMap) return;
-    var mapEl = document.getElementById("locMapEl");
+    var mapEl = document.getElementById('locMapEl');
     if (!mapEl || !window.maptilersdk) return;
     maptilersdk.config.apiKey = MAPTILER_KEY;
     locMap = new maptilersdk.Map({
-      container: "locMapEl",
+      container: 'locMapEl',
       style: MAP_STYLE,
       center: [115.1889, -8.4095],
       zoom: 9.3,
       attributionControl: false,
     });
-    locMap.on("load", function () {
+    locMap.on('load', function () {
       locMapReady = true;
       syncLocMapMarkers(draftLocs);
-      setTimeout(function () {
-        locMap.resize();
-      }, 80);
+      setTimeout(function () { locMap.resize(); }, 80);
     });
   }
   function syncLocMapMarkers(locations) {
     if (!locMap || !locMapReady) return;
     for (var i = 0; i < locMapMarkers.length; i++) locMapMarkers[i].remove();
     locMapMarkers = [];
-    var pts = [],
-      seen = {};
+    var pts = [], seen = {};
     for (var i = 0; i < locations.length; i++) {
       var p = LOC_COORDS[locations[i]];
       if (!p) continue;
-      var key = p[0] + "," + p[1];
-      if (!seen[key]) {
-        seen[key] = true;
-        pts.push({ p: p, loc: locations[i] });
-      }
+      var key = p[0] + ',' + p[1];
+      if (!seen[key]) { seen[key] = true; pts.push({ p: p, loc: locations[i] }); }
     }
     if (!pts.length) {
       locMap.flyTo({ center: [115.1889, -8.4095], zoom: 9.3, duration: 450 });
       return;
     }
     for (var i = 0; i < pts.length; i++) {
-      var label = (labelByNorm[pts[i].loc] || pts[i].loc).replace(
-        /\b\w/g,
-        function (c) {
-          return c.toUpperCase();
-        },
-      );
+      var label = (labelByNorm[pts[i].loc] || pts[i].loc).replace(/\b\w/g, function (c) { return c.toUpperCase(); });
       locMapMarkers.push(
-        new maptilersdk.Marker({ element: makePin(label), anchor: "bottom" })
+        new maptilersdk.Marker({ element: makePin(label), anchor: 'bottom' })
           .setLngLat(pts[i].p)
-          .addTo(locMap),
+          .addTo(locMap)
       );
     }
-    if (pts.length === 1) {
-      locMap.flyTo({ center: pts[0].p, zoom: 12.2, duration: 450 });
-      return;
-    }
+    if (pts.length === 1) { locMap.flyTo({ center: pts[0].p, zoom: 12.2, duration: 450 }); return; }
     var bounds = new maptilersdk.LngLatBounds();
     for (var i = 0; i < pts.length; i++) bounds.extend(pts[i].p);
     locMap.fitBounds(bounds, { padding: 60, maxZoom: 13, duration: 450 });
@@ -1867,24 +1722,21 @@
     return null;
   }
   function buildUI() {
-    var root = document.getElementById("bhb-filter");
+    var root = document.getElementById('bhb-filter');
     if (!root) return;
-    var _savedGrid = root.querySelector("#" + CFG.GRID_ID);
-    root.innerHTML = "";
-    var CLOSE_SVG =
-      '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
-    var CHEVRON_SVG =
-      '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
-    var SEARCH_SVG =
-      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
+    var _savedGrid = root.querySelector('#' + CFG.GRID_ID);
+    root.innerHTML = '';
+    var CLOSE_SVG   = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+    var CHEVRON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+    var SEARCH_SVG  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
     function mk(tag, attrs, children) {
       var e = document.createElement(tag);
       if (attrs) {
         for (var k in attrs) {
           if (!attrs.hasOwnProperty(k)) continue;
-          if (k === "class") e.className = attrs[k];
-          else if (k === "html") e.innerHTML = attrs[k];
-          else if (k === "text") e.textContent = attrs[k];
+          if (k === 'class') e.className = attrs[k];
+          else if (k === 'html') e.innerHTML = attrs[k];
+          else if (k === 'text') e.textContent = attrs[k];
           else e.setAttribute(k, attrs[k]);
         }
       }
@@ -1895,449 +1747,289 @@
       }
       return e;
     }
-    function makeLabel(text) {
-      return mk("div", { class: "filter-label", text: text });
-    }
+    function makeLabel(text) { return mk('div', { class: 'filter-label', text: text }); }
     function makeTrigger(text) {
-      return mk("div", { class: "filter-trigger" }, [
-        mk("div", { class: "filter-trigger_value" }, [
-          mk("div", { class: "filter-trigger_text", text: text }),
+      return mk('div', { class: 'filter-trigger' }, [
+        mk('div', { class: 'filter-trigger_value' }, [
+          mk('div', { class: 'filter-trigger_text', text: text })
         ]),
-        mk("div", { class: "trigger-chevron", html: CHEVRON_SVG }),
+        mk('div', { class: 'trigger-chevron', html: CHEVRON_SVG })
       ]);
     }
     function makeOption(value, label, checked, withCheckbox) {
       var children = [];
-      if (withCheckbox !== false)
-        children.push(mk("div", { class: "filter-checkbox" }));
-      children.push(
-        mk("div", {
-          class: "text-size-small filter-option_label",
-          text: label,
-        }),
-      );
-      return mk(
-        "div",
-        {
-          class: "filter-option" + (checked ? " is-active" : ""),
-          "data-value": value,
-        },
-        children,
-      );
+      if (withCheckbox !== false) children.push(mk('div', { class: 'filter-checkbox' }));
+      children.push(mk('div', { class: 'text-size-small filter-option_label', text: label }));
+      return mk('div', {
+        class: 'filter-option' + (checked ? ' is-active' : ''),
+        'data-value': value
+      }, children);
     }
-    function makeField(children) {
-      return mk("div", { class: "filter-field" }, children);
-    }
+    function makeField(children) { return mk('div', { class: 'filter-field' }, children); }
     function makeDropdown(children) {
-      return mk("div", { class: "filter-dropdown" }, [
-        mk("div", { class: "filter-options" }, children),
+      return mk('div', { class: 'filter-dropdown' }, [
+        mk('div', { class: 'filter-options' }, children)
       ]);
     }
     var ownershipField = makeField([
-      makeLabel("Ownership"),
-      makeTrigger("Any"),
+      makeLabel('Ownership'),
+      makeTrigger('Any'),
       makeDropdown([
-        makeOption("Any", "Any", true, false),
-        makeOption("Freehold", "Freehold", false, false),
-        makeOption("Leasehold", "Leasehold", false, false),
-      ]),
+        makeOption('Any',       'Any',       true,  false),
+        makeOption('Freehold',  'Freehold',  false, false),
+        makeOption('Leasehold', 'Leasehold', false, false)
+      ])
     ]);
     var bedsField = makeField([
-      makeLabel("Bedrooms"),
-      makeTrigger("Any"),
+      makeLabel('Bedrooms'),
+      makeTrigger('Any'),
       makeDropdown([
-        makeOption("Any", "Any", true),
-        makeOption("1", "1 Br", false),
-        makeOption("2", "2 Br", false),
-        makeOption("3", "3 Br", false),
-        makeOption("4", "4 Br", false),
-        makeOption("5", "5 Br", false),
-        makeOption("6+", "6+ Br", false),
-      ]),
+        makeOption('Any', 'Any', true),
+        makeOption('1',   '1 Br',  false),
+        makeOption('2',   '2 Br',  false),
+        makeOption('3',   '3 Br',  false),
+        makeOption('4',   '4 Br',  false),
+        makeOption('5',   '5 Br',  false),
+        makeOption('6+',  '6+ Br', false)
+      ])
     ]);
     var leaseField = makeField([
-      makeLabel("Lease Duration"),
-      makeTrigger("Any"),
+      makeLabel('Lease Duration'),
+      makeTrigger('Any'),
       makeDropdown([
-        makeOption("Any", "Any", true, false),
-        makeOption("10 \u2013 20 years", "10 \u2013 20 years", false, false),
-        makeOption("20 \u2013 25 years", "20 \u2013 25 years", false, false),
-        makeOption("25 \u2013 30 years", "25 \u2013 30 years", false, false),
-        makeOption("30+ years", "30+ years", false, false),
-      ]),
+        makeOption('Any',                'Any',                true,  false),
+        makeOption('10 \u2013 20 years', '10 \u2013 20 years', false, false),
+        makeOption('20 \u2013 25 years', '20 \u2013 25 years', false, false),
+        makeOption('25 \u2013 30 years', '25 \u2013 30 years', false, false),
+        makeOption('30+ years',          '30+ years',          false, false)
+      ])
     ]);
-    var kwInput = mk("input", {
-      class: "keyword-input",
-      type: "search",
-      placeholder: "Search\u2026",
-      maxlength: "256",
-    });
+    var kwInput = mk('input', { class: 'keyword-input', type: 'search', placeholder: 'Search\u2026', maxlength: '256' });
     var kwField = makeField([
-      makeLabel("Listing Code"),
-      mk("div", { class: "filter-trigger" }, [kwInput]),
+      makeLabel('Listing Code'),
+      mk('div', { class: 'filter-trigger' }, [kwInput])
     ]);
-    var zoningField = mk(
-      "div",
-      { class: "filter-field", "data-bhb-field": "zoning" },
-      [
-        makeLabel("Zoning"),
-        makeTrigger("Any"),
-        makeDropdown([makeOption("Any", "Any", true, false)]),
-      ],
-    );
-    var locSearchInput = mk("input", {
-      class: "location-search-input",
-      type: "text",
-      placeholder: "Search locations\u2026",
-    });
-    var treeScrollEl = mk("div", { class: "tree-scroll" });
-    var pillScrollEl = mk("div", { class: "pill-scroll" });
-    var locMapContainerEl = mk("div", {
-      id: "locMapEl",
-      class: "loc-maptiler-map",
-    });
-    var locSelInfo = mk("div", {
-      id: "locSelectedInfo",
-      class: "loc-selected-info",
-      text: "No Location Selected",
-    });
-    var locBtnClear = mk("a", {
-      href: "#",
-      class: "loc-btn-clear-inline",
-      text: "Clear",
-    });
-    var locBtnApply = mk("a", {
-      href: "#",
-      class: "loc-btn-apply-inline",
-      text: "Search",
-    });
-    var locCloseBtn = mk("div", { class: "close-btn", html: CLOSE_SVG });
-    var locTabArea = mk("button", {
-      class: "loc-tab loc-tab-area is-active",
-      type: "button",
-      text: "Area",
-    });
-    var locTabMaps = mk("button", {
-      class: "loc-tab loc-tab-maps",
-      type: "button",
-      text: "Maps",
-    });
-    var locDropdown = mk("div", { class: "location-dropdown" }, [
+    var zoningField = mk('div', { class: 'filter-field', 'data-bhb-field': 'zoning' }, [
+      makeLabel('Zoning'),
+      makeTrigger('Any'),
+      makeDropdown([
+        makeOption('Any', 'Any', true, false)
+      ])
+    ]);
+    var locSearchInput    = mk('input', { class: 'location-search-input', type: 'text', placeholder: 'Search locations\u2026' });
+    var treeScrollEl      = mk('div', { class: 'tree-scroll' });
+    var pillScrollEl      = mk('div', { class: 'pill-scroll' });
+    var locMapContainerEl = mk('div', { id: 'locMapEl', class: 'loc-maptiler-map' });
+    var locSelInfo        = mk('div', { id: 'locSelectedInfo', class: 'loc-selected-info', text: 'No Location Selected' });
+    var locBtnClear       = mk('a', { href: '#', class: 'loc-btn-clear-inline', text: 'Clear' });
+    var locBtnApply       = mk('a', { href: '#', class: 'loc-btn-apply-inline', text: 'Search' });
+    var locCloseBtn       = mk('div', { class: 'close-btn', html: CLOSE_SVG });
+    var locTabArea        = mk('button', { class: 'loc-tab loc-tab-area is-active', type: 'button', text: 'Area' });
+    var locTabMaps        = mk('button', { class: 'loc-tab loc-tab-maps', type: 'button', text: 'Maps' });
+    var locDropdown = mk('div', { class: 'location-dropdown' }, [
       locCloseBtn,
-      mk("div", { class: "loc-tabs" }, [locTabArea, locTabMaps]),
-      mk("div", { class: "loc-body" }, [
-        mk("div", { class: "loc-panel-area is-active" }, [
-          mk("div", { class: "location-search" }, [
-            mk("img", { src: PIN_URL, alt: "" }),
-            locSearchInput,
+      mk('div', { class: 'loc-tabs' }, [locTabArea, locTabMaps]),
+      mk('div', { class: 'loc-body' }, [
+        mk('div', { class: 'loc-panel-area is-active' }, [
+          mk('div', { class: 'location-search' }, [
+            mk('img', { src: PIN_URL, alt: '' }),
+            locSearchInput
           ]),
-          treeScrollEl,
+          treeScrollEl
         ]),
-        mk("div", { class: "loc-panel-maps" }, [
-          mk("div", { class: "loc-pill-col" }, [
-            mk("div", {
-              class: "loc-pill-col-label",
-              text: "Select Locations",
-            }),
-            pillScrollEl,
+        mk('div', { class: 'loc-panel-maps' }, [
+          mk('div', { class: 'loc-pill-col' }, [
+            mk('div', { class: 'loc-pill-col-label', text: 'Select Locations' }),
+            pillScrollEl
           ]),
-          mk("div", { class: "bali-map-wrap" }, [locMapContainerEl]),
-        ]),
+          mk('div', { class: 'bali-map-wrap' }, [locMapContainerEl])
+        ])
       ]),
-      mk("div", { class: "loc-map-footer" }, [
+      mk('div', { class: 'loc-map-footer' }, [
         locSelInfo,
-        mk("div", { class: "loc-actions" }, [locBtnClear, locBtnApply]),
-      ]),
+        mk('div', { class: 'loc-actions' }, [locBtnClear, locBtnApply])
+      ])
     ]);
-    var locTrigger = mk("div", { class: "location-trigger" }, [
-      mk("div", { class: "filter-trigger_value" }, [
-        mk("div", { class: "location-trigger_text", text: "All Location" }),
+    var locTrigger = mk('div', { class: 'location-trigger' }, [
+      mk('div', { class: 'filter-trigger_value' }, [
+        mk('div', { class: 'location-trigger_text', text: 'All Location' })
       ]),
-      mk("div", { class: "trigger-chevron", html: CHEVRON_SVG }),
+      mk('div', { class: 'trigger-chevron', html: CHEVRON_SVG })
     ]);
-    var locField = makeField([makeLabel("Location"), locTrigger, locDropdown]);
-    var pwFillEl = mk("div", { id: "pwFill", class: "pw-fill" });
-    var pwTrackEl = mk("div", { class: "pw-track" });
-    var pwSliderEl = mk("div", { class: "pw-slider" }, [pwTrackEl, pwFillEl]);
-    var pwMinText = mk("input", {
-      id: "pwMinText",
-      class: "pw-box",
-      type: "text",
-      value: "0",
-    });
-    var pwMaxText = mk("input", {
-      id: "pwMaxText",
-      class: "pw-box",
-      type: "text",
-      value: "0",
-    });
-    var pwScaleMinEl = mk("span", {
-      id: "pwScaleMin",
-      class: "pw-scale-min",
-      text: "Rp0",
-    });
-    var pwScaleMaxEl = mk("span", {
-      id: "pwScaleMax",
-      class: "pw-scale-max",
-      text: "Rp0",
-    });
-    var pwRangeTextEl = mk("div", {
-      id: "pwRangeText",
-      class: "pw-range-value",
-      text: "0",
-    });
-    var priceCloseBtn = mk("div", { class: "close-btn", html: CLOSE_SVG });
-    var priceDropdown = mk("div", { class: "price-dropdown" }, [
-      mk("div", { class: "price-panel" }, [
-        mk("div", { class: "pp-section" }, [
-          mk("div", {
-            class: "pp-section-title",
-            text: "QUICK\u00a0SELECTION",
-          }),
-          mk("div", { class: "pw-quick" }, [
-            mk("div", { class: "pw-chip", "data-chip": "0", text: "< 50jt" }),
-            mk("div", {
-              class: "pw-chip",
-              "data-chip": "1",
-              text: "50jt \u2013 200jt",
-            }),
-            mk("div", { class: "pw-chip", "data-chip": "2", text: "> 200jt" }),
-          ]),
+    var locField = makeField([makeLabel('Location'), locTrigger, locDropdown]);
+    var pwFillEl      = mk('div',   { id: 'pwFill',      class: 'pw-fill' });
+    var pwTrackEl     = mk('div',   {                     class: 'pw-track' });
+    var pwSliderEl    = mk('div',   {                     class: 'pw-slider' }, [pwTrackEl, pwFillEl]);
+    var pwMinText     = mk('input', { id: 'pwMinText',    class: 'pw-box', type: 'text', value: '0' });
+    var pwMaxText     = mk('input', { id: 'pwMaxText',    class: 'pw-box', type: 'text', value: '0' });
+    var pwScaleMinEl  = mk('span',  { id: 'pwScaleMin',   class: 'pw-scale-min', text: 'Rp0' });
+    var pwScaleMaxEl  = mk('span',  { id: 'pwScaleMax',   class: 'pw-scale-max', text: 'Rp0' });
+    var pwRangeTextEl = mk('div',   { id: 'pwRangeText',  class: 'pw-range-value', text: '0' });
+    var priceCloseBtn = mk('div',   { class: 'close-btn', html: CLOSE_SVG });
+    var priceDropdown = mk('div', { class: 'price-dropdown' }, [
+      mk('div', { class: 'price-panel' }, [
+        mk('div', { class: 'pp-section' }, [
+          mk('div', { class: 'pp-section-title', text: 'QUICK\u00a0SELECTION' }),
+          mk('div', { class: 'pw-quick' }, [
+            mk('div', { class: 'pw-chip', 'data-chip': '0', text: '< 50jt' }),
+            mk('div', { class: 'pw-chip', 'data-chip': '1', text: '50jt \u2013 200jt' }),
+            mk('div', { class: 'pw-chip', 'data-chip': '2', text: '> 200jt' })
+          ])
         ]),
-        mk("div", { class: "pp-section" }, [
-          mk("div", { class: "pp-section-title", text: "CUSTOM\u00a0RANGE" }),
-          mk("div", { class: "pw-rows" }, [
-            mk("div", { class: "pw-row-item" }, [
-              mk("div", { class: "pw-label", text: "Minimum Price" }),
-              mk("div", { class: "pw-box-wrap" }, [
-                mk("div", {
-                  id: "pwSymbolMin",
-                  class: "pw-symbol",
-                  text: "Rp",
-                }),
-                pwMinText,
-              ]),
+        mk('div', { class: 'pp-section' }, [
+          mk('div', { class: 'pp-section-title', text: 'CUSTOM\u00a0RANGE' }),
+          mk('div', { class: 'pw-rows' }, [
+            mk('div', { class: 'pw-row-item' }, [
+              mk('div', { class: 'pw-label', text: 'Minimum Price' }),
+              mk('div', { class: 'pw-box-wrap' }, [mk('div', { id: 'pwSymbolMin', class: 'pw-symbol', text: 'Rp' }), pwMinText])
             ]),
-            mk("div", { class: "pw-row-item" }, [
-              mk("div", { class: "pw-label", text: "Maximum Price" }),
-              mk("div", { class: "pw-box-wrap" }, [
-                mk("div", {
-                  id: "pwSymbolMax",
-                  class: "pw-symbol",
-                  text: "Rp",
-                }),
-                pwMaxText,
-              ]),
-            ]),
-          ]),
+            mk('div', { class: 'pw-row-item' }, [
+              mk('div', { class: 'pw-label', text: 'Maximum Price' }),
+              mk('div', { class: 'pw-box-wrap' }, [mk('div', { id: 'pwSymbolMax', class: 'pw-symbol', text: 'Rp' }), pwMaxText])
+            ])
+          ])
         ]),
-        mk("div", { class: "pp-section pp-section--slider" }, [
-          mk("div", { class: "pw-range-head" }, [
-            mk("div", { class: "pw-range-label", text: "PRICE RANGE" }),
-            pwRangeTextEl,
+        mk('div', { class: 'pp-section pp-section--slider' }, [
+          mk('div', { class: 'pw-range-head' }, [
+            mk('div', { class: 'pw-range-label', text: 'PRICE RANGE' }),
+            pwRangeTextEl
           ]),
           pwSliderEl,
-          mk("div", { class: "pw-scale" }, [pwScaleMinEl, pwScaleMaxEl]),
-        ]),
+          mk('div', { class: 'pw-scale' }, [pwScaleMinEl, pwScaleMaxEl])
+        ])
       ]),
-      priceCloseBtn,
+      priceCloseBtn
     ]);
-    var priceTrigText = mk("div", {
-      class: "price-trigger_text",
-      text: "Price Range",
-    });
-    var priceTrigger = mk("div", { class: "price-trigger" }, [
-      mk("div", { class: "filter-trigger_value" }, [priceTrigText]),
-      mk("div", { class: "trigger-chevron", html: CHEVRON_SVG }),
+    var priceTrigText = mk('div', { class: 'price-trigger_text', text: 'Price Range' });
+    var priceTrigger  = mk('div', { class: 'price-trigger' }, [
+      mk('div', { class: 'filter-trigger_value' }, [priceTrigText]),
+      mk('div', { class: 'trigger-chevron', html: CHEVRON_SVG })
     ]);
     var priceField = makeField([
-      makeLabel("Price Range"),
-      mk("div", { class: "price-trigger-wrapper" }, [
+      makeLabel('Price Range'),
+      mk('div', { class: 'price-trigger-wrapper' }, [
         priceTrigger,
-        mk("div", {
-          class: "price-note",
-          text: "Price for reference only. Payments in IDR.",
-        }),
+        mk('div', { class: 'price-note', text: 'Price for reference only. Payments in IDR.' })
       ]),
-      priceDropdown,
+      priceDropdown
     ]);
     var currField = makeField([
-      makeLabel("Currency"),
-      makeTrigger("IDR"),
+      makeLabel('Currency'),
+      makeTrigger('IDR'),
       makeDropdown([
-        makeOption("IDR", "IDR", true, true),
-        makeOption("USD", "USD", false, true),
-        makeOption("EUR", "EUR", false, true),
-      ]),
+        makeOption('IDR', 'IDR', true,  true),
+        makeOption('USD', 'USD', false, true),
+        makeOption('EUR', 'EUR', false, true)
+      ])
     ]);
-    var btnClear = mk("button", { type: "button", class: "filter-button-1" }, [
-      mk("span", { class: "btn-icon", html: CLOSE_SVG }),
-      mk("span", { text: "Clear" }),
+    var btnClear  = mk('button', { type: 'button', class: 'filter-button-1' }, [
+      mk('span', { class: 'btn-icon', html: CLOSE_SVG }),
+      mk('span', { text: 'Clear' })
     ]);
-    var btnSearch = mk("button", { type: "button", class: "filter-button-2" }, [
-      mk("span", { class: "btn-icon", html: SEARCH_SVG }),
-      mk("span", { text: "Search Properties" }),
+    var btnSearch = mk('button', { type: 'button', class: 'filter-button-2' }, [
+      mk('span', { class: 'btn-icon', html: SEARCH_SVG }),
+      mk('span', { text: 'Search Properties' })
     ]);
-    var mobileCollapsed = mk("div", { class: "bhb-mobile-collapsed" }, [
-      mk("div", { class: "bhb-mobile-title", text: "Search Villas" }),
-      mk("div", { class: "bhb-mobile-search-trigger" }, [
-        mk("span", {
-          class: "bhb-mobile-search-placeholder",
-          text: "Search\u2026",
-        }),
-      ]),
+    var mobileCollapsed = mk('div', { class: 'bhb-mobile-collapsed' }, [
+      mk('div', { class: 'bhb-mobile-title', text: 'Search Villas' }),
+      mk('div', { class: 'bhb-mobile-search-trigger' }, [
+        mk('span', { class: 'bhb-mobile-search-placeholder', text: 'Search\u2026' })
+      ])
     ]);
-    var mobileCloseBtn = mk("button", {
-      type: "button",
-      class: "close-btn mobile-form-close",
-      html: CLOSE_SVG,
-    });
-    var filterForm = mk("div", { class: "rent-filter_form" }, [
+    var mobileCloseBtn = mk('button', { type: 'button', class: 'close-btn mobile-form-close', html: CLOSE_SVG });
+    var filterForm = mk('div', { class: 'rent-filter_form' }, [
       mobileCloseBtn,
       mobileCollapsed,
-      mk("div", { class: "rent-filter_top" }, [
-        ownershipField,
-        bedsField,
-        leaseField,
-        zoningField,
-        kwField,
+      mk('div', { class: 'rent-filter_top' }, [
+        ownershipField, bedsField, leaseField, zoningField, kwField
       ]),
-      mk("div", { class: "rent-filter_bottom" }, [
-        mk("div", { class: "rent-filter_bottom-fields" }, [
-          locField,
-          priceField,
-          currField,
+      mk('div', { class: 'rent-filter_bottom' }, [
+        mk('div', { class: 'rent-filter_bottom-fields' }, [
+          locField, priceField, currField
         ]),
-        mk("div", { class: "rent-filter_actions" }, [btnClear, btnSearch]),
-      ]),
+        mk('div', { class: 'rent-filter_actions' }, [btnClear, btnSearch])
+      ])
     ]);
-    var overlay = mk("div", { id: "bhbOverlay", class: "bhb-overlay" });
+    var overlay = mk('div', { id: 'bhbOverlay', class: 'bhb-overlay' });
     root.appendChild(overlay);
     root.appendChild(filterForm);
     if (_savedGrid) root.appendChild(_savedGrid);
   }
   function injectMobileLocStyles() {
-    if (document.querySelector("style[data-bhb-mobile-loc]")) return;
+    if (document.querySelector('style[data-bhb-mobile-loc]')) return;
     var css = [
-      "@media (max-width:1024px){",
-      "#bhb-filter .location-dropdown{position:relative!important;bottom:auto!important;top:auto!important;left:auto!important;right:auto!important;width:100%!important;max-height:none!important;height:auto!important;z-index:2!important;overflow:visible!important;animation:none!important;box-shadow:none!important;border-radius:12px;padding:0;margin-top:6px;border:1px solid #e0d9d3;}",
-      "#bhb-filter .rent-filter_form.is-mobile-open .location-dropdown{border:none!important;margin-top:0!important;}",
-      "#bhb-filter .location-dropdown.is-open{animation:none!important;}",
-      "#bhb-filter .location-dropdown .close-btn{display:none!important;}",
-      "#bhb-filter .price-dropdown .close-btn{display:none!important;}",
-      "#bhb-filter .location-dropdown .loc-body{overflow:visible;height:auto;}",
-      "#bhb-filter .location-dropdown .loc-panel-area.is-active,#bhb-filter .location-dropdown .loc-panel-maps.is-active{display:flex;flex-direction:column;height:auto;max-height:none!important;overflow:visible;padding:12px 16px;}",
-      "#bhb-filter .location-dropdown .tree-scroll{display:none!important;}",
-      "#bhb-filter .location-dropdown .loc-pill-col{display:none!important;}",
-      "#bhb-filter .location-dropdown .loc-tabs{margin:12px 16px;padding:3px;background:#262626;border-radius:50px;border:none;gap:2px;display:flex;flex-shrink:0;}",
-      "#bhb-filter .location-dropdown .loc-tab{flex:1;height:42px;border:none;border-radius:50px;background:transparent;color:rgba(255,255,255,0.55);font-size:14px;font-weight:500;cursor:pointer;transition:none;}",
-      "#bhb-filter .location-dropdown .loc-tab.is-active{background:#1c1917!important;color:#fff!important;border-color:transparent!important;}",
-      "#bhb-filter .location-dropdown .loc-tab:hover:not(.is-active){background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.85);}",
-      "#bhb-filter .location-dropdown .loc-mobile-area-pills{display:flex;flex-direction:column;gap:8px;padding:0;}",
-      "#bhb-filter .location-dropdown .mobile-area-pill{width:100%;background:#fff;border:1px solid #e0d9d3;border-radius:12px;padding:14px 16px;font-size:14px;font-weight:500;color:#3a2e28;text-align:left;cursor:pointer;display:block;box-sizing:border-box;}",
-      "#bhb-filter .location-dropdown .mobile-area-pill.is-active{background:#3a2e28;border-color:#3a2e28;color:#fff;}",
-      "#bhb-filter .location-dropdown .bali-map-wrap{height:400px!important;flex:none!important;border-radius:12px;overflow:hidden;margin-top:12px;position:relative;}",
-      "#bhb-filter .location-dropdown #locMapEl{position:absolute;inset:0;width:100%!important;height:100%!important;}",
-      "#bhb-filter .location-dropdown .location-search{padding:0 0 8px 0;border-bottom:none;display:flex;}",
-      "#bhb-filter .location-dropdown .location-search img{display:none;}",
-      "#bhb-filter .location-dropdown .location-search-input{width:100%;height:40px;border:1px solid #e0d9d3;border-radius:12px;padding:0 12px;font-size:14px;outline:none;background:#fff;box-sizing:border-box;}",
-      "#bhb-filter .location-dropdown .loc-mobile-loc-list{display:flex;flex-direction:column;padding:0;}",
-      "#bhb-filter .location-dropdown .mobile-loc-item{min-height:44px;padding:0 2px;font-size:14px;color:#9a8880;border-bottom:1px solid #f0ebe6;border-radius:0;background:transparent;gap:10px;display:flex;align-items:center;}",
-      "#bhb-filter .location-dropdown .mobile-loc-item.is-active{color:#3a2e28;font-weight:500;}",
-      "#bhb-filter .location-dropdown .mobile-loc-item .mini-pin{opacity:0.35;width:16px;height:16px;background-size:14px 14px;}",
-      "#bhb-filter .location-dropdown .mobile-loc-item.is-active .mini-pin{opacity:1;}",
-      "#bhb-filter .location-dropdown .loc-map-footer{display:flex!important;flex-direction:row!important;align-items:center;padding:12px 16px;gap:12px;border-top:1px solid #f0ebe6;}",
-      "#bhb-filter .location-dropdown .loc-selected-info{flex:1;font-size:13px;color:#9a8880;text-align:left;}",
-      "#bhb-filter .location-dropdown .loc-actions{display:flex;gap:8px;flex-shrink:0;}",
-      "#bhb-filter .location-dropdown .loc-btn-clear-inline,#bhb-filter .location-dropdown .loc-btn-apply-inline{height:40px;min-width:76px;display:flex;align-items:center;justify-content:center;border-radius:20px;font-size:14px;font-weight:500;text-decoration:none;cursor:pointer;box-sizing:border-box;padding:0 16px;}",
-      "#bhb-filter .location-dropdown .loc-btn-clear-inline{border:1px solid #e0d9d3;background:#fff;color:#3a2e28;}",
-      "#bhb-filter .location-dropdown .loc-btn-apply-inline{background:#3a2e28;border:1px solid #3a2e28;color:#fff;}",
-      "}",
-      "@media (max-width:479px){",
-      "#bhb-filter .location-dropdown .loc-map-footer{flex-direction:column!important;align-items:stretch!important;padding:12px;}",
-      "#bhb-filter .location-dropdown .loc-selected-info{flex:none!important;margin-bottom:4px;}",
-      "#bhb-filter .location-dropdown .loc-actions{width:100%;justify-content:space-between;}",
-      "}",
-    ].join("");
-    var s = document.createElement("style");
-    s.setAttribute("data-bhb-mobile-loc", "1");
+      '@media (max-width:1024px){',
+      '#bhb-filter .location-dropdown{position:relative!important;bottom:auto!important;top:auto!important;left:auto!important;right:auto!important;width:100%!important;max-height:none!important;height:auto!important;z-index:2!important;overflow:visible!important;animation:none!important;box-shadow:none!important;border-radius:12px;padding:0;margin-top:6px;border:1px solid #e0d9d3;}',
+      '#bhb-filter .rent-filter_form.is-mobile-open .location-dropdown{border:none!important;margin-top:0!important;}',
+      '#bhb-filter .location-dropdown.is-open{animation:none!important;}',
+      '#bhb-filter .location-dropdown .close-btn{display:none!important;}',
+      '#bhb-filter .price-dropdown .close-btn{display:none!important;}',
+      '#bhb-filter .location-dropdown .loc-body{overflow:visible;height:auto;}',
+      '#bhb-filter .location-dropdown .loc-panel-area.is-active,#bhb-filter .location-dropdown .loc-panel-maps.is-active{display:flex;flex-direction:column;height:auto;max-height:none!important;overflow:visible;padding:12px 16px;}',
+      '#bhb-filter .location-dropdown .tree-scroll{display:none!important;}',
+      '#bhb-filter .location-dropdown .loc-pill-col{display:none!important;}',
+      '#bhb-filter .location-dropdown .loc-tabs{margin:12px 16px;padding:3px;background:#262626;border-radius:50px;border:none;gap:2px;display:flex;flex-shrink:0;}',
+      '#bhb-filter .location-dropdown .loc-tab{flex:1;height:42px;border:none;border-radius:50px;background:transparent;color:rgba(255,255,255,0.55);font-size:14px;font-weight:500;cursor:pointer;transition:none;}',
+      '#bhb-filter .location-dropdown .loc-tab.is-active{background:#1c1917!important;color:#fff!important;border-color:transparent!important;}',
+      '#bhb-filter .location-dropdown .loc-tab:hover:not(.is-active){background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.85);}',
+      '#bhb-filter .location-dropdown .loc-mobile-area-pills{display:flex;flex-direction:column;gap:8px;padding:0;}',
+      '#bhb-filter .location-dropdown .mobile-area-pill{width:100%;background:#fff;border:1px solid #e0d9d3;border-radius:12px;padding:14px 16px;font-size:14px;font-weight:500;color:#3a2e28;text-align:left;cursor:pointer;display:block;box-sizing:border-box;}',
+      '#bhb-filter .location-dropdown .mobile-area-pill.is-active{background:#3a2e28;border-color:#3a2e28;color:#fff;}',
+      '#bhb-filter .location-dropdown .bali-map-wrap{height:400px!important;flex:none!important;border-radius:12px;overflow:hidden;margin-top:12px;position:relative;}',
+      '#bhb-filter .location-dropdown #locMapEl{position:absolute;inset:0;width:100%!important;height:100%!important;}',
+      '#bhb-filter .location-dropdown .location-search{padding:0 0 8px 0;border-bottom:none;display:flex;}',
+      '#bhb-filter .location-dropdown .location-search img{display:none;}',
+      '#bhb-filter .location-dropdown .location-search-input{width:100%;height:40px;border:1px solid #e0d9d3;border-radius:12px;padding:0 12px;font-size:14px;outline:none;background:#fff;box-sizing:border-box;}',
+      '#bhb-filter .location-dropdown .loc-mobile-loc-list{display:flex;flex-direction:column;padding:0;}',
+      '#bhb-filter .location-dropdown .mobile-loc-item{min-height:44px;padding:0 2px;font-size:14px;color:#9a8880;border-bottom:1px solid #f0ebe6;border-radius:0;background:transparent;gap:10px;display:flex;align-items:center;}',
+      '#bhb-filter .location-dropdown .mobile-loc-item.is-active{color:#3a2e28;font-weight:500;}',
+      '#bhb-filter .location-dropdown .mobile-loc-item .mini-pin{opacity:0.35;width:16px;height:16px;background-size:14px 14px;}',
+      '#bhb-filter .location-dropdown .mobile-loc-item.is-active .mini-pin{opacity:1;}',
+      '#bhb-filter .location-dropdown .loc-map-footer{display:flex!important;flex-direction:row!important;align-items:center;padding:12px 16px;gap:12px;border-top:1px solid #f0ebe6;}',
+      '#bhb-filter .location-dropdown .loc-selected-info{flex:1;font-size:13px;color:#9a8880;text-align:left;}',
+      '#bhb-filter .location-dropdown .loc-actions{display:flex;gap:8px;flex-shrink:0;}',
+      '#bhb-filter .location-dropdown .loc-btn-clear-inline,#bhb-filter .location-dropdown .loc-btn-apply-inline{height:40px;min-width:76px;display:flex;align-items:center;justify-content:center;border-radius:20px;font-size:14px;font-weight:500;text-decoration:none;cursor:pointer;box-sizing:border-box;padding:0 16px;}',
+      '#bhb-filter .location-dropdown .loc-btn-clear-inline{border:1px solid #e0d9d3;background:#fff;color:#3a2e28;}',
+      '#bhb-filter .location-dropdown .loc-btn-apply-inline{background:#3a2e28;border:1px solid #3a2e28;color:#fff;}',
+      '}',
+      '@media (max-width:479px){',
+      '#bhb-filter .location-dropdown .loc-map-footer{flex-direction:column!important;align-items:stretch!important;padding:12px;}',
+      '#bhb-filter .location-dropdown .loc-selected-info{flex:none!important;margin-bottom:4px;}',
+      '#bhb-filter .location-dropdown .loc-actions{width:100%;justify-content:space-between;}',
+      '}'
+    ].join('');
+    var s = document.createElement('style');
+    s.setAttribute('data-bhb-mobile-loc', '1');
     s.textContent = css;
     document.head.appendChild(s);
   }
-
   function init() {
     injectMobileLocStyles();
     buildUI();
     cacheEls();
-    if (!el.grid) {
-      console.error("[BHB villas] grid #" + CFG.GRID_ID + " not found");
-      return;
-    }
-
-    function finishInit() {
-      allCards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
-      if (!allCards.length) {
-        console.error("[BHB villas] no cards found");
-        return;
-      }
-      cardCache = allCards.map(function (card) {
-        var d = getData(card);
-        var priceEl = card.querySelector(".price");
-        var priceTxt = priceEl ? priceEl.textContent.trim() : "";
-        d.displayPrice = priceTxt
-          ? parseInt(priceTxt.replace(/[^\d]/g, ""), 10)
-          : d.price;
-        d.leaseYears = getLeaseYears(card);
-        return d;
-      });
-      areas = [];
-      buildAreas();
-      buildLocDOM();
-      mountLocUI();
-      populateZoningFilter();
-      initPricePanel();
-      updatePriceRangeForOwnership();
-      hydrateCoordsFromCMS();
-      updateLocText();
-      bindEvents();
-      setCurrency(savedCurrency());
-      var bhbMapEl = document.getElementById("bhbMap");
-      if (bhbMapEl) {
-        var mapObserver = new IntersectionObserver(
-          function (entries) {
-            if (entries[0].isIntersecting) {
-              mapObserver.disconnect();
-              loadMapSDK(initMap);
-            }
-          },
-          { rootMargin: "200px" },
-        );
-        mapObserver.observe(bhbMapEl);
-      }
-    }
-
-    // Poll until card count is stable for 2 consecutive checks
-    var lastCount = 0;
-    var stableChecks = 0;
-    var pollInterval = setInterval(function () {
-      var currentCount = el.grid.querySelectorAll(CFG.CARD_SEL).length;
-      if (currentCount > 0 && currentCount === lastCount) {
-        stableChecks++;
-        if (stableChecks >= 2) {
-          clearInterval(pollInterval);
-          finishInit();
-        }
-      } else {
-        stableChecks = 0;
-        lastCount = currentCount;
-      }
-    }, 300);
-
-    // Hard timeout fallback at 8 seconds
-    setTimeout(function () {
-      clearInterval(pollInterval);
-      if (!allCards.length) finishInit();
-    }, 8000);
+    if (!el.grid) { console.error('[BHB villas] grid #' + CFG.GRID_ID + ' not found'); return; }
+    allCards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
+    if (!allCards.length) { console.error('[BHB villas] no cards (' + CFG.CARD_SEL + ') inside grid'); return; }
+    cardCache = allCards.map(function(card) {
+      var d = getData(card);
+      var priceEl = card.querySelector(".price");
+      var priceTxt = priceEl ? priceEl.textContent.trim() : "";
+      d.displayPrice = priceTxt ? parseInt(priceTxt.replace(/[^\d]/g, ""), 10) : d.price;
+      d.leaseYears = getLeaseYears(card);
+      return d;
+    });
+    areas = [];
+    buildAreas();
+    buildLocDOM();
+    mountLocUI();
+    populateZoningFilter();
+    initPricePanel();
+    updatePriceRangeForOwnership();
+    hydrateCoordsFromCMS();
+    loadMapSDK(function () { initMap(); initLocMap(); });
+    updateLocText();
+    bindEvents();
+    setCurrency(savedCurrency());
   }
   if (document.readyState === "loading")
     document.addEventListener("DOMContentLoaded", init);
