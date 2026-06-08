@@ -2010,6 +2010,17 @@
     s.textContent = css;
     document.head.appendChild(s);
   }
+  function shuffleCards() {
+    var cards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
+    for (var i = cards.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      el.grid.appendChild(cards[j]);
+      var temp = cards[i];
+      cards[i] = cards[j];
+      cards[j] = temp;
+    }
+  }
+
   function init() {
     injectMobileLocStyles();
     buildUI();
