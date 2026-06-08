@@ -1717,3 +1717,12 @@
   background: #f5f5f4;
   font-weight: 600;
 }
+/* Hide all villa cards by default — JS shows first 9 */
+#villas-wrapper .w-dyn-item {
+  display: none;
+}
+
+/* Hide all land cards by default — JS shows first 9 */
+#land-wrapper .w-dyn-item {
+  display: none;
+}
