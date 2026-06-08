@@ -587,23 +587,26 @@
         closeAll();
       }
     });  
-    window.addEventListener("bhb:currency-changed", function (e) {
-      var c = e.detail && e.detail.currency ? e.detail.currency : savedCurrency();
-      setCurrency(c);
-    });
-    window.addEventListener("bhb:rates-ready", function () {
-      updatePriceRangeForOwnership();
-      updateSliderForCurrency(state.currency);
-      updateChips(state.currency);
-    });
-    // Prevent card currency links from scrolling to top
-    document.addEventListener('click', function(e) {
-      var link = e.target.closest('a[data-select-currency]');
-      if (link) {
-        e.preventDefault();
-      }
-    });
-  }
+  window.addEventListener("bhb:currency-changed", function (e) {
+        var c = e.detail && e.detail.currency ? e.detail.currency : savedCurrency();
+        setCurrency(c);
+      });
+      window.addEventListener("bhb:rates-ready", function () {
+        updatePriceRangeForOwnership();
+        updateSliderForCurrency(state.currency);
+        updateChips(state.currency);
+      });
+      // Prevent card currency links from triggering page reload
+      document.addEventListener('click', function(e) {
+        var link = e.target.closest('a[data-select-currency]');
+        if (link) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          return false;
+        }
+      }, true);
+    }
   function getLeaseYears(card) {
     var el2 = card.querySelector(".leasehold-year-container .u-txt-bold");
     if (!el2) return null;
