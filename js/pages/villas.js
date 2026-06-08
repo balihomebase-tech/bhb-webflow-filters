@@ -601,9 +601,6 @@
         var link = e.target.closest('a[data-select-currency]');
         if (link) {
           e.preventDefault();
-          e.stopPropagation();
-          e.stopImmediatePropagation();
-          return false;
         }
       }, true);
     }
