@@ -665,21 +665,23 @@
     return true;
   }
 
-  // PERUBAHAN 3: applyFilters dan showNext yang efisien
-  function applyFilters() {
+  // FIX 3: applyFilters and showNext — efficient rendering
+ function applyFilters() {
+  // Hide all cards first so non-filtered cards don't stay visible
+    for (var i = 0; i < allCards.length; i++) {
+    allCards[i].style.display = "none";
+  }
     filtered = allCards.filter(function(card, idx) {
-      return passes(card, idx);
-    });
+    return passes(card, idx);
+  });
     visible = 0;
+    visibleSet = [];
     showNext();
     updateUI();
   }
   function showNext() {
     var next = Math.min(visible + CFG.STEP, filtered.length);
-    for (var i = 0; i < visibleSet.length; i++)
-      visibleSet[i].style.display = "none";
-    visibleSet = [];
-    for (var i = 0; i < next; i++) {
+    for (var i = visible; i < next; i++) {
       filtered[i].style.display = "block";
       visibleSet.push(filtered[i]);
     }
