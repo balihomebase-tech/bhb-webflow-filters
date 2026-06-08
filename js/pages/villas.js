@@ -586,7 +586,7 @@
         }
         closeAll();
       }
-    });
+    });  
     window.addEventListener("bhb:currency-changed", function (e) {
       var c = e.detail && e.detail.currency ? e.detail.currency : savedCurrency();
       setCurrency(c);
@@ -595,6 +595,13 @@
       updatePriceRangeForOwnership();
       updateSliderForCurrency(state.currency);
       updateChips(state.currency);
+    });
+    // Prevent card currency links from scrolling to top
+    document.addEventListener('click', function(e) {
+      var link = e.target.closest('a[data-select-currency]');
+      if (link) {
+        e.preventDefault();
+      }
     });
   }
   function getLeaseYears(card) {
