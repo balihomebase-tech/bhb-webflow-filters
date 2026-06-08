@@ -2010,28 +2010,43 @@
     document.head.appendChild(s);
   }
 
-  // PERUBAHAN 4: Tambah cardCache di init()
-  function init() {
-    injectMobileLocStyles();
-    buildUI();
-    cacheEls();
-    if (!el.grid) { console.error('[BHB villas] grid #' + CFG.GRID_ID + ' not found'); return; }
-    allCards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
-    if (!allCards.length) { console.error('[BHB villas] no cards (' + CFG.CARD_SEL + ') inside grid'); return; }
+function init() {
+  injectMobileLocStyles();
+  buildUI();
+  cacheEls();
+  if (!el.grid) { console.error('[BHB villas] grid #' + CFG.GRID_ID + ' not found'); return; }
+  
+  // Wait for all CMS items to finish loading before init
+  function waitForCards(attempts) {
+    var cards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
+    if (cards.length > 0 && attempts > 0) {
+      // Check again after 500ms to see if more cards loaded
+      setTimeout(function() {
+        var newCards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
+        if (newCards.length === cards.length) {
+          // Card count stable — safe to init
+          finishInit();
+        } else {
+          waitForCards(attempts - 1);
+        }
+      }, 500);
+    } else {
+      finishInit();
+    }
+  }
 
-    // Build cache sekali saat init
+  function finishInit() {
+    allCards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
+    if (!allCards.length) { console.error('[BHB villas] no cards found'); return; }
     cardCache = allCards.map(function(card) {
       var d = getData(card);
       var priceEl = card.querySelector(".price");
       var priceTxt = priceEl ? priceEl.textContent.trim() : "";
-      d.displayPrice = priceTxt
-        ? parseInt(priceTxt.replace(/[^\d]/g, ""), 10)
-        : d.price;
+      d.displayPrice = priceTxt ? parseInt(priceTxt.replace(/[^\d]/g, ""), 10) : d.price;
       d.leaseYears = getLeaseYears(card);
       return d;
     });
-
-   areas = [];
+    areas = [];
     buildAreas();
     buildLocDOM();
     mountLocUI();
@@ -2042,8 +2057,6 @@
     updateLocText();
     bindEvents();
     setCurrency(savedCurrency());
-
-    // Lazy load map utama hanya saat #bhbMap terlihat di layar
     var bhbMapEl = document.getElementById('bhbMap');
     if (bhbMapEl) {
       var mapObserver = new IntersectionObserver(function(entries) {
@@ -2055,7 +2068,6 @@
       mapObserver.observe(bhbMapEl);
     }
   }
-  if (document.readyState === "loading")
-    document.addEventListener("DOMContentLoaded", init);
-  else init();
-})();
+
+  waitForCards(10);
+}
