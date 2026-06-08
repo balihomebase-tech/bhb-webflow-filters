@@ -2011,12 +2011,14 @@
   }
 
 function init() {
-    injectMobileLocStyles();
-    buildUI();
-    cacheEls();
-    if (!el.grid) { console.error('[BHB villas] grid #' + CFG.GRID_ID + ' not found'); return; }
+  injectMobileLocStyles();
+  buildUI();
+  cacheEls();
+  if (!el.grid) { console.error('[BHB villas] grid #' + CFG.GRID_ID + ' not found'); return; }
+
+  function finishInit() {
     allCards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
-    if (!allCards.length) { console.error('[BHB villas] no cards (' + CFG.CARD_SEL + ') inside grid'); return; }
+    if (!allCards.length) { console.error('[BHB villas] no cards found'); return; }
     cardCache = allCards.map(function(card) {
       var d = getData(card);
       var priceEl = card.querySelector(".price");
@@ -2033,13 +2035,41 @@ function init() {
     initPricePanel();
     updatePriceRangeForOwnership();
     hydrateCoordsFromCMS();
-    loadMapSDK(function () { initMap(); initLocMap(); });
     updateLocText();
     bindEvents();
     setCurrency(savedCurrency());
+    var bhbMapEl = document.getElementById('bhbMap');
+    if (bhbMapEl) {
+      var mapObserver = new IntersectionObserver(function(entries) {
+        if (entries[0].isIntersecting) {
+          mapObserver.disconnect();
+          loadMapSDK(initMap);
+        }
+      }, { rootMargin: '200px' });
+      mapObserver.observe(bhbMapEl);
+    }
   }
 
-  if (document.readyState === "loading")
-    document.addEventListener("DOMContentLoaded", init);
-  else init();
-})();
+  // Poll until card count is stable for 2 consecutive checks
+  var lastCount = 0;
+  var stableChecks = 0;
+  var pollInterval = setInterval(function() {
+    var currentCount = el.grid.querySelectorAll(CFG.CARD_SEL).length;
+    if (currentCount > 0 && currentCount === lastCount) {
+      stableChecks++;
+      if (stableChecks >= 2) {
+        clearInterval(pollInterval);
+        finishInit();
+      }
+    } else {
+      stableChecks = 0;
+      lastCount = currentCount;
+    }
+  }, 300);
+
+  // Hard timeout fallback at 8 seconds
+  setTimeout(function() {
+    clearInterval(pollInterval);
+    if (!allCards.length) finishInit();
+  }, 8000);
+}
