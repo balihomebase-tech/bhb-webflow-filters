@@ -679,8 +679,9 @@
     }
     if (state.keyword) {
       var terms = norm(state.keyword).split(" ");
+      var hay = d.searchText || searchText(d);
       for (var t = 0; t < terms.length; t++) {
-        if (terms[t] && d.searchText.indexOf(terms[t]) === -1) return false;
+        if (terms[t] && hay.indexOf(terms[t]) === -1) return false;
       }
     }
     return true;
@@ -2049,6 +2050,7 @@
       var d = getData(card);
       var priceEl = card.querySelector(".price");
       var priceTxt = priceEl ? priceEl.textContent.trim() : "";
+      d.searchText = searchText(d);
       d.displayPrice = priceTxt ? parseInt(priceTxt.replace(/[^\d]/g, ""), 10) : d.price;
       d.leaseYears = getLeaseYears(card);
       return d;
