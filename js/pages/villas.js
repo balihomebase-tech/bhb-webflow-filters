@@ -647,6 +647,13 @@
     d.ownership || ""
   ].join(" "));
 }
+  function passesPrice(d, card) {
+  var el2 = card.querySelector(".price");
+  var txt = el2 ? el2.textContent.trim() : "";
+  var dsp = txt ? parseInt(txt.replace(/[^\d]/g, ""), 10) : NaN;
+  if (!passesPrice(d, card)) return false;
+  return true;
+}
   function passes(card, idx) {
     var d = cardCache[idx];
     if (!d) return true;
