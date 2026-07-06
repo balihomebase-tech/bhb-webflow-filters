@@ -678,8 +678,10 @@
       if (lbl === "30+ years" && !(years > 30)) return false;
     }
     if (state.keyword) {
-      var kw = state.keyword.toLowerCase();
-      if (d.name.indexOf(kw) === -1 && d.code.indexOf(kw) === -1) return false;
+      var terms = norm(state.keyword).split(" ");
+      for (var t = 0; t < terms.length; t++) {
+        if (terms[t] && d.searchText.indexOf(terms[t]) === -1) return false;
+      }
     }
     return true;
   }
