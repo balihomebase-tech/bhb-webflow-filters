@@ -70,9 +70,9 @@
   var dynamicChips = { IDR: [], USD: [], EUR: [] };
 
   var allCards = [],
-      cardCache = [],
-      filtered = [],
-      visible = 0;
+    cardCache = [],
+    filtered = [],
+    visible = 0;
   var visibleSet = [];
 
   var locDropOpen = false,
@@ -188,11 +188,11 @@
       return;
     }
     var labelMap = {
-      'residential':        'Residential',
+      'residential': 'Residential',
       'tourism facilities': 'Tourism Facilities',
-      'mixed use area':     'Mixed Use Area',
-      'commercial area':    'Commercial Area',
-      'agricultures':       'Agricultures'
+      'mixed use area': 'Mixed Use Area',
+      'commercial area': 'Commercial Area',
+      'agricultures': 'Agricultures'
     };
     var optionsContainer = el.zoningField.querySelector('.filter-options');
     if (!optionsContainer) return;
@@ -204,7 +204,7 @@
       opt.setAttribute('data-value', vals[k]);
       var lbl = document.createElement('div');
       lbl.className = 'text-size-small filter-option_label';
-      lbl.textContent = labelMap[vals[k]] || vals[k].replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+      lbl.textContent = labelMap[vals[k]] || vals[k].replace(/\b\w/g, function (c) { return c.toUpperCase(); });
       opt.appendChild(lbl);
       optionsContainer.appendChild(opt);
     }
@@ -212,8 +212,8 @@
     var trigText = el.zoningField.querySelector('.filter-trigger_text');
     var allOpts = el.zoningField.querySelectorAll('.filter-option');
     for (var i = 0; i < allOpts.length; i++) {
-      (function(opt) {
-        opt.addEventListener('click', function(e) {
+      (function (opt) {
+        opt.addEventListener('click', function (e) {
           e.stopPropagation();
           for (var k = 0; k < allOpts.length; k++)
             allOpts[k].classList.remove('is-active');
@@ -586,24 +586,25 @@
         }
         closeAll();
       }
-    });  
-  window.addEventListener("bhb:currency-changed", function (e) {
-        var c = e.detail && e.detail.currency ? e.detail.currency : savedCurrency();
-        setCurrency(c);
-      });
-      window.addEventListener("bhb:rates-ready", function () {
-        updatePriceRangeForOwnership();
-        updateSliderForCurrency(state.currency);
-        updateChips(state.currency);
-      });
-      // Prevent card currency links from triggering page reload
-      document.addEventListener('click', function(e) {
-        var link = e.target.closest('a[data-select-currency]');
-        if (link) {
-          e.preventDefault();
-        }
-      }, true);
-    }
+    });
+    window.addEventListener("bhb:currency-changed", function (e) {
+      var c = e.detail && e.detail.currency ? e.detail.currency : savedCurrency();
+      setCurrency(c);
+    });
+    window.addEventListener("bhb:rates-ready", function () {
+      updatePriceRangeForOwnership();
+      updateSliderForCurrency(state.currency);
+      updateChips(state.currency);
+      applyFilters();
+    });
+    // Prevent card currency links from triggering page reload
+    document.addEventListener('click', function (e) {
+      var link = e.target.closest('a[data-select-currency]');
+      if (link) {
+        e.preventDefault();
+      }
+    }, true);
+  }
   function getLeaseYears(card) {
     var el2 = card.querySelector(".leasehold-year-container .u-txt-bold");
     if (!el2) return null;
@@ -621,42 +622,44 @@
       price: parseFloat(inner.dataset.price || "0"),
       currency: (inner.dataset.currency || "").toUpperCase(),
       ownership: (inner.dataset.available || "").toLowerCase(),
-      zoning: (function() {
+      zoning: (function () {
         var z = (inner.dataset.zone || '').toLowerCase();
         if (z.indexOf('yellow') > -1) return 'residential';
-        if (z.indexOf('pink')   > -1) return 'tourism facilities';
+        if (z.indexOf('pink') > -1) return 'tourism facilities';
         if (z.indexOf('orange') > -1) return 'mixed use area';
-        if (z.indexOf('red')    > -1) return 'commercial area';
-        if (z.indexOf('brown')  > -1) return 'agricultures';
+        if (z.indexOf('red') > -1) return 'commercial area';
+        if (z.indexOf('brown') > -1) return 'agricultures';
         return '';
       })(),
     };
   }
   function searchText(d) {
-  var area = "";
-  for (var a = 0; a < AREA_RULES.length; a++) {
-    if (AREA_RULES[a].keys.indexOf(d.loc) > -1) { area = AREA_RULES[a].label; break; }
+    var area = "";
+    for (var a = 0; a < AREA_RULES.length; a++) {
+      if (AREA_RULES[a].keys.indexOf(d.loc) > -1) { area = AREA_RULES[a].label; break; }
+    }
+    return norm([
+      d.name,
+      d.code,
+      d.locRaw,
+      area,
+      d.rooms ? d.rooms + " bedroom " + d.rooms + " bedrooms" : "",
+      d.zoning || "",
+      d.ownership || ""
+    ].join(" "));
   }
-  return norm([
-    d.name,
-    d.code,
-    d.locRaw,
-    area,
-    d.rooms ? d.rooms + " bedroom " + d.rooms + " bedrooms" : "",
-    d.zoning || "",
-    d.ownership || ""
-  ].join(" "));
-}
   function passesPrice(d, card) {
-  var el2 = card.querySelector(".price");
-  var txt = el2 ? el2.textContent.trim() : "";
-  var dsp = txt ? parseInt(txt.replace(/[^\d]/g, ""), 10) : NaN;
-  if (!passesPrice(d, card)) return false;
-  return true;
-}
+    var el2 = card.querySelector(".price");
+    var txt = el2 ? el2.textContent.trim() : "";
+    var dsp = txt ? parseInt(txt.replace(/[^\d]/g, ""), 10) : NaN;
+    var price = isFinite(dsp) ? dsp : d.price;
+    if (state.priceMin !== null && price < state.priceMin) return false;
+    if (state.priceMax !== null && price > state.priceMax) return false;
+    return true;
+  }
+
   function passes(card, idx) {
-    var d = cardCache[idx];
-    if (!d) return true;
+    var d = getData(card);
     if (state.ownership !== "Any" && d.ownership !== state.ownership.toLowerCase())
       return false;
     if (state.zoning !== "Any" && d.zoning !== state.zoning.toLowerCase())
@@ -672,11 +675,9 @@
     }
     if (state.locations.length > 0 && state.locations.indexOf(d.loc) === -1)
       return false;
-    var price = isFinite(d.displayPrice) ? d.displayPrice : d.price;
-    if (state.priceMin !== null && price < state.priceMin) return false;
-    if (state.priceMax !== null && price > state.priceMax) return false;
+    if (!passesPrice(d, card)) return false;
     if (state.lease !== "Any") {
-      var years = d.leaseYears;
+      var years = getLeaseYears(card);
       if (years === null) return false;
       var lbl = state.lease.toLowerCase();
       if (lbl === "10 \u2013 20 years" && !(years >= 10 && years <= 20)) return false;
@@ -686,7 +687,7 @@
     }
     if (state.keyword) {
       var terms = norm(state.keyword).split(" ");
-      var hay = d.searchText || searchText(d);
+      var hay = searchText(d);
       for (var t = 0; t < terms.length; t++) {
         if (terms[t] && hay.indexOf(terms[t]) === -1) return false;
       }
@@ -697,7 +698,7 @@
     for (var i = 0; i < allCards.length; i++) {
       allCards[i].style.display = "none";
     }
-    filtered = allCards.filter(function(card, idx) {
+    filtered = allCards.filter(function (card, idx) {
       return passes(card, idx);
     });
     visible = 0;
@@ -764,7 +765,7 @@
     updatePriceRangeForOwnership();
     updateSliderForCurrency(state.currency);
     updateChips(state.currency);
-    filtered = allCards.filter(function(card, idx) {
+    filtered = allCards.filter(function (card, idx) {
       return passes(card, idx);
     });
     var restoreTo = Math.min(
@@ -1196,12 +1197,12 @@
   function mountLocUI() {
     if (!el.locDropdown) return;
     locUI = {
-      searchInput:  el.locDropdown.querySelector(".location-search-input"),
-      treeScroll:   el.locDropdown.querySelector(".tree-scroll"),
-      pillScroll:   el.locDropdown.querySelector(".pill-scroll"),
+      searchInput: el.locDropdown.querySelector(".location-search-input"),
+      treeScroll: el.locDropdown.querySelector(".tree-scroll"),
+      pillScroll: el.locDropdown.querySelector(".pill-scroll"),
       selectedInfo: el.locDropdown.querySelector("#locSelectedInfo"),
-      btnClear:     el.locDropdown.querySelector(".loc-btn-clear-inline"),
-      btnApply:     el.locDropdown.querySelector(".loc-btn-apply-inline"),
+      btnClear: el.locDropdown.querySelector(".loc-btn-clear-inline"),
+      btnApply: el.locDropdown.querySelector(".loc-btn-apply-inline"),
     };
     if (!locUI.searchInput || !locUI.treeScroll || !locUI.pillScroll) return;
     var treeParents = locUI.treeScroll.querySelectorAll('.tree-parent');
@@ -1209,8 +1210,8 @@
       var parent = treeParents[i];
       var cw = parent.parentNode.querySelector('.children');
       if (cw) {
-        parent.addEventListener('click', (function(c) {
-          return function() { c.classList.toggle('open'); };
+        parent.addEventListener('click', (function (c) {
+          return function () { c.classList.toggle('open'); };
         })(cw));
       }
     }
@@ -1219,8 +1220,8 @@
       var child = children[i];
       var loc = child.dataset.location;
       if (loc) {
-        child.addEventListener('click', (function(l) {
-          return function(e) { e.stopPropagation(); toggleLoc(l); };
+        child.addEventListener('click', (function (l) {
+          return function (e) { e.stopPropagation(); toggleLoc(l); };
         })(loc));
       }
     }
@@ -1229,8 +1230,8 @@
       var pill = pills[i];
       var areaId = pill.dataset.areaId;
       if (areaId) {
-        pill.addEventListener('click', (function(aId) {
-          return function() { toggleArea(aId); };
+        pill.addEventListener('click', (function (aId) {
+          return function () { toggleArea(aId); };
         })(areaId));
       }
     }
@@ -1239,8 +1240,8 @@
       var mpBtn = mobilePillBtns[i];
       var mpId = mpBtn.dataset.areaId;
       if (mpId) {
-        mpBtn.addEventListener('click', (function(aId, btn) {
-          return function() {
+        mpBtn.addEventListener('click', (function (aId, btn) {
+          return function () {
             var allPills = el.locDropdown.querySelectorAll('.mobile-area-pill');
             for (var p = 0; p < allPills.length; p++) {
               if (allPills[p] !== btn) {
@@ -1263,31 +1264,31 @@
       var mItem = mobileSubItems[i];
       var mLoc = mItem.dataset.location;
       if (mLoc) {
-        mItem.addEventListener('click', (function(l) {
-          return function() { toggleLoc(l); };
+        mItem.addEventListener('click', (function (l) {
+          return function () { toggleLoc(l); };
         })(mLoc));
       }
     }
     var tabAreaBtn = el.locDropdown.querySelector('.loc-tab-area');
     var tabMapsBtn = el.locDropdown.querySelector('.loc-tab-maps');
-    var panelArea  = el.locDropdown.querySelector('.loc-panel-area');
-    var panelMaps  = el.locDropdown.querySelector('.loc-panel-maps');
+    var panelArea = el.locDropdown.querySelector('.loc-panel-area');
+    var panelMaps = el.locDropdown.querySelector('.loc-panel-maps');
     function switchLocTab(toMaps) {
       if (toMaps) {
         if (tabAreaBtn) tabAreaBtn.classList.remove('is-active');
         if (tabMapsBtn) tabMapsBtn.classList.add('is-active');
-        if (panelArea)  panelArea.classList.remove('is-active');
-        if (panelMaps)  panelMaps.classList.add('is-active');
-        setTimeout(function() { if (locMap) locMap.resize(); }, 50);
+        if (panelArea) panelArea.classList.remove('is-active');
+        if (panelMaps) panelMaps.classList.add('is-active');
+        setTimeout(function () { if (locMap) locMap.resize(); }, 50);
       } else {
         if (tabMapsBtn) tabMapsBtn.classList.remove('is-active');
         if (tabAreaBtn) tabAreaBtn.classList.add('is-active');
-        if (panelMaps)  panelMaps.classList.remove('is-active');
-        if (panelArea)  panelArea.classList.add('is-active');
+        if (panelMaps) panelMaps.classList.remove('is-active');
+        if (panelArea) panelArea.classList.add('is-active');
       }
     }
-    if (tabAreaBtn) tabAreaBtn.addEventListener('click', function() { switchLocTab(false); });
-    if (tabMapsBtn) tabMapsBtn.addEventListener('click', function() { switchLocTab(true); });
+    if (tabAreaBtn) tabAreaBtn.addEventListener('click', function () { switchLocTab(false); });
+    if (tabMapsBtn) tabMapsBtn.addEventListener('click', function () { switchLocTab(true); });
     locUI.searchInput.addEventListener("input", renderLocLists);
     if (locUI.btnClear) {
       locUI.btnClear.addEventListener("click", function () {
@@ -1475,7 +1476,7 @@
       var mpAreaId = mpEl.dataset.areaId;
       for (var ma = 0; ma < areas.length; ma++) {
         if (areas[ma].id === mpAreaId) {
-          var mpAreaActive = areas[ma].children.some(function(c) { return draftLocs.indexOf(c) > -1; });
+          var mpAreaActive = areas[ma].children.some(function (c) { return draftLocs.indexOf(c) > -1; });
           mpEl.classList.toggle('is-active', mpAreaActive);
           break;
         }
@@ -1758,9 +1759,9 @@
     if (!root) return;
     var _savedGrid = root.querySelector('#' + CFG.GRID_ID);
     root.innerHTML = '';
-    var CLOSE_SVG   = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+    var CLOSE_SVG = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
     var CHEVRON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
-    var SEARCH_SVG  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
+    var SEARCH_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
     function mk(tag, attrs, children) {
       var e = document.createElement(tag);
       if (attrs) {
@@ -1807,8 +1808,8 @@
       makeLabel('Ownership'),
       makeTrigger('Any'),
       makeDropdown([
-        makeOption('Any',       'Any',       true,  false),
-        makeOption('Freehold',  'Freehold',  false, false),
+        makeOption('Any', 'Any', true, false),
+        makeOption('Freehold', 'Freehold', false, false),
         makeOption('Leasehold', 'Leasehold', false, false)
       ])
     ]);
@@ -1817,23 +1818,23 @@
       makeTrigger('Any'),
       makeDropdown([
         makeOption('Any', 'Any', true),
-        makeOption('1',   '1 Br',  false),
-        makeOption('2',   '2 Br',  false),
-        makeOption('3',   '3 Br',  false),
-        makeOption('4',   '4 Br',  false),
-        makeOption('5',   '5 Br',  false),
-        makeOption('6+',  '6+ Br', false)
+        makeOption('1', '1 Br', false),
+        makeOption('2', '2 Br', false),
+        makeOption('3', '3 Br', false),
+        makeOption('4', '4 Br', false),
+        makeOption('5', '5 Br', false),
+        makeOption('6+', '6+ Br', false)
       ])
     ]);
     var leaseField = makeField([
       makeLabel('Lease Duration'),
       makeTrigger('Any'),
       makeDropdown([
-        makeOption('Any',                'Any',                true,  false),
+        makeOption('Any', 'Any', true, false),
         makeOption('10 \u2013 20 years', '10 \u2013 20 years', false, false),
         makeOption('20 \u2013 25 years', '20 \u2013 25 years', false, false),
         makeOption('25 \u2013 30 years', '25 \u2013 30 years', false, false),
-        makeOption('30+ years',          '30+ years',          false, false)
+        makeOption('30+ years', '30+ years', false, false)
       ])
     ]);
     var kwInput = mk('input', { class: 'keyword-input', type: 'search', placeholder: 'Search\u2026', maxlength: '256' });
@@ -1848,16 +1849,16 @@
         makeOption('Any', 'Any', true, false)
       ])
     ]);
-    var locSearchInput    = mk('input', { class: 'location-search-input', type: 'text', placeholder: 'Search locations\u2026' });
-    var treeScrollEl      = mk('div', { class: 'tree-scroll' });
-    var pillScrollEl      = mk('div', { class: 'pill-scroll' });
+    var locSearchInput = mk('input', { class: 'location-search-input', type: 'text', placeholder: 'Search locations\u2026' });
+    var treeScrollEl = mk('div', { class: 'tree-scroll' });
+    var pillScrollEl = mk('div', { class: 'pill-scroll' });
     var locMapContainerEl = mk('div', { id: 'locMapEl', class: 'loc-maptiler-map' });
-    var locSelInfo        = mk('div', { id: 'locSelectedInfo', class: 'loc-selected-info', text: 'No Location Selected' });
-    var locBtnClear       = mk('a', { href: '#', class: 'loc-btn-clear-inline', text: 'Clear' });
-    var locBtnApply       = mk('a', { href: '#', class: 'loc-btn-apply-inline', text: 'Search' });
-    var locCloseBtn       = mk('div', { class: 'close-btn', html: CLOSE_SVG });
-    var locTabArea        = mk('button', { class: 'loc-tab loc-tab-area is-active', type: 'button', text: 'Area' });
-    var locTabMaps        = mk('button', { class: 'loc-tab loc-tab-maps', type: 'button', text: 'Maps' });
+    var locSelInfo = mk('div', { id: 'locSelectedInfo', class: 'loc-selected-info', text: 'No Location Selected' });
+    var locBtnClear = mk('a', { href: '#', class: 'loc-btn-clear-inline', text: 'Clear' });
+    var locBtnApply = mk('a', { href: '#', class: 'loc-btn-apply-inline', text: 'Search' });
+    var locCloseBtn = mk('div', { class: 'close-btn', html: CLOSE_SVG });
+    var locTabArea = mk('button', { class: 'loc-tab loc-tab-area is-active', type: 'button', text: 'Area' });
+    var locTabMaps = mk('button', { class: 'loc-tab loc-tab-maps', type: 'button', text: 'Maps' });
     var locDropdown = mk('div', { class: 'location-dropdown' }, [
       locCloseBtn,
       mk('div', { class: 'loc-tabs' }, [locTabArea, locTabMaps]),
@@ -1889,15 +1890,15 @@
       mk('div', { class: 'trigger-chevron', html: CHEVRON_SVG })
     ]);
     var locField = makeField([makeLabel('Location'), locTrigger, locDropdown]);
-    var pwFillEl      = mk('div',   { id: 'pwFill',      class: 'pw-fill' });
-    var pwTrackEl     = mk('div',   {                     class: 'pw-track' });
-    var pwSliderEl    = mk('div',   {                     class: 'pw-slider' }, [pwTrackEl, pwFillEl]);
-    var pwMinText     = mk('input', { id: 'pwMinText',    class: 'pw-box', type: 'text', value: '0' });
-    var pwMaxText     = mk('input', { id: 'pwMaxText',    class: 'pw-box', type: 'text', value: '0' });
-    var pwScaleMinEl  = mk('span',  { id: 'pwScaleMin',   class: 'pw-scale-min', text: 'Rp0' });
-    var pwScaleMaxEl  = mk('span',  { id: 'pwScaleMax',   class: 'pw-scale-max', text: 'Rp0' });
-    var pwRangeTextEl = mk('div',   { id: 'pwRangeText',  class: 'pw-range-value', text: '0' });
-    var priceCloseBtn = mk('div',   { class: 'close-btn', html: CLOSE_SVG });
+    var pwFillEl = mk('div', { id: 'pwFill', class: 'pw-fill' });
+    var pwTrackEl = mk('div', { class: 'pw-track' });
+    var pwSliderEl = mk('div', { class: 'pw-slider' }, [pwTrackEl, pwFillEl]);
+    var pwMinText = mk('input', { id: 'pwMinText', class: 'pw-box', type: 'text', value: '0' });
+    var pwMaxText = mk('input', { id: 'pwMaxText', class: 'pw-box', type: 'text', value: '0' });
+    var pwScaleMinEl = mk('span', { id: 'pwScaleMin', class: 'pw-scale-min', text: 'Rp0' });
+    var pwScaleMaxEl = mk('span', { id: 'pwScaleMax', class: 'pw-scale-max', text: 'Rp0' });
+    var pwRangeTextEl = mk('div', { id: 'pwRangeText', class: 'pw-range-value', text: '0' });
+    var priceCloseBtn = mk('div', { class: 'close-btn', html: CLOSE_SVG });
     var priceDropdown = mk('div', { class: 'price-dropdown' }, [
       mk('div', { class: 'price-panel' }, [
         mk('div', { class: 'pp-section' }, [
@@ -1933,7 +1934,7 @@
       priceCloseBtn
     ]);
     var priceTrigText = mk('div', { class: 'price-trigger_text', text: 'Price Range' });
-    var priceTrigger  = mk('div', { class: 'price-trigger' }, [
+    var priceTrigger = mk('div', { class: 'price-trigger' }, [
       mk('div', { class: 'filter-trigger_value' }, [priceTrigText]),
       mk('div', { class: 'trigger-chevron', html: CHEVRON_SVG })
     ]);
@@ -1949,12 +1950,12 @@
       makeLabel('Currency'),
       makeTrigger('IDR'),
       makeDropdown([
-        makeOption('IDR', 'IDR', true,  true),
+        makeOption('IDR', 'IDR', true, true),
         makeOption('USD', 'USD', false, true),
         makeOption('EUR', 'EUR', false, true)
       ])
     ]);
-    var btnClear  = mk('button', { type: 'button', class: 'filter-button-1' }, [
+    var btnClear = mk('button', { type: 'button', class: 'filter-button-1' }, [
       mk('span', { class: 'btn-icon', html: CLOSE_SVG }),
       mk('span', { text: 'Clear' })
     ]);
@@ -2053,7 +2054,7 @@
     if (!el.grid) { console.error('[BHB villas] grid #' + CFG.GRID_ID + ' not found'); return; }
     allCards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
     if (!allCards.length) { console.error('[BHB villas] no cards (' + CFG.CARD_SEL + ') inside grid'); return; }
-    cardCache = allCards.map(function(card) {
+    cardCache = allCards.map(function (card) {
       var d = getData(card);
       var priceEl = card.querySelector(".price");
       var priceTxt = priceEl ? priceEl.textContent.trim() : "";
