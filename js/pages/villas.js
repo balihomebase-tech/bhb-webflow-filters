@@ -632,6 +632,21 @@
       })(),
     };
   }
+  function searchText(d) {
+  var area = "";
+  for (var a = 0; a < AREA_RULES.length; a++) {
+    if (AREA_RULES[a].keys.indexOf(d.loc) > -1) { area = AREA_RULES[a].label; break; }
+  }
+  return norm([
+    d.name,
+    d.code,
+    d.locRaw,
+    area,
+    d.rooms ? d.rooms + " bedroom " + d.rooms + " bedrooms" : "",
+    d.zoning || "",
+    d.ownership || ""
+  ].join(" "));
+}
   function passes(card, idx) {
     var d = cardCache[idx];
     if (!d) return true;
