@@ -2037,180 +2037,511 @@
     document.head.appendChild(s);
   }
   function shuffleCards() {
-    var cards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
-    for (var i = cards.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      el.grid.appendChild(cards[j]);
-      var temp = cards[i];
-      cards[i] = cards[j];
-      cards[j] = temp;
-    }
+  var cards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
+
+  for (var i = cards.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+
+    el.grid.appendChild(cards[j]);
+
+    var temp = cards[i];
+    cards[i] = cards[j];
+    cards[j] = temp;
+  }
+}
+
+
+/* =========================================================
+   WEBFLOW CMS PAGINATION
+   Loads all Webflow CMS pages into the existing collection.
+   Native Webflow pagination stays hidden.
+   Custom Load More still uses CFG.STEP = 9.
+   ========================================================= */
+
+async function loadAllWebflowPages() {
+
+  /*
+   * #villas-wrapper contains Webflow's Collection List.
+   * The villa cards MUST be appended to .w-dyn-items,
+   * not directly to #villas-wrapper.
+   */
+  var currentList = el.grid.querySelector(".w-dyn-items");
+
+  if (!currentList) {
+    console.error(
+      "[BHB villas] .w-dyn-items not found"
+    );
+    return;
   }
 
-  async function loadAllWebflowPages() {
-  // Find Webflow's native "Next" pagination link
-  var nextLink = document.querySelector(".w-pagination-next");
 
-  // No pagination = everything is already on this page
-  if (!nextLink) return;
+  /*
+   * Webflow's native pagination.
+   * We need the Next URL so the script can fetch page 2+.
+   */
+  var nextLink = el.grid.querySelector(
+    ".w-pagination-next"
+  );
 
-  // Hide Webflow pagination from visitors.
-  // We only use it internally to discover the next CMS page.
-  var paginationWrapper = nextLink.closest(".w-pagination-wrapper");
+  var paginationWrapper = el.grid.querySelector(
+    ".w-pagination-wrapper"
+  );
 
+
+  /*
+   * Hide Webflow's native pagination from visitors.
+   * Do NOT remove pagination in Webflow Designer.
+   * The script still needs its URLs.
+   */
   if (paginationWrapper) {
     paginationWrapper.style.display = "none";
-  } else {
-    nextLink.style.display = "none";
   }
 
+
+  /*
+   * If there is no Next button, there is only one
+   * Webflow CMS page, so nothing else needs loading.
+   */
+  if (!nextLink || !nextLink.href) {
+    return;
+  }
+
+
   var nextUrl = nextLink.href;
+
+  /*
+   * Prevent accidentally loading the same URL twice.
+   */
+  var loadedUrls = {};
+
+  /*
+   * Safety limit.
+   * Prevents an infinite pagination loop if Webflow
+   * ever returns an unexpected pagination URL.
+   */
   var safety = 0;
 
-  while (nextUrl && safety < 20) {
+
+  while (
+    nextUrl &&
+    !loadedUrls[nextUrl] &&
+    safety < 20
+  ) {
+
+    loadedUrls[nextUrl] = true;
+
     safety++;
 
+
     try {
-      var response = await fetch(nextUrl, {
-        credentials: "same-origin"
-      });
+
+      /*
+       * Fetch the next Webflow CMS page.
+       */
+      var response = await fetch(
+        nextUrl,
+        {
+          credentials: "same-origin"
+        }
+      );
+
 
       if (!response.ok) {
+
         console.error(
           "[BHB villas] Failed loading CMS page:",
           nextUrl,
           response.status
         );
+
         break;
       }
 
+
+      /*
+       * Convert returned HTML into a document.
+       */
       var html = await response.text();
 
       var parser = new DOMParser();
-      var doc = parser.parseFromString(html, "text/html");
 
-      // Get the same grid from the fetched Webflow page
-      var fetchedGrid = doc.getElementById(CFG.GRID_ID);
+      var doc = parser.parseFromString(
+        html,
+        "text/html"
+      );
+
+
+      /*
+       * Find #villas-wrapper on the fetched page.
+       */
+      var fetchedGrid = doc.getElementById(
+        CFG.GRID_ID
+      );
+
 
       if (!fetchedGrid) {
+
         console.error(
-          "[BHB villas] #" + CFG.GRID_ID + " not found on:",
+          "[BHB villas] #" +
+            CFG.GRID_ID +
+            " not found on:",
           nextUrl
         );
+
         break;
       }
 
-      var cards = Array.from(
-        fetchedGrid.querySelectorAll(CFG.CARD_SEL)
-      );
 
-      // Add the cards from this Webflow page into the current grid
-      cards.forEach(function (card) {
-        el.grid.appendChild(card);
+      /*
+       * IMPORTANT:
+       *
+       * Find the actual Webflow Collection List.
+       *
+       * Structure:
+       *
+       * #villas-wrapper
+       *   └── .w-dyn-items
+       *        ├── .w-dyn-item
+       *        ├── .w-dyn-item
+       *        └── ...
+       */
+      var fetchedList =
+        fetchedGrid.querySelector(
+          ".w-dyn-items"
+        );
+
+
+      if (!fetchedList) {
+
+        console.error(
+          "[BHB villas] .w-dyn-items not found on:",
+          nextUrl
+        );
+
+        break;
+      }
+
+
+      /*
+       * Get ONLY direct Collection Items.
+       *
+       * We deliberately do not use:
+       *
+       * fetchedGrid.querySelectorAll(".w-dyn-item")
+       *
+       * because a villa card could contain another
+       * nested Webflow Collection List.
+       */
+      var cards = Array.from(
+        fetchedList.children
+      ).filter(function (item) {
+
+        return item.classList.contains(
+          "w-dyn-item"
+        );
+
       });
 
+
+      /*
+       * Append page 2 / page 3 / etc. cards into
+       * the SAME .w-dyn-items container as page 1.
+       *
+       * This preserves the Webflow grid layout.
+       */
+      for (
+        var i = 0;
+        i < cards.length;
+        i++
+      ) {
+
+        currentList.appendChild(
+          cards[i]
+        );
+
+      }
+
+
       console.log(
-        "[BHB villas] Loaded CMS page:",
-        safety + 1,
-        "| added:",
-        cards.length
+        "[BHB villas] Loaded CMS page " +
+          (safety + 1) +
+          ": " +
+          cards.length +
+          " listings"
       );
 
-      // Check whether this fetched page has another Webflow page
-      var fetchedNext = doc.querySelector(".w-pagination-next");
+
+      /*
+       * Look for another Next button on the page
+       * we just fetched.
+       */
+      var fetchedNext =
+        fetchedGrid.querySelector(
+          ".w-pagination-next"
+        );
+
 
       if (
         fetchedNext &&
         fetchedNext.getAttribute("href") &&
-        !fetchedNext.classList.contains("w--disabled")
+        !fetchedNext.classList.contains(
+          "w--disabled"
+        )
       ) {
+
+        /*
+         * Convert relative Webflow URL into
+         * an absolute URL.
+         */
         nextUrl = new URL(
           fetchedNext.getAttribute("href"),
           nextUrl
         ).href;
+
       } else {
+
+        /*
+         * No more CMS pages.
+         */
         nextUrl = null;
+
       }
 
+
     } catch (err) {
-      console.error("[BHB villas] Pagination load failed:", err);
+
+      console.error(
+        "[BHB villas] Pagination load failed:",
+        err
+      );
+
       break;
     }
+
   }
+
+
+  /*
+   * Hide native pagination again after loading.
+   *
+   * This is intentional redundancy so Webflow's
+   * Next/Previous controls never become visible.
+   */
+  paginationWrapper =
+    el.grid.querySelector(
+      ".w-pagination-wrapper"
+    );
+
+
+  if (paginationWrapper) {
+
+    paginationWrapper.style.display =
+      "none";
+
+  }
+
 }
-  
-  async function init() {
+
+
+/* =========================================================
+   INITIALIZE VILLAS
+   ========================================================= */
+
+async function init() {
+
   injectMobileLocStyles();
+
   buildUI();
+
   cacheEls();
 
+
   if (!el.grid) {
+
     console.error(
-      "[BHB villas] grid #" + CFG.GRID_ID + " not found"
+      "[BHB villas] grid #" +
+        CFG.GRID_ID +
+        " not found"
     );
+
     return;
+
   }
 
-  // Load Webflow page 2, 3, etc. into the current grid first
+
+  /*
+   * IMPORTANT:
+   *
+   * Load page 2+ BEFORE creating allCards/cardCache.
+   *
+   * This means filters, locations, prices, maps,
+   * zoning, search and custom Load More can work
+   * against the complete CMS collection.
+   */
   await loadAllWebflowPages();
 
-  // NOW collect every villa, not only Webflow page 1
+
+  /*
+   * Find the actual Webflow Collection List.
+   */
+  var currentList =
+    el.grid.querySelector(
+      ".w-dyn-items"
+    );
+
+
+  if (!currentList) {
+
+    console.error(
+      "[BHB villas] .w-dyn-items not found"
+    );
+
+    return;
+
+  }
+
+
+  /*
+   * Get ONLY direct villa Collection Items.
+   *
+   * This prevents nested .w-dyn-item elements
+   * from accidentally becoming villa cards.
+   */
   allCards = Array.from(
-    el.grid.querySelectorAll(CFG.CARD_SEL)
-  );
+    currentList.children
+  ).filter(function (item) {
+
+    return item.classList.contains(
+      "w-dyn-item"
+    );
+
+  });
+
 
   if (!allCards.length) {
+
     console.error(
       "[BHB villas] no cards (" +
         CFG.CARD_SEL +
         ") inside grid"
     );
+
     return;
+
   }
+
 
   console.log(
     "[BHB villas] Total villa cards loaded:",
     allCards.length
   );
 
-  cardCache = allCards.map(function (card) {
-    var d = getData(card);
-    var priceEl = card.querySelector(".price");
-    var priceTxt = priceEl
-      ? priceEl.textContent.trim()
-      : "";
 
-    d.searchText = searchText(d);
+  /*
+   * Existing card cache logic.
+   * UNCHANGED.
+   */
+  cardCache = allCards.map(
+    function (card) {
 
-    d.displayPrice = priceTxt
-      ? parseInt(priceTxt.replace(/[^\d]/g, ""), 10)
-      : d.price;
+      var d = getData(card);
 
-    d.leaseYears = getLeaseYears(card);
+      var priceEl =
+        card.querySelector(
+          ".price"
+        );
 
-    return d;
-  });
+      var priceTxt =
+        priceEl
+          ? priceEl.textContent.trim()
+          : "";
 
+
+      d.searchText =
+        searchText(d);
+
+
+      d.displayPrice =
+        priceTxt
+          ? parseInt(
+              priceTxt.replace(
+                /[^\d]/g,
+                ""
+              ),
+              10
+            )
+          : d.price;
+
+
+      d.leaseYears =
+        getLeaseYears(card);
+
+
+      return d;
+
+    }
+  );
+
+
+  /*
+   * Everything below is your existing
+   * initialization logic.
+   */
   areas = [];
 
+
   buildAreas();
+
   buildLocDOM();
+
   mountLocUI();
+
   populateZoningFilter();
+
   initPricePanel();
+
   updatePriceRangeForOwnership();
+
   hydrateCoordsFromCMS();
 
+
   loadMapSDK(function () {
+
     initMap();
+
     initLocMap();
+
   });
 
+
   updateLocText();
+
   bindEvents();
-  setCurrency(savedCurrency());
+
+  setCurrency(
+    savedCurrency()
+  );
+
 }
-  if (document.readyState === "loading")
-    document.addEventListener("DOMContentLoaded", init);
-  else init();
+
+
+/* =========================================================
+   START
+   ========================================================= */
+
+if (
+  document.readyState === "loading"
+) {
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    init
+  );
+
+} else {
+
+  init();
+
+}
+
 })();
