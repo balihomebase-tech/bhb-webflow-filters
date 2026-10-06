@@ -2047,35 +2047,169 @@
     }
   }
 
-  function init() {
-    injectMobileLocStyles();
-    buildUI();
-    cacheEls();
-    if (!el.grid) { console.error('[BHB villas] grid #' + CFG.GRID_ID + ' not found'); return; }
-    allCards = Array.from(el.grid.querySelectorAll(CFG.CARD_SEL));
-    if (!allCards.length) { console.error('[BHB villas] no cards (' + CFG.CARD_SEL + ') inside grid'); return; }
-    cardCache = allCards.map(function (card) {
-      var d = getData(card);
-      var priceEl = card.querySelector(".price");
-      var priceTxt = priceEl ? priceEl.textContent.trim() : "";
-      d.searchText = searchText(d);
-      d.displayPrice = priceTxt ? parseInt(priceTxt.replace(/[^\d]/g, ""), 10) : d.price;
-      d.leaseYears = getLeaseYears(card);
-      return d;
-    });
-    areas = [];
-    buildAreas();
-    buildLocDOM();
-    mountLocUI();
-    populateZoningFilter();
-    initPricePanel();
-    updatePriceRangeForOwnership();
-    hydrateCoordsFromCMS();
-    loadMapSDK(function () { initMap(); initLocMap(); });
-    updateLocText();
-    bindEvents();
-    setCurrency(savedCurrency());
+  async function loadAllWebflowPages() {
+  // Find Webflow's native "Next" pagination link
+  var nextLink = document.querySelector(".w-pagination-next");
+
+  // No pagination = everything is already on this page
+  if (!nextLink) return;
+
+  // Hide Webflow pagination from visitors.
+  // We only use it internally to discover the next CMS page.
+  var paginationWrapper = nextLink.closest(".w-pagination-wrapper");
+
+  if (paginationWrapper) {
+    paginationWrapper.style.display = "none";
+  } else {
+    nextLink.style.display = "none";
   }
+
+  var nextUrl = nextLink.href;
+  var safety = 0;
+
+  while (nextUrl && safety < 20) {
+    safety++;
+
+    try {
+      var response = await fetch(nextUrl, {
+        credentials: "same-origin"
+      });
+
+      if (!response.ok) {
+        console.error(
+          "[BHB villas] Failed loading CMS page:",
+          nextUrl,
+          response.status
+        );
+        break;
+      }
+
+      var html = await response.text();
+
+      var parser = new DOMParser();
+      var doc = parser.parseFromString(html, "text/html");
+
+      // Get the same grid from the fetched Webflow page
+      var fetchedGrid = doc.getElementById(CFG.GRID_ID);
+
+      if (!fetchedGrid) {
+        console.error(
+          "[BHB villas] #" + CFG.GRID_ID + " not found on:",
+          nextUrl
+        );
+        break;
+      }
+
+      var cards = Array.from(
+        fetchedGrid.querySelectorAll(CFG.CARD_SEL)
+      );
+
+      // Add the cards from this Webflow page into the current grid
+      cards.forEach(function (card) {
+        el.grid.appendChild(card);
+      });
+
+      console.log(
+        "[BHB villas] Loaded CMS page:",
+        safety + 1,
+        "| added:",
+        cards.length
+      );
+
+      // Check whether this fetched page has another Webflow page
+      var fetchedNext = doc.querySelector(".w-pagination-next");
+
+      if (
+        fetchedNext &&
+        fetchedNext.getAttribute("href") &&
+        !fetchedNext.classList.contains("w--disabled")
+      ) {
+        nextUrl = new URL(
+          fetchedNext.getAttribute("href"),
+          nextUrl
+        ).href;
+      } else {
+        nextUrl = null;
+      }
+
+    } catch (err) {
+      console.error("[BHB villas] Pagination load failed:", err);
+      break;
+    }
+  }
+}
+  
+  async function init() {
+  injectMobileLocStyles();
+  buildUI();
+  cacheEls();
+
+  if (!el.grid) {
+    console.error(
+      "[BHB villas] grid #" + CFG.GRID_ID + " not found"
+    );
+    return;
+  }
+
+  // Load Webflow page 2, 3, etc. into the current grid first
+  await loadAllWebflowPages();
+
+  // NOW collect every villa, not only Webflow page 1
+  allCards = Array.from(
+    el.grid.querySelectorAll(CFG.CARD_SEL)
+  );
+
+  if (!allCards.length) {
+    console.error(
+      "[BHB villas] no cards (" +
+        CFG.CARD_SEL +
+        ") inside grid"
+    );
+    return;
+  }
+
+  console.log(
+    "[BHB villas] Total villa cards loaded:",
+    allCards.length
+  );
+
+  cardCache = allCards.map(function (card) {
+    var d = getData(card);
+    var priceEl = card.querySelector(".price");
+    var priceTxt = priceEl
+      ? priceEl.textContent.trim()
+      : "";
+
+    d.searchText = searchText(d);
+
+    d.displayPrice = priceTxt
+      ? parseInt(priceTxt.replace(/[^\d]/g, ""), 10)
+      : d.price;
+
+    d.leaseYears = getLeaseYears(card);
+
+    return d;
+  });
+
+  areas = [];
+
+  buildAreas();
+  buildLocDOM();
+  mountLocUI();
+  populateZoningFilter();
+  initPricePanel();
+  updatePriceRangeForOwnership();
+  hydrateCoordsFromCMS();
+
+  loadMapSDK(function () {
+    initMap();
+    initLocMap();
+  });
+
+  updateLocText();
+  bindEvents();
+  setCurrency(savedCurrency());
+}
   if (document.readyState === "loading")
     document.addEventListener("DOMContentLoaded", init);
   else init();
